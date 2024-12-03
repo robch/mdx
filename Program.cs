@@ -92,11 +92,41 @@ class Program
         try
         {
             var content = File.ReadAllText(fileName);
-            Console.WriteLine($"## {fileName}\n\n```\n{content}\n```");
+
+            var isMarkdown = fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
+            var backticks = isMarkdown
+                ? new string('`', GetMaxBacktickCharSequence(content))
+                : "```";
+
+            Console.WriteLine($"## {fileName}\n\n{backticks}\n{content}\n{backticks}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"## {fileName} - Error reading file: {ex.Message}\n");
         }
+    }
+
+    static int GetMaxBacktickCharSequence(string content)
+    {
+        int maxConsecutiveBackticks = 0;
+        int currentStreak = 0;
+
+        foreach (char c in content)
+        {
+            if (c == '`')
+            {
+                currentStreak++;
+                if (currentStreak > maxConsecutiveBackticks)
+                {
+                    maxConsecutiveBackticks = currentStreak;
+                }
+            }
+            else
+            {
+                currentStreak = 0;
+            }
+        }
+
+        return Math.Max(3, maxConsecutiveBackticks + 1);
     }
 }
