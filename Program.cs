@@ -10,7 +10,7 @@ class Program
 {
     static int Main(string[] args)
     {
-        var allInputs = ExpandedInputsFromCommandLine(args);
+        var allInputs = ExpandedInputsFromCommandLine(args).ToList();
         if (!allInputs.Any())
         {
             PrintUsage();
