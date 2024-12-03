@@ -3,10 +3,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
-class MDCC
+class Program
 {
     static int Main(string[] args)
     {
@@ -22,13 +22,12 @@ class MDCC
             if (!files.Any())
             {
                 Console.WriteLine($"## Pattern: {pattern} - No files found\n");
+                return 2;
             }
-            else
+
+            foreach (var file in files)
             {
-                foreach (var file in files)
-                {
-                    PrintFileContentAsync(file);
-                }
+                PrintFileContentAsync(file);
             }
         }
 
@@ -39,26 +38,25 @@ class MDCC
     {
         Console.WriteLine("MDCC - Markdown Context Creator CLI, Version 1.0.0\n" +
                           "Copyright(c) 2024, Rob Chambers. All rights reserved.\n\n" +
-                          "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]]\n\n" +
+                          "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]]"+"\n\n" +
                           "EXAMPLES:\n\n" +
                           "  mdcc file1.cs\n" +
                           "  mdcc file1.md file2.md\n" +
                           "  mdcc \"**/*.cs\" \"*.md\"\n" +
-                          "  mdcc \"src/**/*.py\" \"scripts/*.sh\"\n");
+                          "  mdcc \"src/**/*.py\" \"scripts/*.sh\"");
     }
 
     static IEnumerable<string> EnumerateFiles(string pattern)
     {
         try
         {
-            var options = new EnumerationOptions { RecurseSubdirectories = true, MatchCasing = MatchCasing.CaseInsensitive };
-            string directory = Path.GetDirectoryName(pattern);
-            if (string.IsNullOrEmpty(directory))
-            {
-                directory = Directory.GetCurrentDirectory();
-            }
-            var files = Directory.EnumerateFiles(directory, Path.GetFileName(pattern), options);
-            return files.Select(file => MakeRelativePath(file));
+            var matcher = new Matcher();
+            matcher.AddInclude(pattern);
+
+            var directoryInfo = new DirectoryInfoWrapper(new DirectoryInfo(Directory.GetCurrentDirectory()));
+            var matchResult = matcher.Execute(directoryInfo);
+
+            return matchResult.Files.Select(file => MakeRelativePath(Path.Combine(Directory.GetCurrentDirectory(), file.Path)));
         }
         catch (Exception)
         {
@@ -70,22 +68,22 @@ class MDCC
     {
         var currentDirectory = Directory.GetCurrentDirectory().TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
         fullPath = Path.GetFullPath(fullPath);
-        
+
         if (fullPath.StartsWith(currentDirectory, StringComparison.OrdinalIgnoreCase))
         {
             return fullPath.Substring(currentDirectory.Length);
         }
-        
+
         Uri fullPathUri = new Uri(fullPath);
         Uri currentDirectoryUri = new Uri(currentDirectory);
 
         string relativePath = Uri.UnescapeDataString(currentDirectoryUri.MakeRelativeUri(fullPathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
-        
+
         if (Path.DirectorySeparatorChar == '\\')
         {
             relativePath = relativePath.Replace('/', Path.DirectorySeparatorChar);
         }
-        
+
         return relativePath;
     }
 
@@ -94,7 +92,7 @@ class MDCC
         try
         {
             var content = File.ReadAllText(fileName);
-            Console.WriteLine($"## {fileName}\n\n```\n{content}\n```\n");
+            Console.WriteLine($"## {fileName}\n\n```\n{content}\n```");
         }
         catch (Exception ex)
         {
