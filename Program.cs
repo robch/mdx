@@ -6,27 +6,62 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
+struct InputGroup
+{
+    public InputGroup()
+    {
+        Globs = new List<string>();
+        IncludeFilePatterns = new List<Regex>();
+        ExcludeFilePatterns = new List<Regex>();
+        IncludeLinePatterns = new List<Regex>();
+        ExcludeLinePatterns = new List<Regex>();
+    }
+
+    public List<string> Globs;
+    public List<Regex> IncludeFilePatterns;
+    public List<Regex> ExcludeFilePatterns;
+    public List<Regex> IncludeLinePatterns;
+    public List<Regex> ExcludeLinePatterns;
+}
+
+internal class InputException : Exception
+{
+    public InputException(string message) : base(message)
+    {
+    }
+}
+
 class Program
 {
     static int Main(string[] args)
     {
-        var allInputs = ExpandedInputsFromCommandLine(args).ToList();
-        if (!allInputs.Any())
+        if (!ParseInputs(args, out var groups, out var ex))
         {
-            PrintUsage();
-            return 1;
+            PrintBanner();
+            if (ex != null)
+            {
+                PrintException(ex);
+                return 2;
+            }
+            else
+            {
+                PrintUsage();
+                return 1;
+            }
         }
 
-        if (!ValidateInputs(allInputs, out var invalidOption))
+        var processedFiles = new HashSet<string>();
+        foreach (var group in groups)
         {
-            Console.WriteLine($"## Invalid option: {invalidOption}\n");
-            return 2;
-        }
-
-        var files = FindMatchingFilesFromInputs(allInputs);
-        foreach (var file in files)
-        {
-            PrintFileContent(file);
+            var files = FindMatchingFiles(group.Globs, group.IncludeFilePatterns, group.ExcludeFilePatterns);
+            foreach (var file in files)
+            {
+                if (!processedFiles.Contains(file))
+                {
+                    PrintFileContent(file, group.IncludeLinePatterns, group.ExcludeLinePatterns);
+                    processedFiles.Add(file);
+                }
+            }
         }
 
         return 0;
@@ -75,82 +110,120 @@ class Program
             }
         }
     }
-
-    private static bool ValidateInputs(IEnumerable<string> inputs, out string invalidOption)
+    
+    private static bool ParseInputs(string[] args, out List<InputGroup> groups, out InputException ex)
     {
-        var inputsAsList = inputs.ToList();
-        for (int i = 0; i < inputsAsList.Count(); i++)
-        {
-            var input = inputsAsList[i];
-            if (input == "--") continue;
-            if (input.StartsWith("--contains") && i + 1 < inputsAsList.Count())
-            {
-                i++;
-                continue;
-            }
-            if (input.StartsWith("--remove") && i + 1 < inputsAsList.Count())
-            {
-                i++;
-                continue;
-            }
-            if (input.StartsWith("--"))
-            {
-                invalidOption = input;
-                return false;
-            }
-        }
+        ex = null;
+        groups = null;
 
-        invalidOption = null;
-        return true;
+        try
+        {
+            var allInputs = ExpandedInputsFromCommandLine(args);
+            groups = ParseInputs(allInputs);
+            return groups.Any();
+        }
+        catch (InputException e)
+        {
+            ex = e;
+            return false;
+        }
     }
 
-    private static List<string> FindMatchingFilesFromInputs(IEnumerable<string> inputs)
+    private static List<InputGroup> ParseInputs(IEnumerable<string> args)
     {
-        var files = new List<string>();
+        var inputGroups = new List<InputGroup>();
+        var currentGroup = new InputGroup();
 
-        var globs = new List<string>();
-        var includePatterns = new List<string>();
-        var excludePatterns = new List<string>();
-
-        var inputsAsList = inputs.ToList();
-        for (int i = 0; i < inputsAsList.Count(); i++)
+        args = args.ToList();
+        for (int i = 0; i < args.Count(); i++)
         {
-            var input = inputsAsList[i];
-            if (input == "--")
+            var arg = args.ElementAt(i);
+            if (arg == "--")
             {
-                AddMatchingFiles(files, globs, includePatterns, excludePatterns);
+                inputGroups.Add(currentGroup);
+                currentGroup = new InputGroup();
             }
-            else if (input.StartsWith("--contains") && i + 1 < inputsAsList.Count())
+            else if (arg == "--contains")
             {
-                i++;
-                var contains = inputsAsList[i];
-                includePatterns.Add(contains);
+                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.IncludeFilePatterns.Add(ValidateRegExPattern(arg, pattern));
             }
-            else if (input.StartsWith("--remove") && i + 1 < inputsAsList.Count())
+            else if (arg == "--remove")
             {
-                i++;
-                var remove = inputsAsList[i];
-                excludePatterns.Add(remove);
+                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.ExcludeFilePatterns.Add(ValidateRegExPattern(arg, pattern));
+            }
+            else if (arg == "--line-contains" || arg == "--contains-line")
+            {
+                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.IncludeLinePatterns.Add(ValidateRegExPattern(arg, pattern));
+            }
+            else if (arg == "--line-remove" || arg == "--remove-line")
+            {
+                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.ExcludeLinePatterns.Add(ValidateRegExPattern(arg, pattern));
+            }
+            else if (arg.StartsWith("--"))
+            {
+                throw new InputException($"{arg} - Invalid argument");
             }
             else
             {
-                globs.Add(input);
+                currentGroup.Globs.Add(arg);
             }
         }
 
-        AddMatchingFiles(files, globs, includePatterns, excludePatterns);
-        return files.Distinct().ToList();
+        var groupOk = currentGroup.Globs.Any() ||
+            currentGroup.IncludeFilePatterns.Any() || 
+            currentGroup.ExcludeFilePatterns.Any() ||
+            currentGroup.IncludeLinePatterns.Any() ||
+            currentGroup.ExcludeLinePatterns.Any();
+        if (groupOk)
+        {
+            inputGroups.Add(currentGroup);
+        }
+
+        return inputGroups;
     }
 
-    private static void AddMatchingFiles(List<string> files, List<string> globs, List<string> includePatterns, List<string> excludePatterns)
+    private static Regex ValidateRegExPattern(string arg, string pattern)
     {
-        files.AddRange(FindMatchingFiles(globs, includePatterns, excludePatterns));
-        globs.Clear();
-        includePatterns.Clear();
-        excludePatterns.Clear();
+        if (string.IsNullOrEmpty(pattern))
+        {
+            throw new InputException($"{arg} - Missing regular expression pattern");
+        }
+
+        try
+        {
+            return new Regex(pattern);
+        }
+        catch (Exception)
+        {
+            throw new InputException($"{arg} {pattern} - Invalid regular expression pattern");
+        }
     }
 
-    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<string> includePatterns, List<string> excludePatterns)
+    private static bool IsFileMatch(string file, List<Regex> includePatterns, List<Regex> excludePatterns)
+    {
+        var checkContent = includePatterns.Any() || excludePatterns.Any();
+        if (!checkContent) return true;
+
+        var content = File.ReadAllText(file);
+        var includeMatch = includePatterns.All(regex => regex.IsMatch(content));
+        var excludeMatch = excludePatterns.Count > 0 && excludePatterns.Any(regex => regex.IsMatch(content));
+
+        return includeMatch && !excludeMatch;
+    }
+
+    private static bool IsLineMatch(string line, List<Regex> includePatterns, List<Regex> excludePatterns)
+    {
+        var includeMatch = includePatterns.All(regex => regex.IsMatch(line));
+        var excludeMatch = excludePatterns.Count > 0 && excludePatterns.Any(regex => regex.IsMatch(line));
+
+        return includeMatch && !excludeMatch;
+    }
+
+    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<Regex> includePatterns, List<Regex> excludePatterns)
     {
         var files = FilesFromGlobs(globs).ToList();
         if (files.Count == 0)
@@ -167,18 +240,6 @@ class Program
         }
 
         return filtered.Distinct();
-    }
-
-    private static bool IsFileMatch(string file, List<string> includePatterns, List<string> excludePatterns)
-    {
-        var checkContent = includePatterns.Any() || excludePatterns.Any();
-        if (!checkContent) return true;
-
-        var content = File.ReadAllText(file);
-        var includeMatch = includePatterns.All(pattern => Regex.IsMatch(content, pattern));
-        var excludeMatch = excludePatterns.Count > 0 && excludePatterns.Any(pattern => Regex.IsMatch(content, pattern));
-
-        return includeMatch && !excludeMatch;
     }
 
     private static IEnumerable<string> FilesFromGlobs(List<string> globs)
@@ -233,22 +294,35 @@ class Program
         return relativePath;
     }
 
-    static void PrintUsage()
+    static void PrintBanner()
     {
-        Console.WriteLine("MDCC - Markdown Context Creator CLI, Version 1.0.0\n" +
-                          "Copyright(c) 2024, Rob Chambers. All rights reserved.\n\n" +
-                          "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]"+"\n\n" +
-                          "OPTIONS:\n\n" +
-                          "  --contains REGEX  Include only files that contain the specified regex pattern\n" +
-                          "  --remove REGEX    Exclude files that contain the specified regex pattern\n\n" +
-                          "EXAMPLES:\n\n" +
-                          "  mdcc file1.cs\n" +
-                          "  mdcc file1.md file2.md\n" +
-                          "  mdcc \"**/*.cs\" \"*.md\"\n" +
-                          "  mdcc \"src/**/*.py\" \"scripts/*.sh\"");
+        Console.WriteLine(
+            "MDCC - Markdown Context Creator CLI, Version 1.0.0\n" +
+            "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
 
-    static void PrintFileContent(string fileName)
+    static void PrintUsage()
+    {
+        Console.WriteLine(
+            "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]"+"\n\n" +
+            "OPTIONS:\n\n" +
+            "  --remove REGEX         Exclude files that contain the specified regex pattern\n" +
+            "  --contains REGEX       Include only files that contain the specified regex pattern\n\n" +
+            "  --remove-line REGEX    Exclude lines that contain the specified regex pattern\n" +
+            "  --contains-line REGEX  Include only lines that contain the specified regex pattern\n\n" +
+            "EXAMPLES:\n\n" +
+            "  mdcc file1.cs\n" +
+            "  mdcc file1.md file2.md\n" +
+            "  mdcc \"**/*.cs\" \"*.md\"\n" +
+            "  mdcc \"src/**/*.py\" \"scripts/*.sh\"");
+    }
+
+    private static void PrintException(InputException ex)
+    {
+        Console.WriteLine($"{ex.Message}\n\n");
+    }
+
+    static void PrintFileContent(string fileName, List<Regex> includePatterns, List<Regex> excludePatterns)
     {
         try
         {
@@ -258,6 +332,15 @@ class Program
             var backticks = isMarkdown
                 ? new string('`', GetMaxBacktickCharSequence(content))
                 : "```";
+
+            var filterContent = includePatterns.Any() || excludePatterns.Any();
+            if (filterContent)
+            {
+                var lines = content.Split('\n')
+                    .Where(line => IsLineMatch(line, includePatterns, excludePatterns))
+                    .ToList();
+                content = string.Join('\n', lines);
+            }
 
             Console.WriteLine($"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n");
         }
