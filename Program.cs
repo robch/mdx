@@ -11,17 +11,29 @@ struct InputGroup
     public InputGroup()
     {
         Globs = new List<string>();
-        IncludeFilePatterns = new List<Regex>();
-        ExcludeFilePatterns = new List<Regex>();
-        IncludeLinePatterns = new List<Regex>();
-        ExcludeLinePatterns = new List<Regex>();
+
+        IncludeFileContainsPatternList = new List<Regex>();
+        ExcludeFileContainsPatternList = new List<Regex>();
+
+        IncludeLineContainsPatternList = new List<Regex>();
+        IncludeLineCountBefore = 0;
+        IncludeLineCountAfter = 0;
+        IncludeLineNumbers = false;
+
+        RemoveAllLineContainsPatternList = new List<Regex>();
     }
 
     public List<string> Globs;
-    public List<Regex> IncludeFilePatterns;
-    public List<Regex> ExcludeFilePatterns;
-    public List<Regex> IncludeLinePatterns;
-    public List<Regex> ExcludeLinePatterns;
+
+    public List<Regex> IncludeFileContainsPatternList;
+    public List<Regex> ExcludeFileContainsPatternList;
+
+    public List<Regex> IncludeLineContainsPatternList;
+    public int IncludeLineCountBefore;
+    public int IncludeLineCountAfter;
+    public bool IncludeLineNumbers;
+
+    public List<Regex> RemoveAllLineContainsPatternList;
 }
 
 internal class InputException : Exception
@@ -53,12 +65,18 @@ class Program
         var processedFiles = new HashSet<string>();
         foreach (var group in groups)
         {
-            var files = FindMatchingFiles(group.Globs, group.IncludeFilePatterns, group.ExcludeFilePatterns);
+            var files = FindMatchingFiles(group.Globs, group.IncludeFileContainsPatternList, group.ExcludeFileContainsPatternList);
             foreach (var file in files)
             {
                 if (!processedFiles.Contains(file))
                 {
-                    PrintFileContent(file, group.IncludeLinePatterns, group.ExcludeLinePatterns);
+                    PrintFileContent(
+                        file,
+                        group.IncludeLineContainsPatternList,
+                        group.IncludeLineCountBefore,
+                        group.IncludeLineCountAfter,
+                        group.IncludeLineNumbers,
+                        group.RemoveAllLineContainsPatternList);
                     processedFiles.Add(file);
                 }
             }
@@ -143,25 +161,53 @@ class Program
                 inputGroups.Add(currentGroup);
                 currentGroup = new InputGroup();
             }
+            else if (arg == "--find")
+            {
+                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                var regex = ValidateRegExPattern(arg, pattern);
+                currentGroup.IncludeFileContainsPatternList.Add(regex);
+                currentGroup.IncludeLineContainsPatternList.Add(regex);
+            }
             else if (arg == "--contains")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.IncludeFilePatterns.Add(ValidateRegExPattern(arg, pattern));
+                currentGroup.IncludeFileContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
             }
-            else if (arg == "--remove")
+            else if (arg == "--not-contains")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.ExcludeFilePatterns.Add(ValidateRegExPattern(arg, pattern));
+                currentGroup.ExcludeFileContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
             }
-            else if (arg == "--line-contains" || arg == "--contains-line")
+            else if (arg == "--line-contains")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.IncludeLinePatterns.Add(ValidateRegExPattern(arg, pattern));
+                currentGroup.IncludeLineContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
             }
-            else if (arg == "--line-remove" || arg == "--remove-line")
+            else if (arg == "--lines")
+            {
+                var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                var count = ValidateLineCount(arg, countStr);
+                currentGroup.IncludeLineCountBefore = count;
+                currentGroup.IncludeLineCountAfter = count;
+            }
+            else if (arg == "--lines-before")
+            {
+                var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.IncludeLineCountBefore = ValidateLineCount(arg, countStr);
+            }
+            else if (arg == "--lines-after")
+            {
+                var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.IncludeLineCountAfter = ValidateLineCount(arg, countStr);
+            }
+            else if (arg == "--remove-all-lines")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.ExcludeLinePatterns.Add(ValidateRegExPattern(arg, pattern));
+                currentGroup.RemoveAllLineContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
+            }
+            else if (arg == "--line-numbers")
+            {
+                currentGroup.IncludeLineNumbers = true; 
             }
             else if (arg.StartsWith("--"))
             {
@@ -174,10 +220,10 @@ class Program
         }
 
         var groupOk = currentGroup.Globs.Any() ||
-            currentGroup.IncludeFilePatterns.Any() || 
-            currentGroup.ExcludeFilePatterns.Any() ||
-            currentGroup.IncludeLinePatterns.Any() ||
-            currentGroup.ExcludeLinePatterns.Any();
+            currentGroup.IncludeFileContainsPatternList.Any() || 
+            currentGroup.ExcludeFileContainsPatternList.Any() ||
+            currentGroup.IncludeLineContainsPatternList.Any() ||
+            currentGroup.RemoveAllLineContainsPatternList.Any();
         if (groupOk)
         {
             inputGroups.Add(currentGroup);
@@ -203,27 +249,41 @@ class Program
         }
     }
 
-    private static bool IsFileMatch(string file, List<Regex> includePatterns, List<Regex> excludePatterns)
+    private static int ValidateLineCount(string arg, string countStr)
     {
-        var checkContent = includePatterns.Any() || excludePatterns.Any();
+        if (string.IsNullOrEmpty(countStr))
+        {
+            throw new InputException($"{arg} - Missing line count");
+        }
+
+        if (!int.TryParse(countStr, out var count))
+        {
+            throw new InputException($"{arg} {countStr} - Invalid line count");
+        }
+
+        return count;
+    }
+    private static bool IsFileMatch(string file, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
+    {
+        var checkContent = includeFileContainsPatternList.Any() || excludeFileContainsPatternList.Any();
         if (!checkContent) return true;
 
         var content = File.ReadAllText(file);
-        var includeMatch = includePatterns.All(regex => regex.IsMatch(content));
-        var excludeMatch = excludePatterns.Count > 0 && excludePatterns.Any(regex => regex.IsMatch(content));
+        var includeFile = includeFileContainsPatternList.All(regex => regex.IsMatch(content));
+        var excludeFile = excludeFileContainsPatternList.Count > 0 && excludeFileContainsPatternList.Any(regex => regex.IsMatch(content));
 
-        return includeMatch && !excludeMatch;
+        return includeFile && !excludeFile;
     }
 
-    private static bool IsLineMatch(string line, List<Regex> includePatterns, List<Regex> excludePatterns)
+    private static bool IsLineMatch(string line, List<Regex> includeLineContainsPatternList, List<Regex> removeAllLineContainsPatternList)
     {
-        var includeMatch = includePatterns.All(regex => regex.IsMatch(line));
-        var excludeMatch = excludePatterns.Count > 0 && excludePatterns.Any(regex => regex.IsMatch(line));
+        var includeMatch = includeLineContainsPatternList.All(regex => regex.IsMatch(line));
+        var excludeMatch = removeAllLineContainsPatternList.Count > 0 && removeAllLineContainsPatternList.Any(regex => regex.IsMatch(line));
 
         return includeMatch && !excludeMatch;
     }
 
-    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<Regex> includePatterns, List<Regex> excludePatterns)
+    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
     {
         var files = FilesFromGlobs(globs).ToList();
         if (files.Count == 0)
@@ -232,7 +292,7 @@ class Program
             return Enumerable.Empty<string>();
         }
 
-        var filtered = files.Where(file => IsFileMatch(file, includePatterns, excludePatterns)).ToList();
+        var filtered = files.Where(file => IsFileMatch(file, includeFileContainsPatternList, excludeFileContainsPatternList)).ToList();
         if (filtered.Count == 0)
         {
             Console.WriteLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files matched criteria\n");
@@ -306,10 +366,14 @@ class Program
         Console.WriteLine(
             "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]"+"\n\n" +
             "OPTIONS:\n\n" +
-            "  --remove REGEX         Exclude files that contain the specified regex pattern\n" +
-            "  --contains REGEX       Include only files that contain the specified regex pattern\n\n" +
-            "  --remove-line REGEX    Exclude lines that contain the specified regex pattern\n" +
-            "  --contains-line REGEX  Include only lines that contain the specified regex pattern\n\n" +
+            "  --contains REGEX             Include only files that contain the specified regex pattern\n" +
+            "  --not-contains REGEX         Exclude files that contain the specified regex pattern\n\n" +
+            "  --line-contains REGEX        Include only lines that contain the specified regex pattern\n" +
+            "  --lines-before N             Include N lines before matching lines (default 0)\n" +
+            "  --lines-after N              Include N lines after matching lines (default 0)\n" +
+            "  --lines N                    Include N lines both before and after matching lines\n\n" +
+            "  --line-numbers               Include line numbers in the output\n" +
+            "  --remove-all-lines REGEX     Exclude lines that contain the specified regex pattern\n\n" +
             "EXAMPLES:\n\n" +
             "  mdcc file1.cs\n" +
             "  mdcc file1.md file2.md\n" +
@@ -322,7 +386,7 @@ class Program
         Console.WriteLine($"{ex.Message}\n\n");
     }
 
-    static void PrintFileContent(string fileName, List<Regex> includePatterns, List<Regex> excludePatterns)
+    static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
     {
         try
         {
@@ -333,13 +397,15 @@ class Program
                 ? new string('`', GetMaxBacktickCharSequence(content))
                 : "```";
 
-            var filterContent = includePatterns.Any() || excludePatterns.Any();
+            var filterContent = includeLineContainsPatternList.Any() || removeAllLineContainsPatternList.Any();
             if (filterContent)
             {
-                var lines = content.Split('\n')
-                    .Where(line => IsLineMatch(line, includePatterns, excludePatterns))
-                    .ToList();
-                content = string.Join('\n', lines);
+                content = FilterContent(content, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList, backticks);
+            }
+            else if (includeLineNumbers)
+            {
+                var lines = content.Split('\n');
+                content = string.Join('\n', lines.Select((line, index) => $"{index + 1}: {line}"));
             }
 
             Console.WriteLine($"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n");
@@ -348,6 +414,84 @@ class Program
         {
             Console.WriteLine($"## {fileName} - Error reading file: {ex.Message}\n\n");
         }
+    }
+
+    private static string FilterContent(string content, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, string backticks)
+    {
+        var allLines = content.Split('\n');
+        var matchedLineIndices = new List<int>();
+
+        // 1. Identify which lines match the include/exclude line patterns.
+        for (int i = 0; i < allLines.Length; i++)
+        {
+            var line = allLines[i];
+            if (IsLineMatch(line, includeLineContainsPatternList, removeAllLineContainsPatternList))
+            {
+                matchedLineIndices.Add(i);
+            }
+        }
+
+        // If no lines matched, we can simply return empty content (or original if you prefer).
+        if (matchedLineIndices.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        // 2. Include lines before and after the matched lines.
+        //    We'll create a HashSet of all line indices to include to avoid duplicates.
+        var linesToInclude = new HashSet<int>();
+
+        foreach (var matchIndex in matchedLineIndices)
+        {
+            // Add the matched line itself
+            linesToInclude.Add(matchIndex);
+
+            // Add lines before
+            for (int b = 1; b <= includeLineCountBefore; b++)
+            {
+                var idxBefore = matchIndex - b;
+                if (idxBefore >= 0) linesToInclude.Add(idxBefore);
+            }
+
+            // Add lines after
+            for (int a = 1; a <= includeLineCountAfter; a++)
+            {
+                var idxAfter = matchIndex + a;
+                if (idxAfter < allLines.Length) linesToInclude.Add(idxAfter);
+            }
+        }
+
+        // 3. Convert the included lines to a list and sort by line index
+        var finalLineIndices = linesToInclude.OrderBy(i => i).ToList();
+
+        // 4. Build the output content with separators between ranges
+        var output = new List<string>();
+        int? previousIndex = null;
+
+        foreach (var index in finalLineIndices)
+        {
+            // Add a separator if there's a break in the range
+            if (previousIndex != null && index > previousIndex + 1 && includeLineCountBefore + includeLineCountAfter > 0)
+            {
+                output.Add($"{backticks}\n\n{backticks}");
+            }
+
+            var line = allLines[index];
+            if (includeLineNumbers)
+            {
+                output.Add($"{index + 1}: {line}");
+            }
+            else
+            {
+                output.Add(line);
+            }
+
+            previousIndex = index;
+        }
+
+        // 5. Join the lines back into a single string
+        return string.Join("\n", output);
+
     }
 
     static int GetMaxBacktickCharSequence(string content)
