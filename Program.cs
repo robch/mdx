@@ -164,19 +164,19 @@ class Program
                 inputGroups.Add(currentGroup);
                 currentGroup = new InputGroup();
             }
-            else if (arg == "--find")
+            else if (arg == "--contains")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 var regex = ValidateRegExPattern(arg, pattern);
                 currentGroup.IncludeFileContainsPatternList.Add(regex);
                 currentGroup.IncludeLineContainsPatternList.Add(regex);
             }
-            else if (arg == "--contains")
+            else if (arg == "--file-contains")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 currentGroup.IncludeFileContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
             }
-            else if (arg == "--not-contains")
+            else if (arg == "--file-not-contains")
             {
                 var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 currentGroup.ExcludeFileContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
@@ -370,19 +370,20 @@ class Program
         Console.WriteLine(
             "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]"+"\n\n" +
             "OPTIONS:\n\n" +
-            "  --contains REGEX             Include only files that contain the specified regex pattern\n" +
-            "  --not-contains REGEX         Exclude files that contain the specified regex pattern\n\n" +
-            "  --line-contains REGEX        Include only lines that contain the specified regex pattern\n" +
+            "  --contains REGEX             Match only files and lines that contain the specified regex pattern\n\n" +
+            "  --file-contains REGEX        Match only files that contain the specified regex pattern\n" +
+            "  --file-not-contains REGEX    Exclude files that contain the specified regex pattern\n\n" +
+            "  --line-contains REGEX        Match only lines that contain the specified regex pattern\n" +
             "  --lines-before N             Include N lines before matching lines (default 0)\n" +
             "  --lines-after N              Include N lines after matching lines (default 0)\n" +
             "  --lines N                    Include N lines both before and after matching lines\n\n" +
             "  --line-numbers               Include line numbers in the output\n" +
-            "  --remove-all-lines REGEX     Exclude lines that contain the specified regex pattern\n\n" +
+            "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
             "EXAMPLES:\n\n" +
             "  mdcc file1.cs\n" +
-            "  mdcc file1.md file2.md\n" +
-            "  mdcc \"**/*.cs\" \"*.md\"\n" +
-            "  mdcc \"src/**/*.py\" \"scripts/*.sh\"");
+            "  mdcc file1.md file2.md\n\n" +
+            "  mdcc \"**/*.cs\" \"*.md\" --line-numbers\n\n" +
+            "  mdcc \"**\" --contains \"(?i)LLM\" --lines 2");
     }
 
     private static void PrintException(InputException ex)
