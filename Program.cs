@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
@@ -47,6 +48,8 @@ class Program
 {
     static int Main(string[] args)
     {
+        Console.OutputEncoding = Encoding.UTF8;
+
         if (!ParseInputs(args, out var groups, out var ex))
         {
             PrintBanner();
@@ -263,12 +266,13 @@ class Program
 
         return count;
     }
+
     private static bool IsFileMatch(string file, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
     {
         var checkContent = includeFileContainsPatternList.Any() || excludeFileContainsPatternList.Any();
         if (!checkContent) return true;
 
-        var content = File.ReadAllText(file);
+        var content = File.ReadAllText(file, Encoding.UTF8);
         var includeFile = includeFileContainsPatternList.All(regex => regex.IsMatch(content));
         var excludeFile = excludeFileContainsPatternList.Count > 0 && excludeFileContainsPatternList.Any(regex => regex.IsMatch(content));
 
@@ -391,14 +395,14 @@ class Program
         try
         {
             var bytes = File.ReadAllBytes(fileName);
-            var isBinary = bytes.FirstOrDefault(x => x > 127) > 127;
+            var isBinary = bytes.Any(x => x == 0);
             if (isBinary)
             {
                 Console.WriteLine($"## {fileName}\n\nBinary data: {bytes.Length} bytes\n\n");
                 return;
             }
 
-            var content = File.ReadAllText(fileName);
+            var content = File.ReadAllText(fileName, Encoding.UTF8);
 
             var isMarkdown = fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
             var backticks = isMarkdown
@@ -485,11 +489,15 @@ class Program
             }
 
             var line = allLines[index];
+            var shouldRemove = removeAllLineContainsPatternList.Any(regex => regex.IsMatch(line));
+
             if (includeLineNumbers)
             {
-                output.Add($"{index + 1}: {line}");
+                output.Add(shouldRemove
+                    ? $"{index + 1}:"
+                    : $"{index + 1}: {line}");
             }
-            else
+            else if (!shouldRemove)
             {
                 output.Add(line);
             }
