@@ -390,6 +390,14 @@ class Program
     {
         try
         {
+            var bytes = File.ReadAllBytes(fileName);
+            var isBinary = bytes.FirstOrDefault(x => x > 127) > 127;
+            if (isBinary)
+            {
+                Console.WriteLine($"## {fileName}\n\nBinary data: {bytes.Length} bytes\n\n");
+                return;
+            }
+
             var content = File.ReadAllText(fileName);
 
             var isMarkdown = fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
