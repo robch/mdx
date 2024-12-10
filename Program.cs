@@ -24,6 +24,7 @@ struct InputGroup
         IncludeLineNumbers = false;
 
         RemoveAllLineContainsPatternList = new List<Regex>();
+        FileInstructions = new List<string>();
     }
 
     public List<string> Globs;
@@ -40,7 +41,7 @@ struct InputGroup
 
     public List<Regex> RemoveAllLineContainsPatternList;
 
-    public string FileInstructions;
+    public List<string> FileInstructions;
 }
 
 internal class InputException : Exception
@@ -163,15 +164,15 @@ class Program
         }
     }
 
-    private static List<InputGroup> ParseInputs(IEnumerable<string> args)
+    private static List<InputGroup> ParseInputs(IEnumerable<string> allInputs)
     {
         var inputGroups = new List<InputGroup>();
         var currentGroup = new InputGroup();
 
-        args = args.ToList();
+        var args = allInputs.ToArray();
         for (int i = 0; i < args.Count(); i++)
         {
-            var arg = args.ElementAt(i);
+            var arg = args[i];
             if (arg == "--")
             {
                 inputGroups.Add(currentGroup);
@@ -179,25 +180,32 @@ class Program
             }
             else if (arg == "--contains")
             {
-                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                var regex = ValidateRegExPattern(arg, pattern);
-                currentGroup.IncludeFileContainsPatternList.Add(regex);
-                currentGroup.IncludeLineContainsPatternList.Add(regex);
+                var patterns = GetInputOptionArgs(i + 1, args);
+                var asRegExs = ValidateRegExPatterns(arg, patterns);
+                currentGroup.IncludeFileContainsPatternList.AddRange(asRegExs);
+                currentGroup.IncludeLineContainsPatternList.AddRange(asRegExs);
+                i += patterns.Count();
             }
             else if (arg == "--file-contains")
             {
-                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.IncludeFileContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
+                var patterns = GetInputOptionArgs(i + 1, args);
+                var asRegExs = ValidateRegExPatterns(arg, patterns);
+                currentGroup.IncludeFileContainsPatternList.AddRange(asRegExs);
+                i += patterns.Count();
             }
             else if (arg == "--file-not-contains")
             {
-                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.ExcludeFileContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
+                var patterns = GetInputOptionArgs(i + 1, args);
+                var asRegExs = ValidateRegExPatterns(arg, patterns);
+                currentGroup.ExcludeFileContainsPatternList.AddRange(asRegExs);
+                i += patterns.Count();
             }
             else if (arg == "--line-contains")
             {
-                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.IncludeLineContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
+                var patterns = GetInputOptionArgs(i + 1, args);
+                var asRegExs = ValidateRegExPatterns(arg, patterns);
+                currentGroup.IncludeLineContainsPatternList.AddRange(asRegExs);
+                i += patterns.Count();
             }
             else if (arg == "--lines")
             {
@@ -218,8 +226,10 @@ class Program
             }
             else if (arg == "--remove-all-lines")
             {
-                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.RemoveAllLineContainsPatternList.Add(ValidateRegExPattern(arg, pattern));
+                var patterns = GetInputOptionArgs(i + 1, args);
+                var asRegExs = ValidateRegExPatterns(arg, patterns);
+                currentGroup.RemoveAllLineContainsPatternList.AddRange(asRegExs);
+                i += patterns.Count();
             }
             else if (arg == "--line-numbers")
             {
@@ -227,21 +237,32 @@ class Program
             }
             else if (arg == "--file-instructions")
             {
-                var instructions = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentGroup.FileInstructions = instructions;
+                var instructions = GetInputOptionArgs(i + 1, args);
+                if (instructions.Count() == 0)
+                {
+                    throw new InputException($"{arg} - Missing file instructions");
+                }
+                currentGroup.FileInstructions.AddRange(instructions);
             }
             else if (arg == "--exclude")
             {
-                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                var isFilePatternWithoutSlash = pattern != null && !pattern.Contains('/') && !pattern.Contains('\\');
-                if (isFilePatternWithoutSlash)
+                var patterns = GetInputOptionArgs(i + 1, args);
+                if (patterns.Count() == 0)
                 {
-                    currentGroup.ExcludeFileNamePatternList.Add(ValidateFilePatternToRegExPattern(arg, pattern));
+                    throw new InputException($"{arg} - Missing pattern");
                 }
-                else
-                {
-                    currentGroup.ExcludeGlobs.Add(pattern);
-                }
+
+                var containsSlash = (string x) => x.Contains('/') || x.Contains('\\');
+                var asRegExs = patterns
+                    .Where(x => !containsSlash(x))
+                    .Select(x => ValidateFilePatternToRegExPattern(arg, x));
+                var asGlobs = patterns
+                    .Where(x => containsSlash(x))
+                    .ToList();
+
+                currentGroup.ExcludeFileNamePatternList.AddRange(asRegExs);
+                currentGroup.ExcludeGlobs.AddRange(asGlobs);
+                i += patterns.Count();
             }
             else if (arg.StartsWith("--"))
             {
@@ -266,13 +287,32 @@ class Program
         return inputGroups;
     }
 
-    private static Regex ValidateRegExPattern(string arg, string pattern)
+    private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args)
     {
-        if (string.IsNullOrEmpty(pattern))
+        for (int i = startAt; i < args.Length; i++)
+        {
+            if (args[i].StartsWith("--"))
+            {
+                yield break;
+            }
+
+            yield return args[i];
+        }
+    }
+
+    private static IEnumerable<Regex> ValidateRegExPatterns(string arg, IEnumerable<string> patterns)
+    {
+        patterns = patterns.ToList();
+        if (!patterns.Any())
         {
             throw new InputException($"{arg} - Missing regular expression pattern");
         }
 
+        return patterns.Select(x => ValidateRegExPattern(arg, x));
+    }
+
+    private static Regex ValidateRegExPattern(string arg, string pattern)
+    {
         try
         {
             return new Regex(pattern);
@@ -290,10 +330,12 @@ class Program
             throw new InputException($"{arg} - Missing file pattern");
         }
 
-        var regexPattern = pattern
+        var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+        var patternPrefix = isWindows ? "(?i)^" : "^";
+        var regexPattern = patternPrefix + pattern
             .Replace(".", "\\.")
             .Replace("*", ".*")
-            .Replace("?", ".");
+            .Replace("?", ".") + "$";
 
         try
         {
@@ -340,12 +382,17 @@ class Program
         return includeMatch && !excludeMatch;
     }
 
-    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<string> excludeGlobs, List<Regex> excludeFilePatterns, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
+    private static IEnumerable<string> FindMatchingFiles(
+        List<string> globs,
+        List<string> excludeGlobs,
+        List<Regex> excludeFileNamePatternList,
+        List<Regex> includeFileContainsPatternList,
+        List<Regex> excludeFileContainsPatternList)
     {
         var excludeFiles = new HashSet<string>(FilesFromGlobs(excludeGlobs));
         var files = FilesFromGlobs(globs)
             .Where(file => !excludeFiles.Contains(file))
-            .Where(file => !excludeFilePatterns.Any(regex => regex.IsMatch(file)))
+            .Where(file => !excludeFileNamePatternList.Any(regex => regex.IsMatch(Path.GetFileName(file))))
             .ToList();
 
         if (files.Count == 0)
@@ -451,11 +498,11 @@ class Program
         Console.WriteLine($"{ex.Message}\n\n");
     }
 
-    private static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, string fileInstructions)
+    private static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructions)
     {
         var formatted = GetFormattedFileContent(fileName, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList);
 
-        var afterInstructions = !string.IsNullOrEmpty(fileInstructions)
+        var afterInstructions = fileInstructions.Any()
             ? ApplyFileInstructions(fileInstructions, formatted)
             : formatted;
 
@@ -578,6 +625,11 @@ class Program
 
         // 5. Join the lines back into a single string
         return string.Join("\n", output);
+    }
+
+    private static string ApplyFileInstructions(List<string> instructions, string content)
+    {
+        return instructions.Aggregate(content, (current, instruction) => ApplyFileInstructions(instruction, current));
     }
 
     private static string ApplyFileInstructions(string instructions, string content)
