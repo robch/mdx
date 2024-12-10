@@ -35,6 +35,8 @@ struct InputGroup
     public bool IncludeLineNumbers;
 
     public List<Regex> RemoveAllLineContainsPatternList;
+
+    public string FileInstructions;
 }
 
 internal class InputException : Exception
@@ -79,7 +81,8 @@ class Program
                         group.IncludeLineCountBefore,
                         group.IncludeLineCountAfter,
                         group.IncludeLineNumbers,
-                        group.RemoveAllLineContainsPatternList);
+                        group.RemoveAllLineContainsPatternList,
+                        group.FileInstructions);
                     processedFiles.Add(file);
                 }
             }
@@ -212,6 +215,11 @@ class Program
             {
                 currentGroup.IncludeLineNumbers = true; 
             }
+            else if (arg == "--file-instructions")
+            {
+                var instructions = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.FileInstructions = instructions;
+            }
             else if (arg.StartsWith("--"))
             {
                 throw new InputException($"{arg} - Invalid argument");
@@ -335,7 +343,7 @@ class Program
         }
     }
 
-    static string MakeRelativePath(string fullPath)
+    private static string MakeRelativePath(string fullPath)
     {
         var currentDirectory = Directory.GetCurrentDirectory().TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
         fullPath = Path.GetFullPath(fullPath);
@@ -358,14 +366,14 @@ class Program
         return relativePath;
     }
 
-    static void PrintBanner()
+    private static void PrintBanner()
     {
         Console.WriteLine(
             "MDCC - Markdown Context Creator CLI, Version 1.0.0\n" +
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
 
-    static void PrintUsage()
+    private static void PrintUsage()
     {
         Console.WriteLine(
             "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]"+"\n\n" +
@@ -379,6 +387,7 @@ class Program
             "  --lines N                    Include N lines both before and after matching lines\n\n" +
             "  --line-numbers               Include line numbers in the output\n" +
             "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
+            "  --file-instructions FILE     Apply the specified instructions to each file using AI CLI\n\n" +
             "EXAMPLES:\n\n" +
             "  mdcc file1.cs\n" +
             "  mdcc file1.md file2.md\n\n" +
@@ -391,7 +400,18 @@ class Program
         Console.WriteLine($"{ex.Message}\n\n");
     }
 
-    static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
+    private static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, string fileInstructions)
+    {
+        var formatted = GetFormattedFileContent(fileName, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList);
+
+        var afterInstructions = !string.IsNullOrEmpty(fileInstructions)
+            ? ApplyFileInstructions(fileInstructions, formatted)
+            : formatted;
+
+        Console.WriteLine(afterInstructions);
+    }
+
+    private static string GetFormattedFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
     {
         try
         {
@@ -399,8 +419,7 @@ class Program
             var isBinary = bytes.Any(x => x == 0);
             if (isBinary)
             {
-                Console.WriteLine($"## {fileName}\n\nBinary data: {bytes.Length} bytes\n\n");
-                return;
+                return $"## {fileName}\n\nBinary data: {bytes.Length} bytes\n\n";
             }
 
             var content = File.ReadAllText(fileName, Encoding.UTF8);
@@ -413,7 +432,7 @@ class Program
             var filterContent = includeLineContainsPatternList.Any() || removeAllLineContainsPatternList.Any();
             if (filterContent)
             {
-                content = FilterContent(content, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList, backticks);
+                content = GetFilteredContent(content, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList, backticks);
             }
             else if (includeLineNumbers)
             {
@@ -421,15 +440,15 @@ class Program
                 content = string.Join('\n', lines.Select((line, index) => $"{index + 1}: {line}"));
             }
 
-            Console.WriteLine($"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n");
+            return $"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n";
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"## {fileName} - Error reading file: {ex.Message}\n\n");
+            return $"## {fileName} - Error reading file: {ex.Message}\n\n";
         }
     }
 
-    private static string FilterContent(string content, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, string backticks)
+    private static string GetFilteredContent(string content, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, string backticks)
     {
         var allLines = content.Split('\n');
         var matchedLineIndices = new List<int>();
@@ -508,7 +527,68 @@ class Program
 
         // 5. Join the lines back into a single string
         return string.Join("\n", output);
+    }
 
+    private static string ApplyFileInstructions(string instructions, string content)
+    {
+        var userPromptFileName = Path.GetTempFileName();
+        var systemPromptFileName = Path.GetTempFileName();
+        var instructionsFileName = Path.GetTempFileName();
+        var contentFileName = Path.GetTempFileName();
+        try
+        {
+            var backticks = new string('`', GetMaxBacktickCharSequence(content) + 3);
+            File.WriteAllText(userPromptFileName, GetUserPrompt(backticks, contentFileName, instructionsFileName));
+            File.WriteAllText(systemPromptFileName, GetSystemPrompt());
+            File.WriteAllText(instructionsFileName, instructions);
+            File.WriteAllText(contentFileName, content);
+
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = "ai";
+            process.StartInfo.Arguments = $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardInput = false;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.Start();
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            return process.ExitCode != 0
+                ? $"{output}\n\nEXIT CODE: {process.ExitCode}\n\nERROR: {error}"
+                : output;
+        }
+        catch (Exception ex)
+        {
+            return $"## {ex.Message}\n\n";
+        }
+        finally 
+        {
+            // Console.WriteLine($"user:\n{File.ReadAllText(userPromptFileName)}\n\n");
+            // Console.WriteLine($"system:\n{File.ReadAllText(systemPromptFileName)}\n\n");
+            // Console.WriteLine($"instructions:\n{File.ReadAllText(instructionsFileName)}\n\n");
+            if (File.Exists(userPromptFileName)) File.Delete(userPromptFileName);
+            if (File.Exists(systemPromptFileName)) File.Delete(systemPromptFileName);
+            if (File.Exists(instructionsFileName)) File.Delete(instructionsFileName);
+            if (File.Exists(contentFileName)) File.Delete(contentFileName);
+        }
+    }
+    private static string GetSystemPrompt()
+    {
+        return "You are a helpful AI assistant.\n\n" +
+            "You will be provided with a set of instructions and a markdown file.\n\n" +
+            "Your task is to apply the instructions to the text and return the modified text.";
+    }
+
+    private static string GetUserPrompt(string backticks, string contentFile, string instructionsFile)
+    {
+        return 
+            "Instructions:\n" + backticks + "\n{@" + instructionsFile + "}\n" + backticks + "\n\n" +
+            "Markdown:\n" + backticks + "\n{@" + contentFile + "}\n" + backticks + "\n\n" +
+            "Modified markdown (do not enclose in backticks):\n\n";
     }
 
     static int GetMaxBacktickCharSequence(string content)
