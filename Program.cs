@@ -500,8 +500,12 @@ class Program
             "EXAMPLES:\n\n" +
             "  mdcc file1.cs\n" +
             "  mdcc file1.md file2.md\n\n" +
-            "  mdcc \"**/*.cs\" \"*.md\" --line-numbers\n\n" +
-            "  mdcc \"**\" --contains \"(?i)LLM\" --lines 2");
+            "  mdcc \"src/**/*.cs\" \"*.md\"\n" +
+            "  mdcc \"src/**/*.js\" --contains \"export\"\n" +
+            "  mdcc \"src/**\" --contains \"(?i)LLM\" --lines 2\n" +
+            "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
+            "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
+            "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"");
     }
 
     private static void PrintException(InputException ex)
