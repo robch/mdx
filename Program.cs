@@ -12,6 +12,8 @@ struct InputGroup
     public InputGroup()
     {
         Globs = new List<string>();
+        ExcludeGlobs = new List<string>();
+        ExcludeFileNamePatternList = new List<Regex>();
 
         IncludeFileContainsPatternList = new List<Regex>();
         ExcludeFileContainsPatternList = new List<Regex>();
@@ -25,6 +27,8 @@ struct InputGroup
     }
 
     public List<string> Globs;
+    public List<string> ExcludeGlobs;
+    public List<Regex> ExcludeFileNamePatternList;
 
     public List<Regex> IncludeFileContainsPatternList;
     public List<Regex> ExcludeFileContainsPatternList;
@@ -70,7 +74,13 @@ class Program
         var processedFiles = new HashSet<string>();
         foreach (var group in groups)
         {
-            var files = FindMatchingFiles(group.Globs, group.IncludeFileContainsPatternList, group.ExcludeFileContainsPatternList);
+            var files = FindMatchingFiles(
+                group.Globs,
+                group.ExcludeGlobs,
+                group.ExcludeFileNamePatternList,
+                group.IncludeFileContainsPatternList,
+                group.ExcludeFileContainsPatternList);
+
             foreach (var file in files)
             {
                 if (!processedFiles.Contains(file))
@@ -220,6 +230,19 @@ class Program
                 var instructions = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 currentGroup.FileInstructions = instructions;
             }
+            else if (arg == "--exclude")
+            {
+                var pattern = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                var isFilePatternWithoutSlash = pattern != null && !pattern.Contains('/') && !pattern.Contains('\\');
+                if (isFilePatternWithoutSlash)
+                {
+                    currentGroup.ExcludeFileNamePatternList.Add(ValidateFilePatternToRegExPattern(arg, pattern));
+                }
+                else
+                {
+                    currentGroup.ExcludeGlobs.Add(pattern);
+                }
+            }
             else if (arg.StartsWith("--"))
             {
                 throw new InputException($"{arg} - Invalid argument");
@@ -260,6 +283,28 @@ class Program
         }
     }
 
+    private static Regex ValidateFilePatternToRegExPattern(string arg, string pattern)
+    {
+        if (string.IsNullOrEmpty(pattern))
+        {
+            throw new InputException($"{arg} - Missing file pattern");
+        }
+
+        var regexPattern = pattern
+            .Replace(".", "\\.")
+            .Replace("*", ".*")
+            .Replace("?", ".");
+
+        try
+        {
+            return new Regex(regexPattern);
+        }
+        catch (Exception)
+        {
+            throw new InputException($"{arg} {pattern} - Invalid file pattern");
+        }
+    }
+
     private static int ValidateLineCount(string arg, string countStr)
     {
         if (string.IsNullOrEmpty(countStr))
@@ -295,9 +340,14 @@ class Program
         return includeMatch && !excludeMatch;
     }
 
-    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
+    private static IEnumerable<string> FindMatchingFiles(List<string> globs, List<string> excludeGlobs, List<Regex> excludeFilePatterns, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
     {
-        var files = FilesFromGlobs(globs).ToList();
+        var excludeFiles = new HashSet<string>(FilesFromGlobs(excludeGlobs));
+        var files = FilesFromGlobs(globs)
+            .Where(file => !excludeFiles.Contains(file))
+            .Where(file => !excludeFilePatterns.Any(regex => regex.IsMatch(file)))
+            .ToList();
+
         if (files.Count == 0)
         {
             Console.WriteLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files found\n");
@@ -380,7 +430,8 @@ class Program
             "OPTIONS:\n\n" +
             "  --contains REGEX             Match only files and lines that contain the specified regex pattern\n\n" +
             "  --file-contains REGEX        Match only files that contain the specified regex pattern\n" +
-            "  --file-not-contains REGEX    Exclude files that contain the specified regex pattern\n\n" +
+            "  --file-not-contains REGEX    Exclude files that contain the specified regex pattern\n" +
+            "  --exclude PATTERN            Exclude files that match the specified pattern\n\n" +
             "  --line-contains REGEX        Match only lines that contain the specified regex pattern\n" +
             "  --lines-before N             Include N lines before matching lines (default 0)\n" +
             "  --lines-after N              Include N lines after matching lines (default 0)\n" +
