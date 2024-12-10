@@ -132,17 +132,28 @@ class Program
     {
         foreach (var input in InputsFromCommandLine(args))
         {
-            if (input.StartsWith("@") && File.Exists(input.Substring(1)))
+            foreach (var line in ExpandedInput(input))
             {
-                foreach (var line in File.ReadLines(input.Substring(1)))
+                yield return line;
+            }
+        }
+    }
+    
+    private static IEnumerable<string> ExpandedInput(string input)
+    {
+        if (input.StartsWith("@") && File.Exists(input.Substring(1)))
+        {
+            foreach (var line in File.ReadLines(input.Substring(1)))
+            {
+                foreach (var expanded in ExpandedInput(line))
                 {
-                    yield return line.Trim();
+                    yield return expanded;
                 }
             }
-            else
-            {
-                yield return input;
-            }
+        }
+        else
+        {
+            yield return input;
         }
     }
     
