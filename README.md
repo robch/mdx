@@ -64,6 +64,7 @@ EXAMPLES
 
   mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
   mdcc "**/*.json" --file-instructions @instructions.md --threads 5
+  mdcc "**/*.cs" --file-instructions @step1-instructions.md @step2-instructions.md
 ```
 
 ## Example

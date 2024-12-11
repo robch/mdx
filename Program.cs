@@ -540,7 +540,8 @@ class Program
             "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
             "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
             "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
-            "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5"
+            "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
+            "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md"
         );
     }
     private static void PrintException(InputException ex)
