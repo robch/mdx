@@ -47,6 +47,8 @@ struct InputGroup
 
     public List<string> FileInstructionsList;
 
+    public string SaveFileOutput;
+
     public int ThreadCount;
 }
 
@@ -81,7 +83,7 @@ class Program
         var threadCountMax = groups.Max(x => x.ThreadCount);
         var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
 
-        var tasks = new List<Task>();
+        var tasks = new List<Task<string>>();
         var throttler = new SemaphoreSlim(parallelism);
 
         var processedFiles = new HashSet<string>();
@@ -98,7 +100,7 @@ class Program
             {
                 if (processedFiles.Add(file))
                 {
-                    tasks.Add(PrintFileContentAsync(
+                    tasks.Add(PrintSaveFileContentAsync(
                         file,
                         throttler,
                         group.IncludeLineContainsPatternList,
@@ -106,7 +108,8 @@ class Program
                         group.IncludeLineCountAfter,
                         group.IncludeLineNumbers,
                         group.RemoveAllLineContainsPatternList,
-                        group.FileInstructionsList));
+                        group.FileInstructionsList,
+                        group.SaveFileOutput));
                 }
             }
         }
@@ -272,6 +275,13 @@ class Program
                     throw new InputException($"{arg} - Missing file instructions");
                 }
                 currentGroup.FileInstructionsList.AddRange(instructions);
+            }
+            else if (arg == "--save-file-output")
+            {
+                var optionArgs = GetInputOptionArgs(i + 1, args);
+                var saveFileOutput = optionArgs.LastOrDefault() ?? "{filePath}/{fileBase}.md";
+                currentGroup.SaveFileOutput = saveFileOutput;
+                i += optionArgs.Count();
             }
             else if (arg == "--threads")
             {
@@ -527,6 +537,7 @@ class Program
             "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
             "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n" +
             $"  --threads N                  Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
+            "  --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}.md)\n\n" +
             "  @ARGUMENTS\n\n" +
             "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
             "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
@@ -541,7 +552,8 @@ class Program
             "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
             "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
             "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
-            "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md"
+            "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md\n" +
+            "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\""
         );
     }
     private static void PrintException(InputException ex)
@@ -549,7 +561,7 @@ class Program
         Console.WriteLine($"{ex.Message}\n\n");
     }
 
-    private static Task PrintFileContentAsync(
+    private static Task<string> PrintSaveFileContentAsync(
         string fileName,
         SemaphoreSlim throttler,
         List<Regex> includeLineContainsPatternList,
@@ -557,29 +569,31 @@ class Program
         int includeLineCountAfter,
         bool includeLineNumbers,
         List<Regex> removeAllLineContainsPatternList,
-        List<string> fileInstructionsList)
+        List<string> fileInstructionsList,
+        string saveFileOutput)
     {
-        var printFileContent = new Action(() =>
-            PrintFileContent(
+        var printSaveFileContent = new Func<string>(() =>
+            PrintSaveFileContent(
                 fileName,
                 includeLineContainsPatternList,
                 includeLineCountBefore,
                 includeLineCountAfter,
                 includeLineNumbers,
                 removeAllLineContainsPatternList,
-                fileInstructionsList));
+                fileInstructionsList,
+                saveFileOutput));
 
         if (!fileInstructionsList.Any())
         {
-            printFileContent();
-            return Task.CompletedTask;
+            var content = printSaveFileContent();
+            return Task.FromResult(content);
         }
 
         return Task.Run(async () => {
             await throttler.WaitAsync();
             try
             {
-                printFileContent();
+                return printSaveFileContent();
             }
             finally
             {
@@ -588,7 +602,15 @@ class Program
         });
     }
 
-    private static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList)
+    private static string PrintSaveFileContent(
+        string fileName,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList,
+        List<string> fileInstructionsList,
+        string saveFileOutput)
     {
         var finalContent = GetFinalFileContent(
             fileName,
@@ -600,6 +622,15 @@ class Program
             fileInstructionsList);
 
         Console.WriteLine(finalContent);
+
+        if (!string.IsNullOrEmpty(saveFileOutput))
+        {
+            var saveFileName = GetFileNameFromTemplate(fileName, saveFileOutput);
+            File.WriteAllText(saveFileName, finalContent);
+            // Console.WriteLine($"***** Saving to: {saveFileName} ... Done!");
+        }
+
+        return finalContent;
     }
 
     private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList)
@@ -789,6 +820,7 @@ class Program
             if (File.Exists(contentFileName)) File.Delete(contentFileName);
         }
     }
+
     private static string GetSystemPrompt()
     {
         return "You are a helpful AI assistant.\n\n" +
@@ -804,6 +836,32 @@ class Program
             "Modified markdown (do not enclose in backticks):\n\n";
     }
 
+    private static string GetFileNameFromTemplate(string fileName, string template)
+    {
+        string filePath = Path.GetDirectoryName(fileName);
+        string fileBase = Path.GetFileNameWithoutExtension(fileName);
+        string fileExt = Path.GetExtension(fileName).TrimStart('.');
+        string timeStamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+
+        // Console.WriteLine($"***** filePath: {filePath}");
+        // Console.WriteLine($"***** fileBase: {fileBase}");
+        // Console.WriteLine($"***** fileExt: {fileExt}");
+        // Console.WriteLine($"***** timeStamp: {timeStamp}");
+
+        return template
+            .Replace("{fileName}", fileName)
+            .Replace("{filename}", fileName)
+            .Replace("{filePath}", filePath)
+            .Replace("{filepath}", filePath)
+            .Replace("{fileBase}", fileBase)
+            .Replace("{filebase}", fileBase)
+            .Replace("{fileExt}", fileExt)
+            .Replace("{fileext}", fileExt)
+            .Replace("{timeStamp}", timeStamp)
+            .Replace("{timestamp}", timeStamp)
+            .Trim(' ', '/', '\\');
+    }
+    
     static int GetMaxBacktickCharSequence(string content)
     {
         int maxConsecutiveBackticks = 0;

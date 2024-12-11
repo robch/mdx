@@ -45,6 +45,8 @@ OPTIONS
   --file-instructions "..."    Apply the specified instructions to each file using AI CLI (e.g., @file)
   --threads N                  Limit the number of concurrent file processing threads (default <number_of_processors>)
 
+  --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}.md)
+
 @ARGUMENTS
 
   Arguments starting with @ (e.g. @file) will use file content as argument.
@@ -65,6 +67,8 @@ EXAMPLES
   mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
   mdcc "**/*.json" --file-instructions @instructions.md --threads 5
   mdcc "**/*.cs" --file-instructions @step1-instructions.md @step2-instructions.md
+
+  mdcc "**/*.py --file-instructions @instructions --save-file-output "{filePath}/{fileBase}-{timeStamp}.md"
 ```
 
 ## Example
