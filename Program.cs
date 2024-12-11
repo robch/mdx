@@ -143,7 +143,11 @@ class Program
     {
         if (input.StartsWith("@") && File.Exists(input.Substring(1)))
         {
-            foreach (var line in File.ReadLines(input.Substring(1)))
+            yield return File.ReadAllText(input.Substring(1), Encoding.UTF8);
+        }
+        else if (input.StartsWith("@@") && File.Exists(input.Substring(2)))
+        {
+            foreach (var line in File.ReadLines(input.Substring(2)))
             {
                 foreach (var expanded in ExpandedInput(line))
                 {
@@ -484,8 +488,8 @@ class Program
     private static void PrintUsage()
     {
         Console.WriteLine(
-            "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]"+"\n\n" +
-            "OPTIONS:\n\n" +
+            "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
+            "OPTIONS\n\n" +
             "  --contains REGEX             Match only files and lines that contain the specified regex pattern\n\n" +
             "  --file-contains REGEX        Match only files that contain the specified regex pattern\n" +
             "  --file-not-contains REGEX    Exclude files that contain the specified regex pattern\n" +
@@ -496,18 +500,23 @@ class Program
             "  --lines N                    Include N lines both before and after matching lines\n\n" +
             "  --line-numbers               Include line numbers in the output\n" +
             "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
-            "  --file-instructions FILE     Apply the specified instructions to each file using AI CLI\n\n" +
-            "EXAMPLES:\n\n" +
+            "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n\n" +
+            "  @ARGUMENTS\n\n" +
+            "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
+            "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
+            "EXAMPLES\n\n" +
             "  mdcc file1.cs\n" +
-            "  mdcc file1.md file2.md\n\n" +
+            "  mdcc file1.md file2.md\n" +
+            "  mdcc @@filelist.txt\n\n" +
             "  mdcc \"src/**/*.cs\" \"*.md\"\n" +
             "  mdcc \"src/**/*.js\" --contains \"export\"\n" +
             "  mdcc \"src/**\" --contains \"(?i)LLM\" --lines 2\n" +
             "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
             "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
-            "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"");
+            "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
+            "  mdcc \"**/*.json\" --file-instructions @instructions.md"
+        );
     }
-
     private static void PrintException(InputException ex)
     {
         Console.WriteLine($"{ex.Message}\n\n");
