@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
@@ -24,7 +26,9 @@ struct InputGroup
         IncludeLineNumbers = false;
 
         RemoveAllLineContainsPatternList = new List<Regex>();
-        FileInstructions = new List<string>();
+        FileInstructionsList = new List<string>();
+
+        ThreadCount = 0;
     }
 
     public List<string> Globs;
@@ -41,7 +45,9 @@ struct InputGroup
 
     public List<Regex> RemoveAllLineContainsPatternList;
 
-    public List<string> FileInstructions;
+    public List<string> FileInstructionsList;
+
+    public int ThreadCount;
 }
 
 internal class InputException : Exception
@@ -53,7 +59,7 @@ internal class InputException : Exception
 
 class Program
 {
-    static int Main(string[] args)
+    static async Task<int> Main(string[] args)
     {
         Console.OutputEncoding = Encoding.UTF8;
 
@@ -72,6 +78,12 @@ class Program
             }
         }
 
+        var threadCountMax = groups.Max(x => x.ThreadCount);
+        var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
+
+        var tasks = new List<Task>();
+        var throttler = new SemaphoreSlim(parallelism);
+
         var processedFiles = new HashSet<string>();
         foreach (var group in groups)
         {
@@ -84,20 +96,22 @@ class Program
 
             foreach (var file in files)
             {
-                if (!processedFiles.Contains(file))
+                if (processedFiles.Add(file))
                 {
-                    PrintFileContent(
+                    tasks.Add(PrintFileContentAsync(
                         file,
+                        throttler,
                         group.IncludeLineContainsPatternList,
                         group.IncludeLineCountBefore,
                         group.IncludeLineCountAfter,
                         group.IncludeLineNumbers,
                         group.RemoveAllLineContainsPatternList,
-                        group.FileInstructions);
-                    processedFiles.Add(file);
+                        group.FileInstructionsList));
                 }
             }
         }
+
+        await Task.WhenAll(tasks.ToArray());
 
         return 0;
     }
@@ -257,7 +271,12 @@ class Program
                 {
                     throw new InputException($"{arg} - Missing file instructions");
                 }
-                currentGroup.FileInstructions.AddRange(instructions);
+                currentGroup.FileInstructionsList.AddRange(instructions);
+            }
+            else if (arg == "--threads")
+            {
+                var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentGroup.ThreadCount = ValidateInt(arg, countStr, "thread count");
             }
             else if (arg == "--exclude")
             {
@@ -364,14 +383,19 @@ class Program
 
     private static int ValidateLineCount(string arg, string countStr)
     {
+        return ValidateInt(arg, countStr, "line count");
+    }
+
+    private static int ValidateInt(string arg, string countStr, string argDescription)
+    {
         if (string.IsNullOrEmpty(countStr))
         {
-            throw new InputException($"{arg} - Missing line count");
+            throw new InputException($"{arg} - Missing {argDescription}");
         }
 
         if (!int.TryParse(countStr, out var count))
         {
-            throw new InputException($"{arg} {countStr} - Invalid line count");
+            throw new InputException($"{arg} {countStr} - Invalid {argDescription}");
         }
 
         return count;
@@ -487,6 +511,7 @@ class Program
 
     private static void PrintUsage()
     {
+        var processorCount = Environment.ProcessorCount;
         Console.WriteLine(
             "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
             "OPTIONS\n\n" +
@@ -500,7 +525,8 @@ class Program
             "  --lines N                    Include N lines both before and after matching lines\n\n" +
             "  --line-numbers               Include line numbers in the output\n" +
             "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
-            "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n\n" +
+            "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n" +
+            $"  --threads N                  Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
             "  @ARGUMENTS\n\n" +
             "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
             "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
@@ -514,7 +540,7 @@ class Program
             "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
             "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
             "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
-            "  mdcc \"**/*.json\" --file-instructions @instructions.md"
+            "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5"
         );
     }
     private static void PrintException(InputException ex)
@@ -522,15 +548,74 @@ class Program
         Console.WriteLine($"{ex.Message}\n\n");
     }
 
-    private static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructions)
+    private static Task PrintFileContentAsync(
+        string fileName,
+        SemaphoreSlim throttler,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList,
+        List<string> fileInstructionsList)
     {
-        var formatted = GetFormattedFileContent(fileName, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList);
+        var printFileContent = new Action(() =>
+            PrintFileContent(
+                fileName,
+                includeLineContainsPatternList,
+                includeLineCountBefore,
+                includeLineCountAfter,
+                includeLineNumbers,
+                removeAllLineContainsPatternList,
+                fileInstructionsList));
 
-        var afterInstructions = fileInstructions.Any()
-            ? ApplyFileInstructions(fileInstructions, formatted)
+        if (!fileInstructionsList.Any())
+        {
+            printFileContent();
+            return Task.CompletedTask;
+        }
+
+        return Task.Run(async () => {
+            await throttler.WaitAsync();
+            try
+            {
+                printFileContent();
+            }
+            finally
+            {
+                throttler.Release();
+            }
+        });
+    }
+
+    private static void PrintFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList)
+    {
+        var finalContent = GetFinalFileContent(
+            fileName,
+            includeLineContainsPatternList,
+            includeLineCountBefore,
+            includeLineCountAfter,
+            includeLineNumbers,
+            removeAllLineContainsPatternList,
+            fileInstructionsList);
+
+        Console.WriteLine(finalContent);
+    }
+
+    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList)
+    {
+        var formatted = GetFormattedFileContent(
+            fileName,
+            includeLineContainsPatternList,
+            includeLineCountBefore,
+            includeLineCountAfter,
+            includeLineNumbers,
+            removeAllLineContainsPatternList);
+
+        var afterInstructions = fileInstructionsList.Any()
+            ? ApplyAllFileInstructions(fileInstructionsList, formatted)
             : formatted;
 
-        Console.WriteLine(afterInstructions);
+        return afterInstructions;
     }
 
     private static string GetFormattedFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
@@ -651,9 +736,9 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static string ApplyFileInstructions(List<string> instructions, string content)
+    private static string ApplyAllFileInstructions(List<string> instructionsList, string content)
     {
-        return instructions.Aggregate(content, (current, instruction) => ApplyFileInstructions(instruction, current));
+        return instructionsList.Aggregate(content, (current, instruction) => ApplyFileInstructions(instruction, current));
     }
 
     private static string ApplyFileInstructions(string instructions, string content)
