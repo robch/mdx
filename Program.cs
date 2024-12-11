@@ -31,6 +31,22 @@ struct InputGroup
         ThreadCount = 0;
     }
 
+    public bool IsEmpty()
+    {
+        return !Globs.Any() &&
+            !ExcludeGlobs.Any() &&
+            !ExcludeFileNamePatternList.Any() &&
+            !IncludeFileContainsPatternList.Any() &&
+            !ExcludeFileContainsPatternList.Any() &&
+            !IncludeLineContainsPatternList.Any() &&
+            IncludeLineCountBefore == 0 &&
+            IncludeLineCountAfter == 0 &&
+            IncludeLineNumbers == false &&
+            !RemoveAllLineContainsPatternList.Any() &&
+            !FileInstructionsList.Any() &&
+            ThreadCount == 0;
+    }
+
     public List<string> Globs;
     public List<string> ExcludeGlobs;
     public List<Regex> ExcludeFileNamePatternList;
@@ -205,7 +221,7 @@ class Program
         for (int i = 0; i < args.Count(); i++)
         {
             var arg = args[i];
-            if (arg == "--")
+            if (arg == "--" && !currentGroup.IsEmpty())
             {
                 inputGroups.Add(currentGroup);
                 currentGroup = new InputGroup();
@@ -318,14 +334,14 @@ class Program
             }
         }
 
-        var groupOk = currentGroup.Globs.Any() ||
-            currentGroup.IncludeFileContainsPatternList.Any() || 
-            currentGroup.ExcludeFileContainsPatternList.Any() ||
-            currentGroup.IncludeLineContainsPatternList.Any() ||
-            currentGroup.RemoveAllLineContainsPatternList.Any();
-        if (groupOk)
+        if (!currentGroup.IsEmpty())
         {
             inputGroups.Add(currentGroup);
+        }
+
+        foreach (var group in inputGroups.Where(x => !x.Globs.Any()))
+        {
+            group.Globs.Add("**");
         }
 
         return inputGroups;
