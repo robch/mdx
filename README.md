@@ -1,5 +1,3 @@
-## README
-
 # MDCC - Markdown Context Creator CLI
 
 MDCC is a command-line tool that takes file pattern inputs and outputs the contents of those files in a markdown-friendly format. It offers various options to include or exclude files and lines based on regular expressions, line numbers, and other criteria.
