@@ -9,7 +9,21 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
-struct InputGroup
+class InputOptions
+{
+    public InputOptions()
+    {
+        Debug = false;
+        Verbose = false;
+        Groups = new List<InputGroup>();
+    }
+
+    public bool Debug;
+    public bool Verbose;
+    public List<InputGroup> Groups;
+}
+
+class InputGroup
 {
     public InputGroup()
     {
@@ -81,7 +95,7 @@ class Program
     {
         Console.OutputEncoding = Encoding.UTF8;
 
-        if (!ParseInputs(args, out var groups, out var ex))
+        if (!ParseInputOptions(args, out var inputOptions, out var ex))
         {
             PrintBanner();
             if (ex != null)
@@ -95,15 +109,18 @@ class Program
                 return 1;
             }
         }
+            
+        _debug = inputOptions.Debug;
+        _verbose = inputOptions.Verbose;
 
-        var threadCountMax = groups.Max(x => x.ThreadCount);
+        var threadCountMax = inputOptions.Groups.Max(x => x.ThreadCount);
         var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
 
         var tasks = new List<Task<string>>();
         var throttler = new SemaphoreSlim(parallelism);
 
         var processedFiles = new HashSet<string>();
-        foreach (var group in groups)
+        foreach (var group in inputOptions.Groups)
         {
             var files = FindMatchingFiles(
                 group.Globs,
@@ -131,6 +148,7 @@ class Program
         }
 
         await Task.WhenAll(tasks.ToArray());
+        PrintStatusErase();
 
         return 0;
     }
@@ -194,16 +212,16 @@ class Program
         }
     }
     
-    private static bool ParseInputs(string[] args, out List<InputGroup> groups, out InputException ex)
+    private static bool ParseInputOptions(string[] args, out InputOptions options, out InputException ex)
     {
+        options = null;
         ex = null;
-        groups = null;
 
         try
         {
             var allInputs = ExpandedInputsFromCommandLine(args);
-            groups = ParseInputs(allInputs);
-            return groups.Any();
+            options = ParseInputOptions(allInputs);
+            return options.Groups.Any();
         }
         catch (InputException e)
         {
@@ -212,9 +230,9 @@ class Program
         }
     }
 
-    private static List<InputGroup> ParseInputs(IEnumerable<string> allInputs)
+    private static InputOptions ParseInputOptions(IEnumerable<string> allInputs)
     {
-        var inputGroups = new List<InputGroup>();
+        var inputOptions = new InputOptions();
         var currentGroup = new InputGroup();
 
         var args = allInputs.ToArray();
@@ -223,8 +241,16 @@ class Program
             var arg = args[i];
             if (arg == "--" && !currentGroup.IsEmpty())
             {
-                inputGroups.Add(currentGroup);
+                inputOptions.Groups.Add(currentGroup);
                 currentGroup = new InputGroup();
+            }
+            else if (arg == "--debug")
+            {
+                inputOptions.Debug = true;
+            }
+            else if (arg == "--verbose")
+            {
+                inputOptions.Verbose = true;
             }
             else if (arg == "--contains")
             {
@@ -291,6 +317,7 @@ class Program
                     throw new InputException($"{arg} - Missing file instructions");
                 }
                 currentGroup.FileInstructionsList.AddRange(instructions);
+                i += instructions.Count();
             }
             else if (arg == "--save-file-output")
             {
@@ -336,15 +363,15 @@ class Program
 
         if (!currentGroup.IsEmpty())
         {
-            inputGroups.Add(currentGroup);
+            inputOptions.Groups.Add(currentGroup);
         }
 
-        foreach (var group in inputGroups.Where(x => !x.Globs.Any()))
+        foreach (var group in inputOptions.Groups.Where(x => !x.Globs.Any()))
         {
             group.Globs.Add("**");
         }
 
-        return inputGroups;
+        return inputOptions;
     }
 
     private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args)
@@ -427,16 +454,29 @@ class Program
         return count;
     }
 
-    private static bool IsFileMatch(string file, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
+    private static bool IsFileMatch(string fileName, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
     {
         var checkContent = includeFileContainsPatternList.Any() || excludeFileContainsPatternList.Any();
         if (!checkContent) return true;
 
-        var content = File.ReadAllText(file, Encoding.UTF8);
-        var includeFile = includeFileContainsPatternList.All(regex => regex.IsMatch(content));
-        var excludeFile = excludeFileContainsPatternList.Count > 0 && excludeFileContainsPatternList.Any(regex => regex.IsMatch(content));
+        try
+        {
+            PrintStatus($"Processing: {fileName} ...");
 
-        return includeFile && !excludeFile;
+            var content = File.ReadAllText(fileName, Encoding.UTF8);
+            var includeFile = includeFileContainsPatternList.All(regex => regex.IsMatch(content));
+            var excludeFile = excludeFileContainsPatternList.Count > 0 && excludeFileContainsPatternList.Any(regex => regex.IsMatch(content));
+
+            return includeFile && !excludeFile;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+        finally
+        {
+            PrintStatusErase();
+        }
     }
 
     private static bool IsLineMatch(string line, List<Regex> includeLineContainsPatternList, List<Regex> removeAllLineContainsPatternList)
@@ -462,14 +502,14 @@ class Program
 
         if (files.Count == 0)
         {
-            Console.WriteLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files found\n");
+            PrintLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files found\n");
             return Enumerable.Empty<string>();
         }
 
         var filtered = files.Where(file => IsFileMatch(file, includeFileContainsPatternList, excludeFileContainsPatternList)).ToList();
         if (filtered.Count == 0)
         {
-            Console.WriteLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files matched criteria\n");
+            PrintLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files matched criteria\n");
             return Enumerable.Empty<string>();
         }
 
@@ -489,6 +529,7 @@ class Program
 
     private static IEnumerable<string> FilesFromGlob(string glob)
     {
+        PrintStatus($"Finding files: {glob} ...");
         try
         {
             var matcher = new Matcher();
@@ -502,6 +543,10 @@ class Program
         catch (Exception)
         {
             return Enumerable.Empty<string>();
+        }
+        finally
+        {
+            PrintStatusErase();
         }
     }
 
@@ -530,7 +575,7 @@ class Program
 
     private static void PrintBanner()
     {
-        Console.WriteLine(
+        PrintLine(
             "MDCC - Markdown Context Creator CLI, Version 1.0.0\n" +
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
@@ -538,7 +583,7 @@ class Program
     private static void PrintUsage()
     {
         var processorCount = Environment.ProcessorCount;
-        Console.WriteLine(
+        PrintLine(
             "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
             "OPTIONS\n\n" +
             "  --contains REGEX             Match only files and lines that contain the specified regex pattern\n\n" +
@@ -574,7 +619,49 @@ class Program
     }
     private static void PrintException(InputException ex)
     {
-        Console.WriteLine($"{ex.Message}\n\n");
+        PrintLine($"{ex.Message}\n\n");
+    }
+
+    private static void PrintLine(string message)
+    {
+        lock (_printLock)
+        {
+            PrintStatusErase();
+            Console.WriteLine(message);
+        }
+    }
+
+    private static void PrintDebugLine(string message)
+    {
+        if (!_debug) return;
+        PrintLine(message);
+    }
+
+    private static void PrintStatus(string status)
+    {
+        if (!_debug && !_verbose) return;
+        if (Console.IsOutputRedirected) return;
+
+        lock (_printLock)
+        {
+            PrintStatusErase();
+            Console.Write("\r" + status);
+            _cchLastStatus = status.Length;
+            if (_debug) Thread.Sleep(1);
+        }
+    }
+
+    private static void PrintStatusErase()
+    {
+        if (!_debug && !_verbose) return;
+        if (_cchLastStatus <= 0) return;
+
+        lock (_printLock)
+        {
+            var eraseLastStatus = "\r" + new string(' ', _cchLastStatus) + "\r";
+            Console.Write(eraseLastStatus);
+            _cchLastStatus = 0;
+        }
     }
 
     private static Task<string> PrintSaveFileContentAsync(
@@ -628,28 +715,43 @@ class Program
         List<string> fileInstructionsList,
         string saveFileOutput)
     {
-        var finalContent = GetFinalFileContent(
-            fileName,
-            includeLineContainsPatternList,
-            includeLineCountBefore,
-            includeLineCountAfter,
-            includeLineNumbers,
-            removeAllLineContainsPatternList,
-            fileInstructionsList);
-
-        Console.WriteLine(finalContent);
-
-        if (!string.IsNullOrEmpty(saveFileOutput))
+        try
         {
-            var saveFileName = GetFileNameFromTemplate(fileName, saveFileOutput);
-            File.WriteAllText(saveFileName, finalContent);
-            // Console.WriteLine($"***** Saving to: {saveFileName} ... Done!");
-        }
+            PrintStatus($"Processing: {fileName} ...");
+            var finalContent = GetFinalFileContent(
+                fileName,
+                includeLineContainsPatternList,
+                includeLineCountBefore,
+                includeLineCountAfter,
+                includeLineNumbers,
+                removeAllLineContainsPatternList,
+                fileInstructionsList);
 
-        return finalContent;
+            PrintLine(finalContent);
+
+            if (!string.IsNullOrEmpty(saveFileOutput))
+            {
+                var saveFileName = GetFileNameFromTemplate(fileName, saveFileOutput);
+                File.WriteAllText(saveFileName, finalContent);
+                PrintStatus($"Saving to: {saveFileName} ... Done!");
+            }
+
+            return finalContent;
+        }
+        finally
+        {
+            PrintStatusErase();
+        }
     }
 
-    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList)
+    private static string GetFinalFileContent(
+        string fileName,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList,
+        List<string> fileInstructionsList)
     {
         var formatted = GetFormattedFileContent(
             fileName,
@@ -666,7 +768,13 @@ class Program
         return afterInstructions;
     }
 
-    private static string GetFormattedFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
+    private static string GetFormattedFileContent(
+        string fileName,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList)
     {
         try
         {
@@ -786,7 +894,15 @@ class Program
 
     private static string ApplyAllFileInstructions(List<string> instructionsList, string content)
     {
-        return instructionsList.Aggregate(content, (current, instruction) => ApplyFileInstructions(instruction, current));
+        try
+        {
+            PrintStatus("Applying file instructions ...");
+            return instructionsList.Aggregate(content, (current, instruction) => ApplyFileInstructions(instruction, current));
+        }
+        finally
+        {
+            PrintStatusErase();
+        }
     }
 
     private static string ApplyFileInstructions(string instructions, string content)
@@ -803,6 +919,10 @@ class Program
             File.WriteAllText(instructionsFileName, instructions);
             File.WriteAllText(contentFileName, content);
 
+            PrintDebugLine($"user:\n{File.ReadAllText(userPromptFileName)}\n\n");
+            PrintDebugLine($"system:\n{File.ReadAllText(systemPromptFileName)}\n\n");
+            PrintDebugLine($"instructions:\n{File.ReadAllText(instructionsFileName)}\n\n");
+
             var process = new System.Diagnostics.Process();
             process.StartInfo.FileName = "ai";
             process.StartInfo.Arguments = $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
@@ -811,6 +931,9 @@ class Program
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.RedirectStandardOutput = true;
             process.Start();
+
+            PrintDebugLine(process.StartInfo.Arguments);
+            PrintStatus("Applying file instructions ...");
 
             var output = process.StandardOutput.ReadToEnd();
             var error = process.StandardError.ReadToEnd();
@@ -827,9 +950,7 @@ class Program
         }
         finally 
         {
-            // Console.WriteLine($"user:\n{File.ReadAllText(userPromptFileName)}\n\n");
-            // Console.WriteLine($"system:\n{File.ReadAllText(systemPromptFileName)}\n\n");
-            // Console.WriteLine($"instructions:\n{File.ReadAllText(instructionsFileName)}\n\n");
+            PrintStatusErase();
             if (File.Exists(userPromptFileName)) File.Delete(userPromptFileName);
             if (File.Exists(systemPromptFileName)) File.Delete(systemPromptFileName);
             if (File.Exists(instructionsFileName)) File.Delete(instructionsFileName);
@@ -859,10 +980,10 @@ class Program
         string fileExt = Path.GetExtension(fileName).TrimStart('.');
         string timeStamp = DateTime.Now.ToString("yyyyMMddHHmmss");
 
-        // Console.WriteLine($"***** filePath: {filePath}");
-        // Console.WriteLine($"***** fileBase: {fileBase}");
-        // Console.WriteLine($"***** fileExt: {fileExt}");
-        // Console.WriteLine($"***** timeStamp: {timeStamp}");
+        PrintDebugLine($"filePath: {filePath}");
+        PrintDebugLine($"fileBase: {fileBase}");
+        PrintDebugLine($"fileExt: {fileExt}");
+        PrintDebugLine($"timeStamp: {timeStamp}");
 
         return template
             .Replace("{fileName}", fileName)
@@ -901,4 +1022,9 @@ class Program
 
         return Math.Max(3, maxConsecutiveBackticks + 1);
     }
+
+    private static bool _debug = false;
+    private static bool _verbose = false;
+    private static object _printLock = new();
+    private static int _cchLastStatus = 0;
 }
