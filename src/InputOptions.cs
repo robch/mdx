@@ -44,6 +44,9 @@ class InputOptions
             {
                 var line = Console.ReadLine();
                 if (line == null) break;
+
+                if (line.Trim().Length == 0) continue;
+
                 yield return line.Trim();
             }
         }

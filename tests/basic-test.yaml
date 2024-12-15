@@ -1,0 +1,24 @@
+tests:
+
+- name: Check mdcc version
+  bash: mdcc
+  expect-regex: |
+    MDCC - Markdown Context Creator CLI, Version \d+\.\d+\.\d+
+    Copyright\(c\) 2024, Rob Chambers. All rights reserved.
+
+- name: Find text in single file found recursively
+  bash: mdcc **\basic-test.yaml
+  expect-regex: |
+    Find this test in output
+
+- name: Find text in when using --contains option
+  bash: mdcc **\basic-test.yaml --contains "Find text in when using --contains option"
+  expect-regex: |
+    Find text in when using --contains option
+
+- name: Test file instructions
+  bash: |
+    mdcc **\*test*.yaml --instructions "There should be exactly 4 tests in here. If there are exactly that many, output a single line that says 'Yes.'... otherwise, output a single line that says 'No.'..." 
+  expect-regex: |
+    Yes.
+
