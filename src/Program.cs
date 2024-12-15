@@ -124,8 +124,10 @@ class Program
             "  --line-numbers               Include line numbers in the output\n" +
             "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
             "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n" +
+            "  --instructions \"...\"         Apply the specified instructions to the entire output using AI CLI\n" +
             $"  --threads N                  Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-            "  --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}.md)\n\n" +
+            "  --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}-output.md)\n\n" +
+            "  --save-output FILENAME       Save the entire output to the specified file\n\n" +
             "  @ARGUMENTS\n\n" +
             "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
             "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
@@ -141,7 +143,8 @@ class Program
             "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
             "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
             "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md\n" +
-            "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\""
+            "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\"\n" +
+            "  mdcc README.md \"**/*.cs\" --instructions \"Output only an updated README.md\""
         );
     }
 

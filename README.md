@@ -44,6 +44,8 @@ OPTIONS
   --threads N                  Limit the number of concurrent file processing threads (default <number_of_processors>)
 
   --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}.md)
+  --instructions "..."         Apply the specified instructions to the entire output using AI CLI
+  --save-output FILENAME       Save the entire output to the specified file
 
 @ARGUMENTS
 
@@ -67,13 +69,5 @@ EXAMPLES
   mdcc "**/*.cs" --file-instructions @step1-instructions.md @step2-instructions.md
 
   mdcc "**/*.py --file-instructions @instructions --save-file-output "{filePath}/{fileBase}-{timeStamp}.md"
+  mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
 ```
-
-## Example
-Suppose you have the following files:
-
-- `example1.cs`
-- `example2.md`
-- `filelist.txt` (contains a list of files)
-
-You can run MDCC with different options to filter and format the content of these files as shown in the examples above.
