@@ -56,6 +56,7 @@ class Program
                     group.IncludeLineNumbers,
                     group.RemoveAllLineContainsPatternList,
                     group.FileInstructionsList,
+                    group.UseBuiltInFunctions,
                     group.SaveFileOutput);
                 
                 var taskToAdd = delayOutputToApplyInstructions
@@ -77,7 +78,7 @@ class Program
 
                 if (delayOutputToApplyInstructions)
                 {
-                    groupOutput = AiInstructionProcessor.ApplyAllInstructions(group.InstructionsList, groupOutput);
+                    groupOutput = AiInstructionProcessor.ApplyAllInstructions(group.InstructionsList, groupOutput, group.UseBuiltInFunctions);
                     ConsoleHelpers.PrintLine(groupOutput);
                 }
 
@@ -123,10 +124,11 @@ class Program
             "  --lines N                    Include N lines both before and after matching lines\n\n" +
             "  --line-numbers               Include line numbers in the output\n" +
             "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
+            "  --built-in-functions         Enable built-in functions in AI CLI (file system access)\n" +
             "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n" +
             "  --instructions \"...\"         Apply the specified instructions to the entire output using AI CLI\n" +
             $"  --threads N                  Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-            "  --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}-output.md)\n\n" +
+            "  --save-file-output FILENAME  Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)\n" +
             "  --save-output FILENAME       Save the entire output to the specified file\n\n" +
             "  @ARGUMENTS\n\n" +
             "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
@@ -148,7 +150,7 @@ class Program
         );
     }
 
-    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, string saveFileOutput)
+    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
     {
         var getCheckSaveFileContent = new Func<string>(() =>
             GetCheckSaveFileContent(
@@ -159,6 +161,7 @@ class Program
                 includeLineNumbers,
                 removeAllLineContainsPatternList,
                 fileInstructionsList,
+                useBuiltInFunctions,
                 saveFileOutput));
 
         if (!fileInstructionsList.Any())
@@ -180,7 +183,7 @@ class Program
         });
     }
 
-    private static string GetCheckSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, string saveFileOutput)
+    private static string GetCheckSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
     {
         try
         {
@@ -192,7 +195,8 @@ class Program
                 includeLineCountAfter,
                 includeLineNumbers,
                 removeAllLineContainsPatternList,
-                fileInstructionsList);
+                fileInstructionsList, 
+                useBuiltInFunctions);
 
             if (!string.IsNullOrEmpty(saveFileOutput))
             {
@@ -209,7 +213,7 @@ class Program
         }
     }
 
-    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList)
+    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions)
     {
         var formatted = GetFormattedFileContent(
             fileName,
@@ -220,7 +224,7 @@ class Program
             removeAllLineContainsPatternList);
 
         var afterInstructions = fileInstructionsList.Any()
-            ? AiInstructionProcessor.ApplyAllInstructions(fileInstructionsList, formatted)
+            ? AiInstructionProcessor.ApplyAllInstructions(fileInstructionsList, formatted, useBuiltInFunctions)
             : formatted;
 
         return afterInstructions;

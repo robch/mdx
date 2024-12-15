@@ -28,6 +28,7 @@ class InputGroup
         RemoveAllLineContainsPatternList = new List<Regex>();
         FileInstructionsList = new List<string>();
         InstructionsList = new List<string>();
+        UseBuiltInFunctions = false;
         
         ThreadCount = 0;
     }
@@ -64,6 +65,7 @@ class InputGroup
 
     public List<string> FileInstructionsList;
     public List<string> InstructionsList;
+    public bool UseBuiltInFunctions;
 
     public string SaveFileOutput;
     public string SaveOutput;

@@ -208,6 +208,10 @@ class InputOptions
                 currentGroup.SaveOutput = saveOutput;
                 i += max1Arg.Count();
             }
+            else if (arg == "--built-in-functions")
+            {
+                currentGroup.UseBuiltInFunctions = true;
+            }
             else if (arg == "--threads")
             {
                 var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;

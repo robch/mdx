@@ -40,11 +40,12 @@ OPTIONS
   --line-numbers               Include line numbers in the output
   --remove-all-lines REGEX     Remove lines that contain the specified regex pattern
 
+  --built-in-functions         Enable built-in functions in AI CLI (file system access)
   --file-instructions "..."    Apply the specified instructions to each file using AI CLI (e.g., @file)
+  --instructions "..."         Apply the specified instructions to the entire output using AI CLI
   --threads N                  Limit the number of concurrent file processing threads (default <number_of_processors>)
 
-  --save-file-output FILENAME  Save the output to the specified file (e.g. {filePath}/{fileBase}.md)
-  --instructions "..."         Apply the specified instructions to the entire output using AI CLI
+  --save-file-output FILENAME  Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)
   --save-output FILENAME       Save the entire output to the specified file
 
 @ARGUMENTS

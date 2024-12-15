@@ -11,12 +11,12 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 class AiInstructionProcessor
 {
-    public static string ApplyAllInstructions(List<string> instructionsList, string content)
+    public static string ApplyAllInstructions(List<string> instructionsList, string content, bool useBuiltInFunctions = false)
     {
         try
         {
             ConsoleHelpers.PrintStatus("Applying file instructions ...");
-            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current));
+            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current, useBuiltInFunctions));
         }
         finally
         {
@@ -24,7 +24,7 @@ class AiInstructionProcessor
         }
     }
 
-    public static string ApplyInstructions(string instructions, string content)
+    public static string ApplyInstructions(string instructions, string content, bool useBuiltInFunctions = false)
     {
         var userPromptFileName = Path.GetTempFileName();
         var systemPromptFileName = Path.GetTempFileName();
@@ -42,9 +42,12 @@ class AiInstructionProcessor
             ConsoleHelpers.PrintDebugLine($"system:\n{File.ReadAllText(systemPromptFileName)}\n\n");
             ConsoleHelpers.PrintDebugLine($"instructions:\n{File.ReadAllText(instructionsFileName)}\n\n");
 
+            var arguments = $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
+            if (useBuiltInFunctions) arguments += " --built-in-functions";
+
             var process = new System.Diagnostics.Process();
             process.StartInfo.FileName = "ai";
-            process.StartInfo.Arguments = $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
+            process.StartInfo.Arguments = arguments;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardInput = false;
             process.StartInfo.RedirectStandardError = true;
