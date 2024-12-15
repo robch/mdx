@@ -48,6 +48,12 @@ class ConsoleHelpers
         }
     }
 
+    public static void PrintLineIfNotEmpty(string message)
+    {
+        if (string.IsNullOrEmpty(message)) return;
+        PrintLine(message);
+    }
+
     public static void PrintDebugLine(string message)
     {
         if (!_debug) return;

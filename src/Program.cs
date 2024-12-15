@@ -61,7 +61,7 @@ class Program
                 var taskToAdd = delayOutputToApplyInstructions
                     ? getCheckSaveTask
                     : getCheckSaveTask.ContinueWith(t => {
-                        ConsoleHelpers.PrintLine(t.Result);
+                        ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
                         return t.Result;
                     });
 
