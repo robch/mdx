@@ -186,10 +186,27 @@ class InputOptions
             }
             else if (arg == "--save-file-output")
             {
-                var optionArgs = GetInputOptionArgs(i + 1, args);
-                var saveFileOutput = optionArgs.LastOrDefault() ?? "{filePath}/{fileBase}.md";
+                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+                var saveFileOutput = max1Arg.FirstOrDefault() ?? "{filePath}/{fileBase}-output.md";
                 currentGroup.SaveFileOutput = saveFileOutput;
-                i += optionArgs.Count();
+                i += max1Arg.Count();
+            }
+            else if (arg == "--instructions")
+            {
+                var instructions = GetInputOptionArgs(i + 1, args);
+                if (instructions.Count() == 0)
+                {
+                    throw new InputException($"{arg} - Missing instructions");
+                }
+                currentGroup.InstructionsList.AddRange(instructions);
+                i += instructions.Count();
+            }
+            else if (arg == "--save-output")
+            {
+                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+                var saveOutput = max1Arg.FirstOrDefault() ?? "output.md";
+                currentGroup.SaveOutput = saveOutput;
+                i += max1Arg.Count();
             }
             else if (arg == "--threads")
             {
@@ -239,9 +256,9 @@ class InputOptions
         return inputOptions;
     }
 
-    private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args)
+    private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args, int max = int.MaxValue)
     {
-        for (int i = startAt; i < args.Length; i++)
+        for (int i = startAt; i < args.Length && i - startAt < max; i++)
         {
             if (args[i].StartsWith("--"))
             {

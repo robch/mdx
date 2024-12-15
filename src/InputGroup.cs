@@ -27,7 +27,8 @@ class InputGroup
 
         RemoveAllLineContainsPatternList = new List<Regex>();
         FileInstructionsList = new List<string>();
-
+        InstructionsList = new List<string>();
+        
         ThreadCount = 0;
     }
 
@@ -62,8 +63,10 @@ class InputGroup
     public List<Regex> RemoveAllLineContainsPatternList;
 
     public List<string> FileInstructionsList;
+    public List<string> InstructionsList;
 
     public string SaveFileOutput;
+    public string SaveOutput;
 
     public int ThreadCount;
 }

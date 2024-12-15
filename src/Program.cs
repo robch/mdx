@@ -43,9 +43,11 @@ class Program
                 group.IncludeFileContainsPatternList,
                 group.ExcludeFileContainsPatternList);
 
+            var delayOutputToApplyInstructions = group.InstructionsList.Any();
+            var tasksThisGroup = new List<Task<string>>();
             foreach (var file in files)
             {
-                tasks.Add(PrintSaveFileContentAsync(
+                var getCheckSaveTask = GetCheckSaveFileContentAsync(
                     file,
                     throttler,
                     group.IncludeLineContainsPatternList,
@@ -54,7 +56,36 @@ class Program
                     group.IncludeLineNumbers,
                     group.RemoveAllLineContainsPatternList,
                     group.FileInstructionsList,
-                    group.SaveFileOutput));
+                    group.SaveFileOutput);
+                
+                var taskToAdd = delayOutputToApplyInstructions
+                    ? getCheckSaveTask
+                    : getCheckSaveTask.ContinueWith(t => {
+                        ConsoleHelpers.PrintLine(t.Result);
+                        return t.Result;
+                    });
+
+                tasks.Add(taskToAdd);
+                tasksThisGroup.Add(taskToAdd);
+            }
+
+            var shouldSaveOutput = !string.IsNullOrEmpty(group.SaveOutput);
+            if (shouldSaveOutput || delayOutputToApplyInstructions)
+            {
+                await Task.WhenAll(tasksThisGroup.ToArray());
+                var groupOutput = string.Join("\n", tasksThisGroup.Select(t => t.Result));
+
+                if (delayOutputToApplyInstructions)
+                {
+                    groupOutput = AiInstructionProcessor.ApplyAllInstructions(group.InstructionsList, groupOutput);
+                    ConsoleHelpers.PrintLine(groupOutput);
+                }
+
+                if (shouldSaveOutput)
+                {
+                    var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", group.SaveOutput);
+                    File.WriteAllText(saveFileName, groupOutput);
+                }
             }
         }
 
@@ -114,10 +145,10 @@ class Program
         );
     }
 
-    private static Task<string> PrintSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, string saveFileOutput)
+    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, string saveFileOutput)
     {
-        var printSaveFileContent = new Func<string>(() =>
-            PrintSaveFileContent(
+        var getCheckSaveFileContent = new Func<string>(() =>
+            GetCheckSaveFileContent(
                 fileName,
                 includeLineContainsPatternList,
                 includeLineCountBefore,
@@ -129,7 +160,7 @@ class Program
 
         if (!fileInstructionsList.Any())
         {
-            var content = printSaveFileContent();
+            var content = getCheckSaveFileContent();
             return Task.FromResult(content);
         }
 
@@ -137,7 +168,7 @@ class Program
             await throttler.WaitAsync();
             try
             {
-                return printSaveFileContent();
+                return getCheckSaveFileContent();
             }
             finally
             {
@@ -146,7 +177,7 @@ class Program
         });
     }
 
-    private static string PrintSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, string saveFileOutput)
+    private static string GetCheckSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, string saveFileOutput)
     {
         try
         {
@@ -159,8 +190,6 @@ class Program
                 includeLineNumbers,
                 removeAllLineContainsPatternList,
                 fileInstructionsList);
-
-            ConsoleHelpers.PrintLine(finalContent);
 
             if (!string.IsNullOrEmpty(saveFileOutput))
             {
@@ -188,7 +217,7 @@ class Program
             removeAllLineContainsPatternList);
 
         var afterInstructions = fileInstructionsList.Any()
-            ? AiInstructionProcessor.ApplyAllFileInstructions(fileInstructionsList, formatted)
+            ? AiInstructionProcessor.ApplyAllInstructions(fileInstructionsList, formatted)
             : formatted;
 
         return afterInstructions;

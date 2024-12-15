@@ -11,12 +11,12 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 class AiInstructionProcessor
 {
-    public static string ApplyAllFileInstructions(List<string> instructionsList, string content)
+    public static string ApplyAllInstructions(List<string> instructionsList, string content)
     {
         try
         {
             ConsoleHelpers.PrintStatus("Applying file instructions ...");
-            return instructionsList.Aggregate(content, (current, instruction) => ApplyFileInstructions(instruction, current));
+            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current));
         }
         finally
         {
@@ -24,7 +24,7 @@ class AiInstructionProcessor
         }
     }
 
-    public static string ApplyFileInstructions(string instructions, string content)
+    public static string ApplyInstructions(string instructions, string content)
     {
         var userPromptFileName = Path.GetTempFileName();
         var systemPromptFileName = Path.GetTempFileName();
