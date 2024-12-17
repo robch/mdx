@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,11 +13,17 @@ class InputOptions
         Debug = false;
         Verbose = false;
         Groups = new List<InputGroup>();
+
+        AllOptions = null;
+        SaveOptionsTemplate = null;
     }
 
     public bool Debug;
     public bool Verbose;
     public List<InputGroup> Groups;
+
+    public string[] AllOptions;
+    public string SaveOptionsTemplate;
 
     public static bool Parse(string[] args, out InputOptions options, out InputException ex)
     {
@@ -34,6 +41,35 @@ class InputOptions
             ex = e;
             return false;
         }
+    }
+
+    public List<string> SaveOptions(string fileName)
+    {
+        var filesSaved = new List<string>();
+
+        var options = AllOptions
+            .Where(x => x != "--save" && x != SaveOptionsTemplate)
+            .Select(x => SingleLineOrNewAtFile(x, fileName, ref filesSaved));
+
+        var asMultiLineString = string.Join('\n', options);
+        File.WriteAllText(fileName, asMultiLineString, Encoding.UTF8);
+
+        filesSaved.Insert(0, fileName);
+        return filesSaved;
+    }
+
+    private string SingleLineOrNewAtFile(string text, string baseFileName, ref List<string> additionalFiles)
+    {
+        var isMultiLine = text.Contains('\n') || text.Contains('\r');
+        if (!isMultiLine) return text;
+
+        var additionalFileCount = additionalFiles.Count + 1;
+        var additionalFileName = FileHelpers.GetFileNameFromTemplate(baseFileName, "{filepath}/{filebase}-" + additionalFileCount + "{fileext}");
+        additionalFiles.Add(additionalFileName);
+
+        File.WriteAllText(additionalFileName, text);
+
+        return "@" + additionalFileName;
     }
 
     private static IEnumerable<string> InputsFromStdio()
@@ -103,7 +139,7 @@ class InputOptions
         var inputOptions = new InputOptions();
         var currentGroup = new InputGroup();
 
-        var args = allInputs.ToArray();
+        var args = inputOptions.AllOptions = allInputs.ToArray();
         for (int i = 0; i < args.Count(); i++)
         {
             var arg = args[i];
@@ -119,6 +155,13 @@ class InputOptions
             else if (arg == "--verbose")
             {
                 inputOptions.Verbose = true;
+            }
+            else if (arg == "--save")
+            {
+                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+                var saveOptionsTemplate = max1Arg.FirstOrDefault() ?? "options";
+                inputOptions.SaveOptionsTemplate = saveOptionsTemplate;
+                i += max1Arg.Count();
             }
             else if (arg == "--contains")
             {

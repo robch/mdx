@@ -28,6 +28,17 @@ class Program
 
         ConsoleHelpers.Configure(inputOptions.Debug, inputOptions.Verbose);
 
+        var shouldSaveOptions = !string.IsNullOrEmpty(inputOptions.SaveOptionsTemplate);
+        if (shouldSaveOptions)
+        {
+            var filesSaved = inputOptions.SaveOptions(inputOptions.SaveOptionsTemplate);
+
+            PrintBanner();
+            PrintSavedOptionFiles(filesSaved);
+
+            return 0;
+        }
+
         var threadCountMax = inputOptions.Groups.Max(x => x.ThreadCount);
         var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
 
@@ -148,6 +159,19 @@ class Program
             "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\"\n" +
             "  mdcc README.md \"**/*.cs\" --instructions \"Output only an updated README.md\""
         );
+    }
+
+    private static void PrintSavedOptionFiles(List<string> filesSaved)
+    {
+        var firstFileSaved = filesSaved.First();
+        ConsoleHelpers.PrintLine($"Saved: {firstFileSaved}");
+
+        foreach (var additionalFile in filesSaved.Skip(1))
+        {
+            ConsoleHelpers.PrintLine($"  and: {additionalFile}");
+        }
+
+        ConsoleHelpers.PrintLine("\nUSAGE: mdcc @@" + firstFileSaved);
     }
 
     private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
