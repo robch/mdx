@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -60,8 +63,31 @@ class ConsoleHelpers
         PrintLine(message);
     }
 
+    public static IEnumerable<string> GetAllLinesFromStdin()
+    {
+        return _allLinesFromStdin == null
+            ? ReadAllLinesFromStdin()
+            : _allLinesFromStdin;
+    }
+
+    private static List<string> ReadAllLinesFromStdin()
+    {
+        _allLinesFromStdin = new();
+        while (true)
+        {
+            var line = Console.ReadLine();
+            if (line == null) break;
+
+            _allLinesFromStdin.Add(line);
+        }
+
+        return _allLinesFromStdin;
+    }
+    
     private static bool _debug = false;
     private static bool _verbose = false;
     private static object _printLock = new();
     private static int _cchLastStatus = 0;
+
+    private static List<string> _allLinesFromStdin;
 }
