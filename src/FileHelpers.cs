@@ -16,7 +16,7 @@ class FileHelpers
         {
             ConsoleHelpers.PrintStatus($"Processing: {fileName} ...");
 
-            var content = File.ReadAllText(fileName, Encoding.UTF8);
+            var content = ReadAllText(fileName);
             var includeFile = includeFileContainsPatternList.All(regex => regex.IsMatch(content));
             var excludeFile = excludeFileContainsPatternList.Count > 0 && excludeFileContainsPatternList.Any(regex => regex.IsMatch(content));
 
@@ -74,6 +74,8 @@ class FileHelpers
         ConsoleHelpers.PrintStatus($"Finding files: {glob} ...");
         try
         {
+            if (glob == "-") return [ glob ]; // special case for stdin
+
             var matcher = new Microsoft.Extensions.FileSystemGlobbing.Matcher();
             matcher.AddInclude(MakeRelativePath(glob));
 
@@ -142,5 +144,14 @@ class FileHelpers
         }
 
         return relativePath;
+    }
+
+    public static string ReadAllText(string fileName)
+    {
+        var content = fileName == "-"
+            ? string.Join("\n", ConsoleHelpers.GetAllLinesFromStdin())
+            : File.ReadAllText(fileName, Encoding.UTF8);
+
+        return content;
     }
 }

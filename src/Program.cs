@@ -258,14 +258,14 @@ class Program
     {
         try
         {
-            var bytes = File.ReadAllBytes(fileName);
-            var isBinary = bytes.Any(x => x == 0);
+            var isStdin = fileName == "-";
+            var isBinary = !isStdin && File.ReadAllBytes(fileName).Any(x => x == 0);
             if (isBinary) return string.Empty;
 
-            var content = File.ReadAllText(fileName, Encoding.UTF8);
+            var content = FileHelpers.ReadAllText(fileName);
 
             var isMarkdown = fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
-            var backticks = isMarkdown
+            var backticks = isMarkdown || isStdin
                 ? new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(content))
                 : "```";
 

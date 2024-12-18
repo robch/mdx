@@ -72,22 +72,6 @@ class InputOptions
         return "@" + additionalFileName;
     }
 
-    private static IEnumerable<string> InputsFromStdio()
-    {
-        if (Console.IsInputRedirected)
-        {
-            while (true)
-            {
-                var line = Console.ReadLine();
-                if (line == null) break;
-
-                if (line.Trim().Length == 0) continue;
-
-                yield return line.Trim();
-            }
-        }
-    }
-
     private static IEnumerable<string> ExpandedInputsFromCommandLine(string[] args)
     {
         return args.SelectMany(arg => ExpandedInput(arg));
@@ -98,7 +82,7 @@ class InputOptions
         return input.StartsWith("@@")
             ? ExpandedAtAtFileInput(input)
             : input.StartsWith("@")
-                ? ExpandedAtFileInput(input)
+                ? [ExpandedAtFileInput(input)]
                 : [input];
     }
 
@@ -120,25 +104,15 @@ class InputOptions
         return [input];
     }
 
-    private static IEnumerable<string> ExpandedAtFileInput(string input)
+    private static string ExpandedAtFileInput(string input)
     {
         if (!input.StartsWith("@")) throw new ArgumentException("Not an @ file input");
 
         var fileName = input.Substring(1);
-        if (fileName == "-")
-        {
-            var lines = ConsoleHelpers.GetAllLinesFromStdin();
-            var joined = string.Join("\n", lines);
-            return [joined];
-        }
-
-        if (File.Exists(fileName))
-        {
-            var content = File.ReadAllText(fileName, Encoding.UTF8);
-            return [content];
-        }
-
-        return [input];
+        var fileNameOk = fileName == "-" || File.Exists(fileName);
+        return fileNameOk
+            ? FileHelpers.ReadAllText(fileName)
+            : input;
     }
 
     private static InputOptions ParseInputOptions(IEnumerable<string> allInputs)
