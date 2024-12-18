@@ -18,6 +18,7 @@ dotnet build
 ```
 
 ## Usage
+
 ```plaintext
 MDCC - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
@@ -26,32 +27,34 @@ USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
 
 OPTIONS
 
-  --contains REGEX             Match only files and lines that contain the specified regex pattern
+  --contains REGEX               Match only files and lines that contain the specified regex pattern
 
-  --file-contains REGEX        Match only files that contain the specified regex pattern
-  --file-not-contains REGEX    Exclude files that contain the specified regex pattern
-  --exclude PATTERN            Exclude files that match the specified pattern
+  --file-contains REGEX          Match only files that contain the specified regex pattern
+  --file-not-contains REGEX      Exclude files that contain the specified regex pattern
+  --exclude PATTERN              Exclude files that match the specified pattern
 
-  --line-contains REGEX        Match only lines that contain the specified regex pattern
-  --lines-before N             Include N lines before matching lines (default 0)
-  --lines-after N              Include N lines after matching lines (default 0)
-  --lines N                    Include N lines both before and after matching lines
+  --line-contains REGEX          Match only lines that contain the specified regex pattern
+  --lines-before N               Include N lines before matching lines (default 0)
+  --lines-after N                Include N lines after matching lines (default 0)
+  --lines N                      Include N lines both before and after matching lines
 
-  --line-numbers               Include line numbers in the output
-  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern
+  --line-numbers                 Include line numbers in the output
+  --remove-all-lines REGEX       Remove lines that contain the specified regex pattern
 
-  --built-in-functions         Enable built-in functions in AI CLI (file system access)
-  --file-instructions "..."    Apply the specified instructions to each file using AI CLI (e.g., @file)
-  --instructions "..."         Apply the specified instructions to the entire output using AI CLI
-  --threads N                  Limit the number of concurrent file processing threads (default <number_of_processors>)
+  --built-in-functions           Enable built-in functions in AI CLI (file system access)
+  --instructions "..."           Apply the specified instructions to all output using AI CLI
+  --file-instructions "..."      Apply the specified instructions to each file using AI CLI
+  --EXT-file-instructions "..."  Apply the specified instructions to each file with the specified extension
 
-  --save-file-output FILENAME  Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)
-  --save-output FILENAME       Save the entire output to the specified file
+  --threads N                    Limit the number of concurrent file processing threads (default 16)
 
-@ARGUMENTS
+  --save-file-output FILENAME    Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)
+  --save-output FILENAME         Save the entire output to the specified file
 
-  Arguments starting with @ (e.g. @file) will use file content as argument.
-  Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.
+  @ARGUMENTS
+
+    Arguments starting with @ (e.g. @file) will use file content as argument.
+    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.
 
 EXAMPLES
 
@@ -68,7 +71,7 @@ EXAMPLES
   mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
   mdcc "**/*.json" --file-instructions @instructions.md --threads 5
   mdcc "**/*.cs" --file-instructions @step1-instructions.md @step2-instructions.md
-
-  mdcc "**/*.py --file-instructions @instructions --save-file-output "{filePath}/{fileBase}-{timeStamp}.md"
+  mdcc "**/*.py" --file-instructions @instructions --save-file-output "{filePath}/{fileBase}-{timeStamp}.md"
+  mdcc "**/*" --cs-file-instructions "Only keep public methods"
   mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
 ```

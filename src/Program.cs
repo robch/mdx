@@ -114,7 +114,7 @@ class Program
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
 
-    public static void PrintException(InputException ex)
+    private static void PrintException(InputException ex)
     {
         ConsoleHelpers.PrintLine($"{ex.Message}\n\n");
     }
@@ -125,22 +125,23 @@ class Program
         ConsoleHelpers.PrintLine(
             "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
             "OPTIONS\n\n" +
-            "  --contains REGEX             Match only files and lines that contain the specified regex pattern\n\n" +
-            "  --file-contains REGEX        Match only files that contain the specified regex pattern\n" +
-            "  --file-not-contains REGEX    Exclude files that contain the specified regex pattern\n" +
-            "  --exclude PATTERN            Exclude files that match the specified pattern\n\n" +
-            "  --line-contains REGEX        Match only lines that contain the specified regex pattern\n" +
-            "  --lines-before N             Include N lines before matching lines (default 0)\n" +
-            "  --lines-after N              Include N lines after matching lines (default 0)\n" +
-            "  --lines N                    Include N lines both before and after matching lines\n\n" +
-            "  --line-numbers               Include line numbers in the output\n" +
-            "  --remove-all-lines REGEX     Remove lines that contain the specified regex pattern\n\n" +
-            "  --built-in-functions         Enable built-in functions in AI CLI (file system access)\n" +
-            "  --file-instructions \"...\"    Apply the specified instructions to each file using AI CLI (e.g., @file)\n" +
-            "  --instructions \"...\"         Apply the specified instructions to the entire output using AI CLI\n" +
-            $"  --threads N                  Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-            "  --save-file-output FILENAME  Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)\n" +
-            "  --save-output FILENAME       Save the entire output to the specified file\n\n" +
+            "  --contains REGEX               Match only files and lines that contain the specified regex pattern\n\n" +
+            "  --file-contains REGEX          Match only files that contain the specified regex pattern\n" +
+            "  --file-not-contains REGEX      Exclude files that contain the specified regex pattern\n" +
+            "  --exclude PATTERN              Exclude files that match the specified pattern\n\n" +
+            "  --line-contains REGEX          Match only lines that contain the specified regex pattern\n" +
+            "  --lines-before N               Include N lines before matching lines (default 0)\n" +
+            "  --lines-after N                Include N lines after matching lines (default 0)\n" +
+            "  --lines N                      Include N lines both before and after matching lines\n\n" +
+            "  --line-numbers                 Include line numbers in the output\n" +
+            "  --remove-all-lines REGEX       Remove lines that contain the specified regex pattern\n\n" +
+            "  --built-in-functions           Enable built-in functions in AI CLI (file system access)\n" +
+            "  --instructions \"...\"           Apply the specified instructions to all output using AI CLI\n" +
+            "  --file-instructions \"...\"      Apply the specified instructions to each file using AI CLI\n" +
+            "  --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n\n" +
+            $"  --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
+            "  --save-file-output FILENAME    Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)\n" +
+            "  --save-output FILENAME         Save the entire output to the specified file\n\n" +
             "  @ARGUMENTS\n\n" +
             "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
             "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
@@ -157,6 +158,7 @@ class Program
             "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
             "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md\n" +
             "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\"\n" +
+            "  mdcc \"**/*\" --cs-file-instructions \"Only keep public methods\"\n" +
             "  mdcc README.md \"**/*.cs\" --instructions \"Output only an updated README.md\""
         );
     }
@@ -174,7 +176,7 @@ class Program
         ConsoleHelpers.PrintLine("\nUSAGE: mdcc @@" + firstFileSaved);
     }
 
-    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
+    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
     {
         var getCheckSaveFileContent = new Func<string>(() =>
             GetCheckSaveFileContent(
@@ -207,7 +209,7 @@ class Program
         });
     }
 
-    private static string GetCheckSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
+    private static string GetCheckSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
     {
         try
         {
@@ -237,7 +239,7 @@ class Program
         }
     }
 
-    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<string> fileInstructionsList, bool useBuiltInFunctions)
+    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions)
     {
         var formatted = GetFormattedFileContent(
             fileName,
@@ -247,11 +249,23 @@ class Program
             includeLineNumbers,
             removeAllLineContainsPatternList);
 
-        var afterInstructions = fileInstructionsList.Any()
-            ? AiInstructionProcessor.ApplyAllInstructions(fileInstructionsList, formatted, useBuiltInFunctions)
+        var instructionsForThisFile = fileInstructionsList
+            .Where(x => FileNameMatchesInstructionsCriteria(fileName, x.Item2))
+            .Select(x => x.Item1)
+            .ToList();
+
+        var afterInstructions = instructionsForThisFile.Any()
+            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisFile, formatted, useBuiltInFunctions)
             : formatted;
 
         return afterInstructions;
+    }
+
+    private static bool FileNameMatchesInstructionsCriteria(string fileName, string fileNameCriteria)
+    {
+        return string.IsNullOrEmpty(fileNameCriteria) ||
+            fileName.EndsWith($".{fileNameCriteria}") ||
+            fileName == fileNameCriteria;
     }
 
     private static string GetFormattedFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)

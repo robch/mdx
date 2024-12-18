@@ -26,7 +26,7 @@ class InputGroup
         IncludeLineNumbers = false;
 
         RemoveAllLineContainsPatternList = new List<Regex>();
-        FileInstructionsList = new List<string>();
+        FileInstructionsList = new List<Tuple<string, string>>();
         InstructionsList = new List<string>();
         UseBuiltInFunctions = false;
         
@@ -63,7 +63,7 @@ class InputGroup
 
     public List<Regex> RemoveAllLineContainsPatternList;
 
-    public List<string> FileInstructionsList;
+    public List<Tuple<string, string>> FileInstructionsList;
     public List<string> InstructionsList;
     public bool UseBuiltInFunctions;
 

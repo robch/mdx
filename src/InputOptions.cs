@@ -201,14 +201,18 @@ class InputOptions
             {
                 currentGroup.IncludeLineNumbers = true; 
             }
-            else if (arg == "--file-instructions")
+            else if (arg.StartsWith("--") && arg.EndsWith("file-instructions"))
             {
                 var instructions = GetInputOptionArgs(i + 1, args);
                 if (instructions.Count() == 0)
                 {
                     throw new InputException($"{arg} - Missing file instructions");
                 }
-                currentGroup.FileInstructionsList.AddRange(instructions);
+                var fileNameCriteria = arg != "--file-instructions"
+                    ? arg.Substring(2, arg.Length - 20)
+                    : string.Empty;
+                var withCriteria = instructions.Select(x => Tuple.Create(x, fileNameCriteria));
+                currentGroup.FileInstructionsList.AddRange(withCriteria);
                 i += instructions.Count();
             }
             else if (arg == "--save-file-output")
