@@ -42,7 +42,7 @@ class ConsoleHelpers
         }
     }
 
-    public static void PrintLine(string message)
+    public static void PrintLine(string message = "")
     {
         lock (_printLock)
         {

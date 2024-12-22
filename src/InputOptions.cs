@@ -8,6 +8,10 @@ using System.Text.RegularExpressions;
 
 class InputOptions
 {
+    public const string DefaultOptionsFileName = "options";
+    public const string DefaultSaveFileOutputTemplate = "{filePath}/{fileBase}-output.md";
+    public const string DefaultSaveOutputTemplate = "output.md";
+
     public InputOptions()
     {
         Debug = false;
@@ -74,6 +78,12 @@ class InputOptions
 
     private static IEnumerable<string> ExpandedInputsFromCommandLine(string[] args)
     {
+        var hasArgs = args.Any();
+        if (hasArgs && File.Exists(DefaultOptionsFileName))
+        {
+            args = new[] { "@@" + DefaultOptionsFileName, "--and" }.Concat(args).ToArray();
+        }
+
         return args.SelectMany(arg => ExpandedInput(arg));
     }
     
@@ -129,6 +139,10 @@ class InputOptions
                 inputOptions.Groups.Add(currentGroup);
                 currentGroup = new InputGroup();
             }
+            else if (arg == "--and")
+            {
+                continue; // ignore --and ... used when combining @@ files
+            }
             else if (arg == "--debug")
             {
                 inputOptions.Debug = true;
@@ -137,10 +151,14 @@ class InputOptions
             {
                 inputOptions.Verbose = true;
             }
-            else if (arg == "--save")
+            else if (arg == "--help")
+            {
+                throw new HelpRequestedInputException();
+            }
+            else if (arg == "--save-options" || arg == "--save")
             {
                 var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-                var saveOptionsTemplate = max1Arg.FirstOrDefault() ?? "options";
+                var saveOptionsTemplate = max1Arg.FirstOrDefault() ?? DefaultOptionsFileName;
                 inputOptions.SaveOptionsTemplate = saveOptionsTemplate;
                 i += max1Arg.Count();
             }
@@ -206,7 +224,7 @@ class InputOptions
                 var instructions = GetInputOptionArgs(i + 1, args);
                 if (instructions.Count() == 0)
                 {
-                    throw new InputException($"{arg} - Missing file instructions");
+                    throw new InputException($"Missing instructions for {arg}");
                 }
                 var fileNameCriteria = arg != "--file-instructions"
                     ? arg.Substring(2, arg.Length - 20)
@@ -218,7 +236,7 @@ class InputOptions
             else if (arg == "--save-file-output")
             {
                 var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-                var saveFileOutput = max1Arg.FirstOrDefault() ?? "{filePath}/{fileBase}-output.md";
+                var saveFileOutput = max1Arg.FirstOrDefault() ?? DefaultSaveFileOutputTemplate;
                 currentGroup.SaveFileOutput = saveFileOutput;
                 i += max1Arg.Count();
             }
@@ -227,7 +245,7 @@ class InputOptions
                 var instructions = GetInputOptionArgs(i + 1, args);
                 if (instructions.Count() == 0)
                 {
-                    throw new InputException($"{arg} - Missing instructions");
+                    throw new InputException($"Missing instructions for {arg}");
                 }
                 currentGroup.InstructionsList.AddRange(instructions);
                 i += instructions.Count();
@@ -235,7 +253,7 @@ class InputOptions
             else if (arg == "--save-output")
             {
                 var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-                var saveOutput = max1Arg.FirstOrDefault() ?? "output.md";
+                var saveOutput = max1Arg.FirstOrDefault() ?? DefaultSaveOutputTemplate;
                 currentGroup.SaveOutput = saveOutput;
                 i += max1Arg.Count();
             }
@@ -253,7 +271,7 @@ class InputOptions
                 var patterns = GetInputOptionArgs(i + 1, args);
                 if (patterns.Count() == 0)
                 {
-                    throw new InputException($"{arg} - Missing pattern");
+                    throw new InputException($"Missing patterns for {arg}");
                 }
 
                 var containsSlash = (string x) => x.Contains('/') || x.Contains('\\');
@@ -270,7 +288,7 @@ class InputOptions
             }
             else if (arg.StartsWith("--"))
             {
-                throw new InputException($"{arg} - Invalid argument");
+                throw new InputException($"Invalid argument: {arg}");
             }
             else
             {
@@ -309,7 +327,7 @@ class InputOptions
         patterns = patterns.ToList();
         if (!patterns.Any())
         {
-            throw new InputException($"{arg} - Missing regular expression pattern");
+            throw new InputException($"Missing regular expression patterns for {arg}");
         }
 
         return patterns.Select(x => ValidateRegExPattern(arg, x));
@@ -323,7 +341,7 @@ class InputOptions
         }
         catch (Exception)
         {
-            throw new InputException($"{arg} {pattern} - Invalid regular expression pattern");
+            throw new InputException($"Invalid regular expression pattern for {arg}: {pattern}");
         }
     }
 
@@ -331,7 +349,7 @@ class InputOptions
     {
         if (string.IsNullOrEmpty(pattern))
         {
-            throw new InputException($"{arg} - Missing file pattern");
+            throw new InputException($"Missing file pattern for {arg}");
         }
 
         var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
@@ -347,7 +365,7 @@ class InputOptions
         }
         catch (Exception)
         {
-            throw new InputException($"{arg} {pattern} - Invalid file pattern");
+            throw new InputException($"Invalid file pattern for {arg}: {pattern}");
         }
     }
 
@@ -360,12 +378,12 @@ class InputOptions
     {
         if (string.IsNullOrEmpty(countStr))
         {
-            throw new InputException($"{arg} - Missing {argDescription}");
+            throw new InputException($"Missing {argDescription} for {arg}");
         }
 
         if (!int.TryParse(countStr, out var count))
         {
-            throw new InputException($"{arg} {countStr} - Invalid {argDescription}");
+            throw new InputException($"Invalid {argDescription} for {arg}: {countStr}");
         }
 
         return count;

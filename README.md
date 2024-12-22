@@ -51,6 +51,8 @@ OPTIONS
   --save-file-output FILENAME    Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)
   --save-output FILENAME         Save the entire output to the specified file
 
+  --save-options FILENAME        Save the current options to the specified file
+
   @ARGUMENTS
 
     Arguments starting with @ (e.g. @file) will use file content as argument.

@@ -11,6 +11,10 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 internal class InputException : Exception
 {
+    public InputException() : base()
+    {
+    }
+
     public InputException(string message) : base(message)
     {
     }

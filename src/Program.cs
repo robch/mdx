@@ -17,6 +17,7 @@ class Program
             if (ex != null)
             {
                 PrintException(ex);
+                PrintUsage();
                 return 2;
             }
             else
@@ -116,7 +117,8 @@ class Program
 
     private static void PrintException(InputException ex)
     {
-        ConsoleHelpers.PrintLine($"{ex.Message}\n\n");
+        var printMessage = !string.IsNullOrEmpty(ex.Message) && !(ex is HelpRequestedInputException);
+        if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
     }
 
     private static void PrintUsage()
@@ -140,8 +142,9 @@ class Program
             "  --file-instructions \"...\"      Apply the specified instructions to each file using AI CLI\n" +
             "  --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n\n" +
             $"  --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-            "  --save-file-output FILENAME    Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)\n" +
+            "  --save-file-output FILENAME    Save file output to the specified file (e.g. " + InputOptions.DefaultSaveFileOutputTemplate + ")\n" +
             "  --save-output FILENAME         Save the entire output to the specified file\n\n" +
+            "  --save-options FILENAME        Save the current options to the specified file\n\n" +
             "  @ARGUMENTS\n\n" +
             "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
             "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
@@ -166,14 +169,33 @@ class Program
     private static void PrintSavedOptionFiles(List<string> filesSaved)
     {
         var firstFileSaved = filesSaved.First();
-        ConsoleHelpers.PrintLine($"Saved: {firstFileSaved}");
+        var additionalFiles = filesSaved.Skip(1).ToList();
 
-        foreach (var additionalFile in filesSaved.Skip(1))
+        var savedAsDefault = firstFileSaved == InputOptions.DefaultOptionsFileName;
+        ConsoleHelpers.PrintLine(savedAsDefault
+            ? $"Saved: {firstFileSaved} (default options file)\n"
+            : $"Saved: {firstFileSaved}\n");
+
+        var hasAdditionalFiles = additionalFiles.Any();
+        if (hasAdditionalFiles)
         {
-            ConsoleHelpers.PrintLine($"  and: {additionalFile}");
+            foreach (var additionalFile in additionalFiles)
+            {
+                ConsoleHelpers.PrintLine($"  and: {additionalFile}");
+            }
+         
+            ConsoleHelpers.PrintLine();
         }
 
-        ConsoleHelpers.PrintLine("\nUSAGE: mdcc @@" + firstFileSaved);
+        if (savedAsDefault)
+        {
+            ConsoleHelpers.PrintLine("NOTE: These options will be used by default when invoking mdcc in this directory.");
+            ConsoleHelpers.PrintLine("      To stop using these options by default, delete the file: " + firstFileSaved);
+        }
+        else
+        {
+            ConsoleHelpers.PrintLine("USAGE: mdcc @@" + firstFileSaved);
+        }
     }
 
     private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
