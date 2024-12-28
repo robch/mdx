@@ -22,7 +22,7 @@ tests:
 - name: Test file instructions
   parallelize: true
   bash: |
-    mdcc **\*test*.yaml --instructions "There should be exactly 4 tests in here. If there are exactly that many, output a single line that says 'Yes.'... otherwise, output a single line that says 'No.'..." 
+    mdcc **\basic-test.yaml --instructions "There should be exactly 4 tests in here. If there are exactly that many, output a single line that says 'Yes.'... otherwise, output a single line that says 'No.'..." 
   expect-regex: |
     Yes.
 
