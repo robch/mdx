@@ -294,13 +294,9 @@ class Program
     {
         try
         {
-            var isStdin = fileName == "-";
-            var isBinary = !isStdin && File.ReadAllBytes(fileName).Any(x => x == 0);
-            if (isBinary) return string.Empty;
-
-            var content = FileHelpers.ReadAllText(fileName);
-
-            var isMarkdown = fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
+            var content = FileHelpers.ReadAllText(fileName, out var isMarkdown, out var isStdin);
+            if (content == null) return string.Empty;
+            
             var backticks = isMarkdown || isStdin
                 ? new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(content))
                 : "```";

@@ -1,0 +1,28 @@
+using System.Collections.Generic;
+
+public static class FileConverters
+{
+    private static readonly List<IFileConverter> _converters = new()
+    {
+        new DocxFileConverter(),
+    };
+
+    public static IFileConverter GetConverter(string fileName)
+    {
+        foreach (var converter in _converters)
+        {
+            if (converter.CanConvert(fileName))
+            {
+                return converter;
+            }
+        }
+
+        return new BinaryFileConverter();
+    }
+
+    public static string ConvertToMarkdown(string fileName)
+    {
+        var converter = GetConverter(fileName);
+        return converter.ConvertToMarkdown(fileName);
+    }
+}
