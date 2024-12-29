@@ -359,9 +359,23 @@ class Program
                 wrapInMarkdown = true;
             }
 
-            return wrapInMarkdown
-                ? $"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n"
-                : content;
+            if (wrapInMarkdown)
+            {
+                if (fileName != "-")
+                {
+                    var fileInfo = new FileInfo(fileName);
+                    var modified = FileHelpers.GetFriendlyLastModified(fileInfo);
+                    var size = FileHelpers.GetFriendlySize(fileInfo);
+
+                    content = $"## {fileName}\n\nModified: {modified}\nSize: {size}\n\n{backticks}\n{content}\n{backticks}\n";
+                }
+                else
+                {
+                    content = $"## (stdin)\n\n{backticks}\n{content}\n{backticks}\n";
+                }
+            }
+
+            return content;
         }
         catch (Exception ex)
         {

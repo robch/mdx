@@ -165,4 +165,39 @@ class FileHelpers
             ? FileHelpers.ReadAllText(fileName)
             : FileConverters.ConvertToMarkdown(fileName);
     }
+
+    public static string GetFriendlyLastModified(FileInfo fileInfo)
+    {
+        var modified = fileInfo.LastWriteTime;
+        var modifiedSeconds = (int)((DateTime.Now - modified).TotalSeconds);
+        var modifiedMinutes = modifiedSeconds / 60;
+        var modifiedHours = modifiedSeconds / 3600;
+        var modifiedDays = modifiedSeconds / 86400;
+
+        var formatted =
+            modifiedMinutes < 1 ? "just now" :
+            modifiedMinutes == 1 ? "1 minute ago" :
+            modifiedMinutes < 60 ? $"{modifiedMinutes} minutes ago" :
+            modifiedHours == 1 ? "1 hour ago" :
+            modifiedHours < 24 ? $"{modifiedHours} hours ago" :
+            modifiedDays == 1 ? "1 day ago" :
+            modifiedDays < 7 ? $"{modifiedDays} days ago" :
+            modified.ToString();
+
+        return formatted;
+    }
+
+    public static string GetFriendlySize(FileInfo fileInfo)
+    {
+        var size = fileInfo.Length;
+        var sizeFormatted = size >= 1024 * 1024 * 1024
+            ? $"{size / (1024 * 1024 * 1024)} GB"
+            : size >= 1024 * 1024
+                ? $"{size / (1024 * 1024)} MB"
+                : size >= 1024
+                    ? $"{size / 1024} KB"
+                    : $"{size} bytes";
+        return sizeFormatted;
+    }
+
 }

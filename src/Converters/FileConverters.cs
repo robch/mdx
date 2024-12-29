@@ -23,6 +23,7 @@ public static class FileConverters
     public static bool CanConvert(string fileName)
     {
         var converter = GetConverter(fileName);
+        if (converter is BinaryFileConverter) return false;
         return converter != null && converter.CanConvert(fileName);
     }
 
