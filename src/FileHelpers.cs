@@ -155,10 +155,10 @@ class FileHelpers
         return content;
     }
 
-    public static string ReadAllText(string fileName, out bool isStdin, out bool isMarkdown)
+    public static string ReadAllText(string fileName, out bool isStdin, out bool isMarkdown, out bool isBinary)
     {
         isStdin = fileName == "-";
-        var isBinary = !isStdin && File.ReadAllBytes(fileName).Any(x => x == 0);
+        isBinary = !isStdin && File.ReadAllBytes(fileName).Any(x => x == 0);
         isMarkdown = isBinary || fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
 
         return !isBinary

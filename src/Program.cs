@@ -53,15 +53,21 @@ class Program
                 group.ExcludeGlobs,
                 group.ExcludeFileNamePatternList,
                 group.IncludeFileContainsPatternList,
-                group.ExcludeFileContainsPatternList);
+                group.ExcludeFileContainsPatternList)
+                .ToList();
 
             var delayOutputToApplyInstructions = group.InstructionsList.Any();
             var tasksThisGroup = new List<Task<string>>();
             foreach (var file in files)
             {
+                var onlyOneFile = files.Count == 1 && inputOptions.Groups.Count == 1;
+                var skipMarkdownWrapping = onlyOneFile && FileConverters.CanConvert(file);
+                var wrapInMarkdown = !skipMarkdownWrapping;;
+                    
                 var getCheckSaveTask = GetCheckSaveFileContentAsync(
                     file,
                     throttler,
+                    wrapInMarkdown,
                     group.IncludeLineContainsPatternList,
                     group.IncludeLineCountBefore,
                     group.IncludeLineCountAfter,
@@ -198,11 +204,23 @@ class Program
         }
     }
 
-    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
+    private static Task<string> GetCheckSaveFileContentAsync(
+        string fileName,
+        SemaphoreSlim throttler,
+        bool wrapInMarkdown,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList,
+        List<Tuple<string, string>> fileInstructionsList,
+        bool useBuiltInFunctions,
+        string saveFileOutput)
     {
         var getCheckSaveFileContent = new Func<string>(() =>
             GetCheckSaveFileContent(
                 fileName,
+                wrapInMarkdown,
                 includeLineContainsPatternList,
                 includeLineCountBefore,
                 includeLineCountAfter,
@@ -231,13 +249,24 @@ class Program
         });
     }
 
-    private static string GetCheckSaveFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
+    private static string GetCheckSaveFileContent(
+        string fileName,
+        bool wrapInMarkdown,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList,
+        List<Tuple<string, string>> fileInstructionsList,
+        bool useBuiltInFunctions,
+        string saveFileOutput)
     {
         try
         {
             ConsoleHelpers.PrintStatus($"Processing: {fileName} ...");
             var finalContent = GetFinalFileContent(
                 fileName,
+                wrapInMarkdown,
                 includeLineContainsPatternList,
                 includeLineCountBefore,
                 includeLineCountAfter,
@@ -261,10 +290,20 @@ class Program
         }
     }
 
-    private static string GetFinalFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions)
+    private static string GetFinalFileContent(
+        string fileName,
+        bool wrapInMarkdown,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList,
+        List<Tuple<string, string>> fileInstructionsList,
+        bool useBuiltInFunctions)
     {
         var formatted = GetFormattedFileContent(
             fileName,
+            wrapInMarkdown,
             includeLineContainsPatternList,
             includeLineCountBefore,
             includeLineCountAfter,
@@ -290,11 +329,18 @@ class Program
             fileName == fileNameCriteria;
     }
 
-    private static string GetFormattedFileContent(string fileName, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
+    private static string GetFormattedFileContent(
+        string fileName,
+        bool wrapInMarkdown,
+        List<Regex> includeLineContainsPatternList,
+        int includeLineCountBefore,
+        int includeLineCountAfter,
+        bool includeLineNumbers,
+        List<Regex> removeAllLineContainsPatternList)
     {
         try
         {
-            var content = FileHelpers.ReadAllText(fileName, out var isMarkdown, out var isStdin);
+            var content = FileHelpers.ReadAllText(fileName, out var isMarkdown, out var isStdin, out var isBinary);
             if (content == null) return string.Empty;
             
             var backticks = isMarkdown || isStdin
@@ -305,13 +351,17 @@ class Program
             if (filterContent)
             {
                 content = GetContentFilteredAndFormatted(content, includeLineContainsPatternList, includeLineCountBefore, includeLineCountAfter, includeLineNumbers, removeAllLineContainsPatternList, backticks);
+                wrapInMarkdown = true;
             }
             else if (includeLineNumbers)
             {
                 content = GetContentFormattedWithLineNumbers(content);
+                wrapInMarkdown = true;
             }
 
-            return $"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n";
+            return wrapInMarkdown
+                ? $"## {fileName}\n\n{backticks}\n{content}\n{backticks}\n"
+                : content;
         }
         catch (Exception ex)
         {

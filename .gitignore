@@ -1,4 +1,5 @@
 .ai/data/**
+.ai/scratch/**
 **/obj/**
 **/bin/**
 options

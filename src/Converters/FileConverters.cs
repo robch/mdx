@@ -20,9 +20,15 @@ public static class FileConverters
         return new BinaryFileConverter();
     }
 
-    public static string ConvertToMarkdown(string fileName)
+    public static bool CanConvert(string fileName)
     {
         var converter = GetConverter(fileName);
+        return converter != null && converter.CanConvert(fileName);
+    }
+
+    public static string ConvertToMarkdown(string fileName)
+    {
+        var converter = GetConverter(fileName);        
         return converter.ConvertToMarkdown(fileName);
     }
 }
