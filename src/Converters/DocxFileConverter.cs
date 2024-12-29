@@ -83,49 +83,71 @@ public class DocxFileConverter : IFileConverter
         var boldOn = false;
         var italicOn = false;
 
-        foreach (var run in paragraph.Elements<Run>())
+        foreach (var element in paragraph.Elements())
         {
-            string runText = string.Join("", run.Elements<Text>().Select(t => t.Text));
-            if (string.IsNullOrEmpty(runText)) continue;
-
-            var bold = run.RunProperties?.Bold != null;
-            var italic = run.RunProperties?.Italic != null;
-
-            var turnBoldOn = bold && !boldOn;
-            var turnBoldOff = !bold && boldOn;
-            var turnItalicOn = italic && !italicOn;
-            var turnItalicOff = !italic && italicOn;
-
-            var turnAnythingOff = turnBoldOff || turnItalicOff;
-            var turnAnythingOn = turnBoldOn || turnItalicOn;
-
-            if (turnAnythingOff)
+            if (element is Run run)
             {
-                var cchTrailingWhitespace = paragraphText.ToString().Length - paragraphText.ToString().TrimEnd().Length;
-                var trailingWhitespace = paragraphText.ToString().Substring(paragraphText.Length - cchTrailingWhitespace);
-                paragraphText.Length -= cchTrailingWhitespace;
-
-                if (turnItalicOff) { paragraphText.Append("_"); italicOn = false; }
-                if (turnBoldOff) { paragraphText.Append("**"); boldOn = false; }
-
-                paragraphText.Append(trailingWhitespace);
+                HandleParagraphRun(paragraphText, ref boldOn, ref italicOn, run);
             }
-
-            if (turnAnythingOn)
+            else if (element is Hyperlink hyperlink)
             {
-                var cchLeadingWhitespace = runText.Length - runText.TrimStart().Length;
-                var leadingWhitespace = runText.Substring(0, cchLeadingWhitespace);
-                runText = runText.TrimStart();
-
-                paragraphText.Append(leadingWhitespace);
-
-                if (turnBoldOn) { paragraphText.Append("**"); boldOn = true; }
-                if (turnItalicOn) { paragraphText.Append("_"); italicOn = true; }
+                var hyperlinkMarkdown = ConvertHyperlinkToMarkdown(hyperlink, doc);
+                paragraphText.Append(hyperlinkMarkdown);
             }
-
-            paragraphText.Append(runText);
         }
 
+        CheckTurnOffBoldItalic(paragraphText, ref boldOn, ref italicOn);
+
+        paragraphText.Append(paragraphSuffix);
+
+        return paragraphText.ToString();
+    }
+
+    private static void HandleParagraphRun(StringBuilder paragraphText, ref bool boldOn, ref bool italicOn, Run run)
+    {
+        string runText = string.Join("", run.Elements<Text>().Select(t => t.Text));
+        if (string.IsNullOrEmpty(runText)) return;
+
+        var bold = run.RunProperties?.Bold != null;
+        var italic = run.RunProperties?.Italic != null;
+
+        var turnBoldOn = bold && !boldOn;
+        var turnBoldOff = !bold && boldOn;
+        var turnItalicOn = italic && !italicOn;
+        var turnItalicOff = !italic && italicOn;
+
+        var turnAnythingOff = turnBoldOff || turnItalicOff;
+        var turnAnythingOn = turnBoldOn || turnItalicOn;
+
+        if (turnAnythingOff)
+        {
+            var cchTrailingWhitespace = paragraphText.ToString().Length - paragraphText.ToString().TrimEnd().Length;
+            var trailingWhitespace = paragraphText.ToString().Substring(paragraphText.Length - cchTrailingWhitespace);
+            paragraphText.Length -= cchTrailingWhitespace;
+
+            if (turnItalicOff) { paragraphText.Append("_"); italicOn = false; }
+            if (turnBoldOff) { paragraphText.Append("**"); boldOn = false; }
+
+            paragraphText.Append(trailingWhitespace);
+        }
+
+        if (turnAnythingOn)
+        {
+            var cchLeadingWhitespace = runText.Length - runText.TrimStart().Length;
+            var leadingWhitespace = runText.Substring(0, cchLeadingWhitespace);
+            runText = runText.TrimStart();
+
+            paragraphText.Append(leadingWhitespace);
+
+            if (turnBoldOn) { paragraphText.Append("**"); boldOn = true; }
+            if (turnItalicOn) { paragraphText.Append("_"); italicOn = true; }
+        }
+
+        paragraphText.Append(runText);
+    }
+
+    private static void CheckTurnOffBoldItalic(StringBuilder paragraphText, ref bool boldOn, ref bool italicOn)
+    {
         var finalTurnOffBold = boldOn;
         var finalTurnOffItalic = italicOn;
         var finalTurnAnythingOff = finalTurnOffBold || finalTurnOffItalic;
@@ -141,10 +163,6 @@ public class DocxFileConverter : IFileConverter
 
             paragraphText.Append(finalTrailingWhitespace);
         }
-
-        paragraphText.Append(paragraphSuffix);
-
-        return paragraphText.ToString();
     }
 
     private ListType GetListType(Paragraph para, WordprocessingDocument doc)
@@ -211,5 +229,19 @@ public class DocxFileConverter : IFileConverter
         }
 
         return cellText.ToString().Trim();
+    }
+
+    private string ConvertHyperlinkToMarkdown(Hyperlink hyperlink, WordprocessingDocument doc)
+    {
+        var relationshipId = hyperlink.Id?.Value;
+        if (relationshipId == null) return string.Empty;
+
+        var hyperlinkPart = doc.MainDocumentPart.HyperlinkRelationships.FirstOrDefault(r => r.Id == relationshipId);
+        if (hyperlinkPart == null) return string.Empty;
+
+        var uri = hyperlinkPart.Uri.OriginalString;
+        var displayText = hyperlink.InnerText;
+
+        return $"[{displayText}]({uri})";
     }
 }
