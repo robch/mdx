@@ -46,11 +46,11 @@ public class PptxFileConverter : IFileConverter
         if (titleShape != null)
         {
             var titleText = GetTextFromShape(titleShape);
-            sb.AppendLine($"# Slide #{slideNumber}: {titleText}");
+            sb.AppendLine($"# Slide #{slideNumber}: {titleText}\n");
         }
         else
         {
-            sb.AppendLine($"# Slide #{slideNumber}");
+            sb.AppendLine($"# Slide #{slideNumber}\n");
         }
 
         // Extract other text boxes and shapes
