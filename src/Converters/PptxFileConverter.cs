@@ -45,7 +45,7 @@ public class PptxFileConverter : IFileConverter
         var titleShape = slide.Descendants<Shape>().FirstOrDefault(s => IsTitleShape(s));
         if (titleShape != null)
         {
-            var titleText = GetTextFromShape(titleShape);
+            var titleText = GetTextFromShape(titleShape, ": ");
             sb.AppendLine($"# Slide #{slideNumber}: {titleText}\n");
         }
         else
@@ -84,16 +84,15 @@ public class PptxFileConverter : IFileConverter
             placeholder.Type.HasValue && placeholder.Type.Value == PlaceholderValues.Title;
     }
 
-    private string GetTextFromShape(Shape shape)
+    private string GetTextFromShape(Shape shape, string insertForBreak = "\n")
     {
         if (shape.TextBody == null)
             return string.Empty;
 
         var sb = new StringBuilder();
         
-        var paragraphs = shape.TextBody.Elements<A.Paragraph>();
         bool firstParagraph = true;
-
+        var paragraphs = shape.TextBody.Elements<A.Paragraph>();
         foreach (var paragraph in paragraphs)
         {
             var paragraphText = new StringBuilder();
@@ -105,12 +104,26 @@ public class PptxFileConverter : IFileConverter
                 _ => string.Empty
             };
 
-            foreach (var run in paragraph.Elements<A.Run>())
+            var insertBreakNextTime = false;
+            foreach (var element in paragraph.Elements())
             {
-                if (run?.Text?.Text == null)
-                    continue;
+                if (element is A.Run run)
+                {
+                    var skipEmptyRun = run.Text == null || string.IsNullOrEmpty(run.Text.Text);
+                    if (skipEmptyRun) continue;
 
-                paragraphText.Append(run.Text.Text);
+                    if (insertBreakNextTime)
+                    {
+                        paragraphText.Append(insertForBreak);
+                        insertBreakNextTime = false;
+                    }
+
+                    paragraphText.Append(run.Text.Text);
+                }
+                else if (element is A.Break)
+                {
+                    insertBreakNextTime = true;
+                }
             }
 
             var trimmed = paragraphText.ToString().TrimEnd();
