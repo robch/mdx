@@ -5,6 +5,7 @@ public static class FileConverters
     private static readonly List<IFileConverter> _converters = new()
     {
         new DocxFileConverter(),
+        new PptxFileConverter(),
     };
 
     public static IFileConverter GetConverter(string fileName)

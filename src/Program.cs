@@ -379,7 +379,7 @@ class Program
         }
         catch (Exception ex)
         {
-            return $"## {fileName} - Error reading file: {ex.Message}\n\n";
+            return $"## {fileName} - Error reading file: {ex.Message}\n\n{ex.StackTrace}";
         }
     }
 
