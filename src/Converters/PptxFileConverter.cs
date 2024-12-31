@@ -7,6 +7,8 @@ using A = DocumentFormat.OpenXml.Drawing;
 
 public class PptxFileConverter : IFileConverter
 {
+    private enum ListType { None, Bullet, Numbered }
+
     public bool CanConvert(string fileName)
     {
         return fileName.EndsWith(".pptx", StringComparison.OrdinalIgnoreCase);
@@ -84,46 +86,70 @@ public class PptxFileConverter : IFileConverter
 
     private string GetTextFromShape(Shape shape)
     {
-        // Some shapes may not have text bodies at all
         if (shape.TextBody == null)
             return string.Empty;
 
         var sb = new StringBuilder();
         
-        // Go through each Paragraph in the shape
         var paragraphs = shape.TextBody.Elements<A.Paragraph>();
         bool firstParagraph = true;
 
         foreach (var paragraph in paragraphs)
         {
-            // Build up this paragraph's text from its Runs
             var paragraphText = new StringBuilder();
+            var listType = GetListType(paragraph);
+            var paragraphPrefix = listType switch
+            {
+                ListType.Bullet => "- ",
+                ListType.Numbered => "1. ",
+                _ => string.Empty
+            };
 
             foreach (var run in paragraph.Elements<A.Run>())
             {
-                // If the <a:t> (A.Text) child is null (rare, but can happen), skip
                 if (run?.Text?.Text == null)
                     continue;
 
                 paragraphText.Append(run.Text.Text);
             }
 
-            // If there's any actual text, append it to the shape's text builder
             var trimmed = paragraphText.ToString().TrimEnd();
             if (!string.IsNullOrEmpty(trimmed))
             {
                 if (!firstParagraph)
                 {
-                    // If not the first paragraph, 
-                    // we’ll add a line break before appending new paragraph text
                     sb.AppendLine();
                 }
+                sb.Append(paragraphPrefix);
                 sb.Append(trimmed);
                 firstParagraph = false;
             }
         }
 
         return sb.ToString();
+    }
+
+    private ListType GetListType(A.Paragraph paragraph)
+    {
+        var paragraphProperties = paragraph.ParagraphProperties;
+        if (paragraphProperties != null)
+        {
+            // Check to see if any of the properties are of the CharacterBullet type
+            var bullet = paragraphProperties.Descendants<A.CharacterBullet>().FirstOrDefault();
+            if (bullet != null)
+            {
+                return ListType.Bullet;
+            }
+
+            // Check to see if any of the properties are of the AutoNumberedBullet type
+            var autoNumberedBullet = paragraphProperties.Descendants<A.AutoNumberedBullet>().FirstOrDefault();
+            if (autoNumberedBullet != null)
+            {
+                return ListType.Numbered;
+            }
+        }
+
+        return ListType.None;
     }
 
     private string ConvertTableToMarkdown(GraphicFrame graphicFrame)
