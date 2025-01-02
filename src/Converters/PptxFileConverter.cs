@@ -59,7 +59,7 @@ public class PptxFileConverter : IFileConverter
         var titleShape = slide.Descendants<Shape>().FirstOrDefault(s => IsTitleShape(s));
         if (titleShape != null)
         {
-            var titleText = GetTextFromShape(titleShape, ": ");
+            var titleText = GetTextFromShape(slidePart, titleShape, ": ");
             sb.AppendLine($"# Slide #{slideNumber}: {titleText}\n");
         }
         else
@@ -70,7 +70,7 @@ public class PptxFileConverter : IFileConverter
         // Extract other text boxes and shapes
         foreach (var shape in slide.Descendants<Shape>().Where(s => !IsTitleShape(s)))
         {
-            var text = GetTextFromShape(shape);
+            var text = GetTextFromShape(slidePart, shape);
             if (!string.IsNullOrWhiteSpace(text))
             {
                 sb.AppendLine(text);
@@ -80,7 +80,7 @@ public class PptxFileConverter : IFileConverter
         // Extract tables
         foreach (var graphicFrame in slide.Descendants<GraphicFrame>())
         {
-            var tableMarkdown = ConvertTableToMarkdown(graphicFrame);
+            var tableMarkdown = ConvertTableToMarkdown(slidePart, graphicFrame);
             if (!string.IsNullOrWhiteSpace(tableMarkdown))
             {
                 sb.AppendLine(tableMarkdown);
@@ -98,7 +98,7 @@ public class PptxFileConverter : IFileConverter
             placeholder.Type.HasValue && placeholder.Type.Value == PlaceholderValues.Title;
     }
 
-    private string GetTextFromShape(Shape shape, string insertForBreak = "\n")
+    private string GetTextFromShape(SlidePart slidePart, Shape shape, string insertForBreak = "\n")
     {
         if (shape.TextBody == null)
             return string.Empty;
@@ -109,48 +109,15 @@ public class PptxFileConverter : IFileConverter
         var paragraphs = shape.TextBody.Elements<A.Paragraph>();
         foreach (var paragraph in paragraphs)
         {
-            var paragraphText = new StringBuilder();
-            var listType = GetListType(paragraph);
-            var paragraphPrefix = listType switch
+            var paragraphText = GetParagraphText(slidePart, paragraph, insertForBreak);
+            if (string.IsNullOrEmpty(paragraphText)) continue;
+
+            if (!firstParagraph)
             {
-                ListType.Bullet => "- ",
-                ListType.Numbered => "1. ",
-                _ => string.Empty
-            };
-
-            var insertBreakNextTime = false;
-            foreach (var element in paragraph.Elements())
-            {
-                if (element is A.Run run)
-                {
-                    var skipEmptyRun = run.Text == null || string.IsNullOrEmpty(run.Text.Text);
-                    if (skipEmptyRun) continue;
-
-                    if (insertBreakNextTime)
-                    {
-                        paragraphText.Append(insertForBreak);
-                        insertBreakNextTime = false;
-                    }
-
-                    paragraphText.Append(run.Text.Text);
-                }
-                else if (element is A.Break)
-                {
-                    insertBreakNextTime = true;
-                }
+                sb.AppendLine();
             }
-
-            var trimmed = paragraphText.ToString().TrimEnd();
-            if (!string.IsNullOrEmpty(trimmed))
-            {
-                if (!firstParagraph)
-                {
-                    sb.AppendLine();
-                }
-                sb.Append(paragraphPrefix);
-                sb.Append(trimmed);
-                firstParagraph = false;
-            }
+            sb.Append(paragraphText);
+            firstParagraph = false;
         }
 
         return sb.ToString();
@@ -179,7 +146,7 @@ public class PptxFileConverter : IFileConverter
         return ListType.None;
     }
 
-    private string ConvertTableToMarkdown(GraphicFrame graphicFrame)
+    private string ConvertTableToMarkdown(SlidePart slidePart, GraphicFrame graphicFrame)
     {
         var sb = new StringBuilder();
         var table = graphicFrame.Descendants<A.Table>().FirstOrDefault();
@@ -188,7 +155,7 @@ public class PptxFileConverter : IFileConverter
         foreach (var row in table.Elements<A.TableRow>())
         {
             var rowTexts = row.Elements<A.TableCell>()
-                .Select(cell => GetCellText(cell))
+                .Select(cell => GetCellText(slidePart, cell))
                 .ToArray();
             sb.AppendLine("| " + string.Join(" | ", rowTexts) + " |");
 
@@ -199,13 +166,13 @@ public class PptxFileConverter : IFileConverter
         return sb.ToString();
     }
 
-    private string GetCellText(A.TableCell cell)
+    private string GetCellText(SlidePart slidePart, A.TableCell cell)
     {
         var cellText = new StringBuilder();
         var isFirst = true;
         foreach (var paragraph in cell.TextBody.Elements<A.Paragraph>())
         {
-            var paragraphText = GetParagraphText(paragraph).TrimEnd();
+            var paragraphText = GetParagraphText(slidePart, paragraph, "<br/>").TrimEnd();
             if (string.IsNullOrWhiteSpace(paragraphText)) continue;
 
             if (!isFirst)
@@ -219,8 +186,54 @@ public class PptxFileConverter : IFileConverter
         return cellText.ToString().Trim();
     }
 
-    private string GetParagraphText(A.Paragraph paragraph)
+    private string GetParagraphText(SlidePart slidePart, A.Paragraph paragraph, string insertForBreak)
     {
-        return string.Join(" ", paragraph.Elements<A.Run>().Select(run => run.Text.Text));
+        var paragraphText = new StringBuilder();
+        var listType = GetListType(paragraph);
+        var paragraphPrefix = listType switch
+        {
+            ListType.Bullet => "- ",
+            ListType.Numbered => "1. ",
+            _ => string.Empty
+        };
+
+        var insertBreakNextTime = false;
+        foreach (var element in paragraph.Elements())
+        {
+            if (element is A.Run run)
+            {
+                var skipEmptyRun = run.Text == null || string.IsNullOrEmpty(run.Text.Text);
+                if (skipEmptyRun) continue;
+
+                if (insertBreakNextTime)
+                {
+                    paragraphText.Append(insertForBreak);
+                    insertBreakNextTime = false;
+                }
+
+                var hyperlink = run.Descendants<A.HyperlinkOnClick>().FirstOrDefault();
+                paragraphText.Append(hyperlink != null
+                    ? ConvertHyperlinkToMarkdown(slidePart, hyperlink, run.Text.Text)
+                    : run.Text.Text);
+            }
+            else if (element is A.Break)
+            {
+                insertBreakNextTime = true;
+            }
+        }
+
+        var trimmed = paragraphText.ToString().TrimEnd();
+        return !string.IsNullOrEmpty(trimmed)
+            ? $"{paragraphPrefix}{trimmed}"
+            : string.Empty;
+    }
+
+    private string ConvertHyperlinkToMarkdown(SlidePart slidePart, A.HyperlinkOnClick hyperlink, string displayText)
+    {
+        var hyperlinkRelationship = slidePart.HyperlinkRelationships.FirstOrDefault(h => h.Id == hyperlink.Id);
+        if (hyperlinkRelationship == null) return string.Empty;
+
+        var uri = hyperlinkRelationship.Uri.OriginalString;
+        return $"[{displayText}]({uri})";
     }
 }
