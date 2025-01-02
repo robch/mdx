@@ -28,7 +28,7 @@ public class PptxFileConverter : IFileConverter
         }
     }
 
-    public string TryConvertToMarkdown(string fileName)
+    private string TryConvertToMarkdown(string fileName)
     {
         using var presentationDoc = PresentationDocument.Open(fileName, false);
         var sb = new StringBuilder();
@@ -83,6 +83,7 @@ public class PptxFileConverter : IFileConverter
             var tableMarkdown = ConvertTableToMarkdown(slidePart, graphicFrame);
             if (!string.IsNullOrWhiteSpace(tableMarkdown))
             {
+                sb.AppendLine();
                 sb.AppendLine(tableMarkdown);
                 sb.AppendLine();
             }
@@ -123,19 +124,126 @@ public class PptxFileConverter : IFileConverter
         return sb.ToString();
     }
 
+    private string GetParagraphText(SlidePart slidePart, A.Paragraph paragraph, string insertForBreak)
+    {
+        var paragraphText = new StringBuilder();
+        var listType = GetListType(paragraph);
+        var paragraphPrefix = listType switch
+        {
+            ListType.Bullet => "- ",
+            ListType.Numbered => "1. ",
+            _ => string.Empty
+        };
+
+        bool boldOn = false;
+        bool italicOn = false;
+        bool insertBreakNextTime = false;
+
+        foreach (var element in paragraph.Elements())
+        {
+            if (element is A.Run run)
+            {
+                if (insertBreakNextTime)
+                {
+                    paragraphText.Append(insertForBreak);
+                    insertBreakNextTime = false;
+                }
+                HandleParagraphRun(paragraphText, ref boldOn, ref italicOn, run, slidePart);
+            }
+            else if (element is A.Break)
+            {
+                insertBreakNextTime = true;
+            }
+        }
+
+        CheckTurnOffBoldItalic(paragraphText, ref boldOn, ref italicOn);
+
+        var trimmed = paragraphText.ToString().TrimEnd();
+        return !string.IsNullOrEmpty(trimmed)
+            ? $"{paragraphPrefix}{trimmed}"
+            : string.Empty;
+    }
+
+    private static void HandleParagraphRun(StringBuilder paragraphText, ref bool boldOn, ref bool italicOn, A.Run run, SlidePart slidePart)
+    {
+        var runText = run.Text?.Text ?? string.Empty;
+        if (string.IsNullOrEmpty(runText)) return;
+
+        var runProps = run.RunProperties;
+        var isBold = runProps?.Bold?.Value == true;
+        var isItalic = runProps?.Italic?.Value == true;
+
+        var turnBoldOn = isBold && !boldOn;
+        var turnBoldOff = !isBold && boldOn;
+        var turnItalicOn = isItalic && !italicOn;
+        var turnItalicOff = !isItalic && italicOn;
+
+        var turnAnythingOff = turnBoldOff || turnItalicOff;
+        var turnAnythingOn = turnBoldOn || turnItalicOn;
+
+        if (turnAnythingOff)
+        {
+            var cchTrailingWhitespace = paragraphText.Length - paragraphText.ToString().TrimEnd().Length;
+            var trailingWhitespace = paragraphText.ToString().Substring(paragraphText.Length - cchTrailingWhitespace);
+            paragraphText.Length -= cchTrailingWhitespace;
+
+            if (turnItalicOff) { paragraphText.Append("_"); italicOn = false; }
+            if (turnBoldOff) { paragraphText.Append("**"); boldOn = false; }
+
+            paragraphText.Append(trailingWhitespace);
+        }
+
+        if (turnAnythingOn)
+        {
+            var cchLeadingWhitespace = runText.Length - runText.TrimStart().Length;
+            var leadingWhitespace = runText.Substring(0, cchLeadingWhitespace);
+            runText = runText.TrimStart();
+
+            paragraphText.Append(leadingWhitespace);
+
+            if (turnBoldOn) { paragraphText.Append("**"); boldOn = true; }
+            if (turnItalicOn) { paragraphText.Append("_"); italicOn = true; }
+        }
+
+        var hyperlink = run.Descendants<A.HyperlinkOnClick>().FirstOrDefault();
+        if (hyperlink != null)
+        {
+            runText = ConvertHyperlinkToMarkdown(slidePart, hyperlink, runText);
+        }
+
+        paragraphText.Append(runText);
+    }
+
+    private static void CheckTurnOffBoldItalic(StringBuilder paragraphText, ref bool boldOn, ref bool italicOn)
+    {
+        var finalTurnOffBold = boldOn;
+        var finalTurnOffItalic = italicOn;
+        var finalTurnAnythingOff = finalTurnOffBold || finalTurnOffItalic;
+
+        if (finalTurnAnythingOff)
+        {
+            var cchFinalTrailingWhitespace = paragraphText.ToString().Length - paragraphText.ToString().TrimEnd().Length;
+            var finalTrailingWhitespace = paragraphText.ToString().Substring(paragraphText.Length - cchFinalTrailingWhitespace);
+            paragraphText.Length -= cchFinalTrailingWhitespace;
+
+            if (finalTurnOffItalic) { paragraphText.Append("_"); italicOn = false; }
+            if (finalTurnOffBold) { paragraphText.Append("**"); boldOn = false; }
+
+            paragraphText.Append(finalTrailingWhitespace);
+        }
+    }
+
     private ListType GetListType(A.Paragraph paragraph)
     {
         var paragraphProperties = paragraph.ParagraphProperties;
         if (paragraphProperties != null)
         {
-            // Check to see if any of the properties are of the CharacterBullet type
             var bullet = paragraphProperties.Descendants<A.CharacterBullet>().FirstOrDefault();
             if (bullet != null)
             {
                 return ListType.Bullet;
             }
 
-            // Check to see if any of the properties are of the AutoNumberedBullet type
             var autoNumberedBullet = paragraphProperties.Descendants<A.AutoNumberedBullet>().FirstOrDefault();
             if (autoNumberedBullet != null)
             {
@@ -148,10 +256,10 @@ public class PptxFileConverter : IFileConverter
 
     private string ConvertTableToMarkdown(SlidePart slidePart, GraphicFrame graphicFrame)
     {
-        var sb = new StringBuilder();
         var table = graphicFrame.Descendants<A.Table>().FirstOrDefault();
         if (table == null) return string.Empty;
 
+        var sb = new StringBuilder();
         foreach (var row in table.Elements<A.TableRow>())
         {
             var rowTexts = row.Elements<A.TableCell>()
@@ -186,49 +294,7 @@ public class PptxFileConverter : IFileConverter
         return cellText.ToString().Trim();
     }
 
-    private string GetParagraphText(SlidePart slidePart, A.Paragraph paragraph, string insertForBreak)
-    {
-        var paragraphText = new StringBuilder();
-        var listType = GetListType(paragraph);
-        var paragraphPrefix = listType switch
-        {
-            ListType.Bullet => "- ",
-            ListType.Numbered => "1. ",
-            _ => string.Empty
-        };
-
-        var insertBreakNextTime = false;
-        foreach (var element in paragraph.Elements())
-        {
-            if (element is A.Run run)
-            {
-                var skipEmptyRun = run.Text == null || string.IsNullOrEmpty(run.Text.Text);
-                if (skipEmptyRun) continue;
-
-                if (insertBreakNextTime)
-                {
-                    paragraphText.Append(insertForBreak);
-                    insertBreakNextTime = false;
-                }
-
-                var hyperlink = run.Descendants<A.HyperlinkOnClick>().FirstOrDefault();
-                paragraphText.Append(hyperlink != null
-                    ? ConvertHyperlinkToMarkdown(slidePart, hyperlink, run.Text.Text)
-                    : run.Text.Text);
-            }
-            else if (element is A.Break)
-            {
-                insertBreakNextTime = true;
-            }
-        }
-
-        var trimmed = paragraphText.ToString().TrimEnd();
-        return !string.IsNullOrEmpty(trimmed)
-            ? $"{paragraphPrefix}{trimmed}"
-            : string.Empty;
-    }
-
-    private string ConvertHyperlinkToMarkdown(SlidePart slidePart, A.HyperlinkOnClick hyperlink, string displayText)
+    private static string ConvertHyperlinkToMarkdown(SlidePart slidePart, A.HyperlinkOnClick hyperlink, string displayText)
     {
         var hyperlinkRelationship = slidePart.HyperlinkRelationships.FirstOrDefault(h => h.Id == hyperlink.Id);
         if (hyperlinkRelationship == null) return string.Empty;

@@ -56,23 +56,6 @@ public class DocxFileConverter : IFileConverter
         return sb.ToString();
     }
 
-    private int GetHeadingLevel(string styleId, WordprocessingDocument doc)
-    {
-        if (string.IsNullOrEmpty(styleId)) return 0;
-
-        // OpenXML can define a style named "Heading1", "Heading2", etc. 
-        if (styleId.StartsWith("Heading", StringComparison.OrdinalIgnoreCase))
-        {
-            var levelStr = styleId.Substring("Heading".Length);
-            if (int.TryParse(levelStr, out int level))
-            {
-                return Math.Min(level, 6); // Markdown supports up to 6 levels
-            }
-        }
-
-        return 0;
-    }
-
     private string GetParagraphText(Paragraph paragraph, WordprocessingDocument doc)
     {
         var listType = GetListType(paragraph, doc);
@@ -136,7 +119,7 @@ public class DocxFileConverter : IFileConverter
 
         if (turnAnythingOff)
         {
-            var cchTrailingWhitespace = paragraphText.ToString().Length - paragraphText.ToString().TrimEnd().Length;
+            var cchTrailingWhitespace = paragraphText.Length - paragraphText.ToString().TrimEnd().Length;
             var trailingWhitespace = paragraphText.ToString().Substring(paragraphText.Length - cchTrailingWhitespace);
             paragraphText.Length -= cchTrailingWhitespace;
 
@@ -178,6 +161,23 @@ public class DocxFileConverter : IFileConverter
 
             paragraphText.Append(finalTrailingWhitespace);
         }
+    }
+
+    private int GetHeadingLevel(string styleId, WordprocessingDocument doc)
+    {
+        if (string.IsNullOrEmpty(styleId)) return 0;
+
+        // OpenXML can define a style named "Heading1", "Heading2", etc. 
+        if (styleId.StartsWith("Heading", StringComparison.OrdinalIgnoreCase))
+        {
+            var levelStr = styleId.Substring("Heading".Length);
+            if (int.TryParse(levelStr, out int level))
+            {
+                return Math.Min(level, 6); // Markdown supports up to 6 levels
+            }
+        }
+
+        return 0;
     }
 
     private ListType GetListType(Paragraph para, WordprocessingDocument doc)
