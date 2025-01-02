@@ -6,6 +6,7 @@ public static class FileConverters
     {
         new DocxFileConverter(),
         new PptxFileConverter(),
+        new PdfFileConverter(),
     };
 
     public static IFileConverter GetConverter(string fileName)
