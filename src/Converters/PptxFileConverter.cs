@@ -16,6 +16,20 @@ public class PptxFileConverter : IFileConverter
 
     public string ConvertToMarkdown(string fileName)
     {
+        try
+        {
+            return TryConvertToMarkdown(fileName);
+        }
+        catch (Exception ex)
+        {
+            var couldBeEncrypted = ex.Message.Contains("corrupted");
+            if (couldBeEncrypted) return $"File encrypted or corrupted: {fileName}\n\nPlease remove encryption or fix the file and try again.";
+            throw;
+        }
+    }
+
+    public string TryConvertToMarkdown(string fileName)
+    {
         using var presentationDoc = PresentationDocument.Open(fileName, false);
         var sb = new StringBuilder();
 

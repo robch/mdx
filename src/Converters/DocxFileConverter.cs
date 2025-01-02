@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 using DocumentFormat.OpenXml.Packaging;
@@ -14,6 +15,20 @@ public class DocxFileConverter : IFileConverter
     }
 
     public string ConvertToMarkdown(string fileName)
+    {
+        try
+        {
+            return TryConvertToMarkdown(fileName);
+        }
+        catch (Exception ex)
+        {
+            var couldBeEncrypted = ex.Message.Contains("corrupted");
+            if (couldBeEncrypted) return $"File encrypted or corrupted: {fileName}\n\nPlease remove encryption or fix the file and try again.";
+            throw;
+        }
+    }
+
+    private string TryConvertToMarkdown(string fileName)
     {
         using var doc = WordprocessingDocument.Open(fileName, false);
         var sb = new StringBuilder();
