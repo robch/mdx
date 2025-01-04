@@ -107,6 +107,10 @@ class FileHelpers
             .Where(file => !excludeFileNamePatternList.Any(regex => regex.IsMatch(Path.GetFileName(file))))
             .ToList();
 
+        ConsoleHelpers.PrintDebugLine($"DEBUG: 1: Found files ({files.Count()}): ");
+        files.ForEach(x => ConsoleHelpers.PrintDebugLine($"DEBUG: 1: - {x}"));
+        ConsoleHelpers.PrintDebugLine("");
+
         if (files.Count == 0)
         {
             ConsoleHelpers.PrintLine($"## Pattern: {string.Join(" ", globs)}\n\n - No files found\n");
@@ -120,7 +124,11 @@ class FileHelpers
             return Enumerable.Empty<string>();
         }
 
-        return filtered.Distinct();
+        var distinct = filtered.Distinct().ToList();
+        ConsoleHelpers.PrintDebugLine($"DEBUG: 2: Found files ({distinct.Count()} distinct/filtered): ");
+        distinct.ForEach(x => ConsoleHelpers.PrintDebugLine($"DEBUG: 2: - {x}"));
+
+        return distinct;
     }
 
     public static string MakeRelativePath(string fullPath)

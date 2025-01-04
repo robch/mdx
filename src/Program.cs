@@ -11,7 +11,7 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        if (!InputOptions.Parse(args, out var inputOptions, out var ex))
+        if (!CommandLineOptions.Parse(args, out var commandLineOptions, out var ex))
         {
             PrintBanner();
             if (ex != null)
@@ -27,12 +27,12 @@ class Program
             }
         }
 
-        ConsoleHelpers.Configure(inputOptions.Debug, inputOptions.Verbose);
+        ConsoleHelpers.Configure(commandLineOptions.Debug, commandLineOptions.Verbose);
 
-        var shouldSaveOptions = !string.IsNullOrEmpty(inputOptions.SaveOptionsTemplate);
+        var shouldSaveOptions = !string.IsNullOrEmpty(commandLineOptions.SaveOptionsTemplate);
         if (shouldSaveOptions)
         {
-            var filesSaved = inputOptions.SaveOptions(inputOptions.SaveOptionsTemplate);
+            var filesSaved = commandLineOptions.SaveOptions(commandLineOptions.SaveOptionsTemplate);
 
             PrintBanner();
             PrintSavedOptionFiles(filesSaved);
@@ -40,70 +40,44 @@ class Program
             return 0;
         }
 
-        var threadCountMax = inputOptions.Groups.Max(x => x.ThreadCount);
+        var threadCountMax = commandLineOptions.Commands.OfType<FindFilesCommand>().Max(x => x.ThreadCount);
         var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
 
         var tasks = new List<Task<string>>();
         var throttler = new SemaphoreSlim(parallelism);
 
-        foreach (var group in inputOptions.Groups)
+        foreach (var command in commandLineOptions.Commands)
         {
-            var files = FileHelpers.FindMatchingFiles(
-                group.Globs,
-                group.ExcludeGlobs,
-                group.ExcludeFileNamePatternList,
-                group.IncludeFileContainsPatternList,
-                group.ExcludeFileContainsPatternList)
-                .ToList();
+            bool delayOutputToApplyInstructions;
+            List<Task<string>> tasksThisCommand;
 
-            var delayOutputToApplyInstructions = group.InstructionsList.Any();
-            var tasksThisGroup = new List<Task<string>>();
-            foreach (var file in files)
+            var findFileCommand = command as FindFilesCommand;
+            if (findFileCommand != null)
             {
-                var onlyOneFile = files.Count == 1 && inputOptions.Groups.Count == 1;
-                var skipMarkdownWrapping = onlyOneFile && FileConverters.CanConvert(file);
-                var wrapInMarkdown = !skipMarkdownWrapping;;
-                    
-                var getCheckSaveTask = GetCheckSaveFileContentAsync(
-                    file,
-                    throttler,
-                    wrapInMarkdown,
-                    group.IncludeLineContainsPatternList,
-                    group.IncludeLineCountBefore,
-                    group.IncludeLineCountAfter,
-                    group.IncludeLineNumbers,
-                    group.RemoveAllLineContainsPatternList,
-                    group.FileInstructionsList,
-                    group.UseBuiltInFunctions,
-                    group.SaveFileOutput);
-                
-                var taskToAdd = delayOutputToApplyInstructions
-                    ? getCheckSaveTask
-                    : getCheckSaveTask.ContinueWith(t => {
-                        ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
-                        return t.Result;
-                    });
-
-                tasks.Add(taskToAdd);
-                tasksThisGroup.Add(taskToAdd);
+                HandleFindFileCommand(commandLineOptions, findFileCommand, tasks, throttler, out delayOutputToApplyInstructions, out tasksThisCommand);
+            }
+            else
+            {
+                delayOutputToApplyInstructions = false;
+                tasksThisCommand = new();
             }
 
-            var shouldSaveOutput = !string.IsNullOrEmpty(group.SaveOutput);
+            var shouldSaveOutput = !string.IsNullOrEmpty(findFileCommand.SaveOutput);
             if (shouldSaveOutput || delayOutputToApplyInstructions)
             {
-                await Task.WhenAll(tasksThisGroup.ToArray());
-                var groupOutput = string.Join("\n", tasksThisGroup.Select(t => t.Result));
+                await Task.WhenAll(tasksThisCommand.ToArray());
+                var commandOutput = string.Join("\n", tasksThisCommand.Select(t => t.Result));
 
                 if (delayOutputToApplyInstructions)
                 {
-                    groupOutput = AiInstructionProcessor.ApplyAllInstructions(group.InstructionsList, groupOutput, group.UseBuiltInFunctions);
-                    ConsoleHelpers.PrintLine(groupOutput);
+                    commandOutput = AiInstructionProcessor.ApplyAllInstructions(findFileCommand.InstructionsList, commandOutput, findFileCommand.UseBuiltInFunctions);
+                    ConsoleHelpers.PrintLine(commandOutput);
                 }
 
                 if (shouldSaveOutput)
                 {
-                    var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", group.SaveOutput);
-                    File.WriteAllText(saveFileName, groupOutput);
+                    var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", findFileCommand.SaveOutput);
+                    File.WriteAllText(saveFileName, commandOutput);
                 }
             }
         }
@@ -112,6 +86,50 @@ class Program
         ConsoleHelpers.PrintStatusErase();
 
         return 0;
+    }
+
+    private static void HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFileCommand, List<Task<string>> tasks, SemaphoreSlim throttler, out bool delayOutputToApplyInstructions, out List<Task<string>> tasksThisCommand)
+    {
+        var files = FileHelpers.FindMatchingFiles(
+            findFileCommand.Globs,
+            findFileCommand.ExcludeGlobs,
+            findFileCommand.ExcludeFileNamePatternList,
+            findFileCommand.IncludeFileContainsPatternList,
+            findFileCommand.ExcludeFileContainsPatternList)
+            .ToList();
+
+        delayOutputToApplyInstructions = findFileCommand.InstructionsList.Any();
+        tasksThisCommand = new List<Task<string>>();
+        foreach (var file in files)
+        {
+            var onlyOneFile = files.Count == 1 && commandLineOptions.Commands.Count == 1;
+            var skipMarkdownWrapping = onlyOneFile && FileConverters.CanConvert(file);
+            var wrapInMarkdown = !skipMarkdownWrapping; ;
+
+            var getCheckSaveTask = GetCheckSaveFileContentAsync(
+                file,
+                throttler,
+                wrapInMarkdown,
+                findFileCommand.IncludeLineContainsPatternList,
+                findFileCommand.IncludeLineCountBefore,
+                findFileCommand.IncludeLineCountAfter,
+                findFileCommand.IncludeLineNumbers,
+                findFileCommand.RemoveAllLineContainsPatternList,
+                findFileCommand.FileInstructionsList,
+                findFileCommand.UseBuiltInFunctions,
+                findFileCommand.SaveFileOutput);
+
+            var taskToAdd = delayOutputToApplyInstructions
+                ? getCheckSaveTask
+                : getCheckSaveTask.ContinueWith(t =>
+                {
+                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
+                    return t.Result;
+                });
+
+            tasks.Add(taskToAdd);
+            tasksThisCommand.Add(taskToAdd);
+        }
     }
 
     private static void PrintBanner()
@@ -148,7 +166,7 @@ class Program
             "  --file-instructions \"...\"      Apply the specified instructions to each file using AI CLI\n" +
             "  --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n\n" +
             $"  --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-            "  --save-file-output FILENAME    Save file output to the specified file (e.g. " + InputOptions.DefaultSaveFileOutputTemplate + ")\n" +
+            "  --save-file-output FILENAME    Save file output to the specified file (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
             "  --save-output FILENAME         Save the entire output to the specified file\n\n" +
             "  --save-options FILENAME        Save the current options to the specified file\n\n" +
             "  @ARGUMENTS\n\n" +
@@ -177,7 +195,7 @@ class Program
         var firstFileSaved = filesSaved.First();
         var additionalFiles = filesSaved.Skip(1).ToList();
 
-        var savedAsDefault = firstFileSaved == InputOptions.DefaultOptionsFileName;
+        var savedAsDefault = firstFileSaved == CommandLineOptions.DefaultOptionsFileName;
         ConsoleHelpers.PrintLine(savedAsDefault
             ? $"Saved: {firstFileSaved} (default options file)\n"
             : $"Saved: {firstFileSaved}\n");

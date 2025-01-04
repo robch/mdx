@@ -1,17 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
-class InputGroup
+class FindFilesCommand : Command
 {
-    public InputGroup()
+    public FindFilesCommand()
     {
         Globs = new List<string>();
         ExcludeGlobs = new List<string>();
@@ -33,7 +27,7 @@ class InputGroup
         ThreadCount = 0;
     }
 
-    public bool IsEmpty()
+    override public bool IsEmpty()
     {
         return !Globs.Any() &&
             !ExcludeGlobs.Any() &&
@@ -64,11 +58,4 @@ class InputGroup
     public List<Regex> RemoveAllLineContainsPatternList;
 
     public List<Tuple<string, string>> FileInstructionsList;
-    public List<string> InstructionsList;
-    public bool UseBuiltInFunctions;
-
-    public string SaveFileOutput;
-    public string SaveOutput;
-
-    public int ThreadCount;
 }
