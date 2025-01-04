@@ -29,7 +29,7 @@ class CommandLineOptions
     public string[] AllOptions;
     public string SaveOptionsTemplate;
 
-    public static bool Parse(string[] args, out CommandLineOptions options, out InputException ex)
+    public static bool Parse(string[] args, out CommandLineOptions options, out CommandLineException ex)
     {
         options = null;
         ex = null;
@@ -40,7 +40,7 @@ class CommandLineOptions
             options = ParseInputOptions(allInputs);
             return options.Commands.Any();
         }
-        catch (InputException e)
+        catch (CommandLineException e)
         {
             ex = e;
             return false;
@@ -174,7 +174,7 @@ class CommandLineOptions
             }
             else if (arg == "--help")
             {
-                throw new HelpRequestedInputException();
+                throw new CommandLineHelpRequestedException();
             }
             else if (arg == "--save-options" || arg == "--save")
             {
@@ -245,7 +245,7 @@ class CommandLineOptions
                 var instructions = GetInputOptionArgs(i + 1, args);
                 if (instructions.Count() == 0)
                 {
-                    throw new InputException($"Missing instructions for {arg}");
+                    throw new CommandLineException($"Missing instructions for {arg}");
                 }
                 var fileNameCriteria = arg != "--file-instructions"
                     ? arg.Substring(2, arg.Length - 20)
@@ -259,7 +259,7 @@ class CommandLineOptions
                 var patterns = GetInputOptionArgs(i + 1, args);
                 if (patterns.Count() == 0)
                 {
-                    throw new InputException($"Missing patterns for {arg}");
+                    throw new CommandLineException($"Missing patterns for {arg}");
                 }
 
                 var containsSlash = (string x) => x.Contains('/') || x.Contains('\\');
@@ -286,7 +286,7 @@ class CommandLineOptions
                 var instructions = GetInputOptionArgs(i + 1, args);
                 if (instructions.Count() == 0)
                 {
-                    throw new InputException($"Missing instructions for {arg}");
+                    throw new CommandLineException($"Missing instructions for {arg}");
                 }
                 currentCommand.InstructionsList.AddRange(instructions);
                 i += instructions.Count();
@@ -309,7 +309,7 @@ class CommandLineOptions
             }
             else if (arg.StartsWith("--"))
             {
-                throw new InputException($"Invalid argument: {arg}");
+                throw new CommandLineException($"Invalid argument: {arg}");
             }
             else
             {
@@ -349,7 +349,7 @@ class CommandLineOptions
         patterns = patterns.ToList();
         if (!patterns.Any())
         {
-            throw new InputException($"Missing regular expression patterns for {arg}");
+            throw new CommandLineException($"Missing regular expression patterns for {arg}");
         }
 
         return patterns.Select(x => ValidateRegExPattern(arg, x));
@@ -363,7 +363,7 @@ class CommandLineOptions
         }
         catch (Exception)
         {
-            throw new InputException($"Invalid regular expression pattern for {arg}: {pattern}");
+            throw new CommandLineException($"Invalid regular expression pattern for {arg}: {pattern}");
         }
     }
 
@@ -371,7 +371,7 @@ class CommandLineOptions
     {
         if (string.IsNullOrEmpty(pattern))
         {
-            throw new InputException($"Missing file pattern for {arg}");
+            throw new CommandLineException($"Missing file pattern for {arg}");
         }
 
         var isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
@@ -387,7 +387,7 @@ class CommandLineOptions
         }
         catch (Exception)
         {
-            throw new InputException($"Invalid file pattern for {arg}: {pattern}");
+            throw new CommandLineException($"Invalid file pattern for {arg}: {pattern}");
         }
     }
 
@@ -400,12 +400,12 @@ class CommandLineOptions
     {
         if (string.IsNullOrEmpty(countStr))
         {
-            throw new InputException($"Missing {argDescription} for {arg}");
+            throw new CommandLineException($"Missing {argDescription} for {arg}");
         }
 
         if (!int.TryParse(countStr, out var count))
         {
-            throw new InputException($"Invalid {argDescription} for {arg}: {countStr}");
+            throw new CommandLineException($"Invalid {argDescription} for {arg}: {countStr}");
         }
 
         return count;

@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
-internal class InputException : Exception
+internal class CommandLineException : Exception
 {
-    public InputException() : base()
+    public CommandLineException() : base()
     {
     }
 
-    public InputException(string message) : base(message)
+    public CommandLineException(string message) : base(message)
     {
     }
 }

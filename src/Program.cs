@@ -134,9 +134,9 @@ class Program
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
 
-    private static void PrintException(InputException ex)
+    private static void PrintException(CommandLineException ex)
     {
-        var printMessage = !string.IsNullOrEmpty(ex.Message) && !(ex is HelpRequestedInputException);
+        var printMessage = !string.IsNullOrEmpty(ex.Message) && !(ex is CommandLineHelpRequestedException);
         if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
     }
 
