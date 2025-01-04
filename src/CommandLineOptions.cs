@@ -148,8 +148,8 @@ class CommandLineOptions
 
             if (currentCommand == null)
             {
-                var name1 = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
-                var name2 = GetInputOptionArgs(i + 2, args, max: 1).FirstOrDefault();
+                var name1 = GetInputOptionArgs(i, args, max: 1).FirstOrDefault();
+                var name2 = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
                 if (name1 == "web" && (name2 == "search" || name2 == "get"))
                 {
                     i += 1;
@@ -183,7 +183,7 @@ class CommandLineOptions
                 commandLineOptions.SaveOptionsTemplate = saveOptionsTemplate;
                 i += max1Arg.Count();
             }
-            else if (arg == "--contains")
+            else if (arg == "--contains" && currentFindFilesCommand != null)
             {
                 var patterns = GetInputOptionArgs(i + 1, args);
                 var asRegExs = ValidateRegExPatterns(arg, patterns);
@@ -191,56 +191,56 @@ class CommandLineOptions
                 currentFindFilesCommand.IncludeLineContainsPatternList.AddRange(asRegExs);
                 i += patterns.Count();
             }
-            else if (arg == "--file-contains")
+            else if (arg == "--file-contains" && currentFindFilesCommand != null)
             {
                 var patterns = GetInputOptionArgs(i + 1, args);
                 var asRegExs = ValidateRegExPatterns(arg, patterns);
                 currentFindFilesCommand.IncludeFileContainsPatternList.AddRange(asRegExs);
                 i += patterns.Count();
             }
-            else if (arg == "--file-not-contains")
+            else if (arg == "--file-not-contains" && currentFindFilesCommand != null)
             {
                 var patterns = GetInputOptionArgs(i + 1, args);
                 var asRegExs = ValidateRegExPatterns(arg, patterns);
                 currentFindFilesCommand.ExcludeFileContainsPatternList.AddRange(asRegExs);
                 i += patterns.Count();
             }
-            else if (arg == "--line-contains")
+            else if (arg == "--line-contains" && currentFindFilesCommand != null)
             {
                 var patterns = GetInputOptionArgs(i + 1, args);
                 var asRegExs = ValidateRegExPatterns(arg, patterns);
                 currentFindFilesCommand.IncludeLineContainsPatternList.AddRange(asRegExs);
                 i += patterns.Count();
             }
-            else if (arg == "--lines")
+            else if (arg == "--lines" && currentFindFilesCommand != null)
             {
                 var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 var count = ValidateLineCount(arg, countStr);
                 currentFindFilesCommand.IncludeLineCountBefore = count;
                 currentFindFilesCommand.IncludeLineCountAfter = count;
             }
-            else if (arg == "--lines-before")
+            else if (arg == "--lines-before" && currentFindFilesCommand != null)
             {
                 var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 currentFindFilesCommand.IncludeLineCountBefore = ValidateLineCount(arg, countStr);
             }
-            else if (arg == "--lines-after")
+            else if (arg == "--lines-after" && currentFindFilesCommand != null)
             {
                 var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
                 currentFindFilesCommand.IncludeLineCountAfter = ValidateLineCount(arg, countStr);
             }
-            else if (arg == "--remove-all-lines")
+            else if (arg == "--remove-all-lines" && currentFindFilesCommand != null)
             {
                 var patterns = GetInputOptionArgs(i + 1, args);
                 var asRegExs = ValidateRegExPatterns(arg, patterns);
                 currentFindFilesCommand.RemoveAllLineContainsPatternList.AddRange(asRegExs);
                 i += patterns.Count();
             }
-            else if (arg == "--line-numbers")
+            else if (arg == "--line-numbers" && currentFindFilesCommand != null)
             {
                 currentFindFilesCommand.IncludeLineNumbers = true; 
             }
-            else if (arg.StartsWith("--") && arg.EndsWith("file-instructions"))
+            else if (arg.StartsWith("--") && arg.EndsWith("file-instructions") && currentFindFilesCommand != null)
             {
                 var instructions = GetInputOptionArgs(i + 1, args);
                 if (instructions.Count() == 0)
@@ -254,40 +254,7 @@ class CommandLineOptions
                 currentFindFilesCommand.FileInstructionsList.AddRange(withCriteria);
                 i += instructions.Count();
             }
-            else if (arg == "--save-file-output")
-            {
-                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-                var saveFileOutput = max1Arg.FirstOrDefault() ?? DefaultSaveFileOutputTemplate;
-                currentFindFilesCommand.SaveFileOutput = saveFileOutput;
-                i += max1Arg.Count();
-            }
-            else if (arg == "--instructions")
-            {
-                var instructions = GetInputOptionArgs(i + 1, args);
-                if (instructions.Count() == 0)
-                {
-                    throw new InputException($"Missing instructions for {arg}");
-                }
-                currentFindFilesCommand.InstructionsList.AddRange(instructions);
-                i += instructions.Count();
-            }
-            else if (arg == "--save-output")
-            {
-                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-                var saveOutput = max1Arg.FirstOrDefault() ?? DefaultSaveOutputTemplate;
-                currentFindFilesCommand.SaveOutput = saveOutput;
-                i += max1Arg.Count();
-            }
-            else if (arg == "--built-in-functions")
-            {
-                currentFindFilesCommand.UseBuiltInFunctions = true;
-            }
-            else if (arg == "--threads")
-            {
-                var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
-                currentFindFilesCommand.ThreadCount = ValidateInt(arg, countStr, "thread count");
-            }
-            else if (arg == "--exclude")
+            else if (arg == "--exclude" && currentFindFilesCommand != null)
             {
                 var patterns = GetInputOptionArgs(i + 1, args);
                 if (patterns.Count() == 0)
@@ -306,6 +273,39 @@ class CommandLineOptions
                 currentFindFilesCommand.ExcludeFileNamePatternList.AddRange(asRegExs);
                 currentFindFilesCommand.ExcludeGlobs.AddRange(asGlobs);
                 i += patterns.Count();
+            }
+            else if (arg == "--save-file-output")
+            {
+                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+                var saveFileOutput = max1Arg.FirstOrDefault() ?? DefaultSaveFileOutputTemplate;
+                currentCommand.SaveFileOutput = saveFileOutput;
+                i += max1Arg.Count();
+            }
+            else if (arg == "--instructions")
+            {
+                var instructions = GetInputOptionArgs(i + 1, args);
+                if (instructions.Count() == 0)
+                {
+                    throw new InputException($"Missing instructions for {arg}");
+                }
+                currentCommand.InstructionsList.AddRange(instructions);
+                i += instructions.Count();
+            }
+            else if (arg == "--save-output")
+            {
+                var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+                var saveOutput = max1Arg.FirstOrDefault() ?? DefaultSaveOutputTemplate;
+                currentCommand.SaveOutput = saveOutput;
+                i += max1Arg.Count();
+            }
+            else if (arg == "--built-in-functions")
+            {
+                currentCommand.UseBuiltInFunctions = true;
+            }
+            else if (arg == "--threads")
+            {
+                var countStr = i + 1 < args.Count() ? args.ElementAt(++i) : null;
+                currentCommand.ThreadCount = ValidateInt(arg, countStr, "thread count");
             }
             else if (arg.StartsWith("--"))
             {

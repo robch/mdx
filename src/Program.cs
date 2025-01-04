@@ -40,7 +40,7 @@ class Program
             return 0;
         }
 
-        var threadCountMax = commandLineOptions.Commands.OfType<FindFilesCommand>().Max(x => x.ThreadCount);
+        var threadCountMax = commandLineOptions.Commands.Max(x => x.ThreadCount);
         var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
 
         var allTasks = new List<Task<string>>();
