@@ -43,26 +43,21 @@ class Program
         var threadCountMax = commandLineOptions.Commands.OfType<FindFilesCommand>().Max(x => x.ThreadCount);
         var parallelism = threadCountMax > 0 ? threadCountMax : Environment.ProcessorCount;
 
-        var tasks = new List<Task<string>>();
+        var allTasks = new List<Task<string>>();
         var throttler = new SemaphoreSlim(parallelism);
 
         foreach (var command in commandLineOptions.Commands)
         {
-            bool delayOutputToApplyInstructions;
-            List<Task<string>> tasksThisCommand;
+            bool delayOutputToApplyInstructions = command.InstructionsList.Any();
 
-            var findFileCommand = command as FindFilesCommand;
-            if (findFileCommand != null)
-            {
-                HandleFindFileCommand(commandLineOptions, findFileCommand, tasks, throttler, out delayOutputToApplyInstructions, out tasksThisCommand);
-            }
-            else
-            {
-                delayOutputToApplyInstructions = false;
-                tasksThisCommand = new();
-            }
+            var findFilesCommand = command as FindFilesCommand;
+            var tasksThisCommand = findFilesCommand != null
+                ? HandleFindFileCommand(commandLineOptions, findFilesCommand, throttler, delayOutputToApplyInstructions)
+                : new();
 
-            var shouldSaveOutput = !string.IsNullOrEmpty(findFileCommand.SaveOutput);
+            allTasks.AddRange(tasksThisCommand);
+
+            var shouldSaveOutput = !string.IsNullOrEmpty(command.SaveOutput);
             if (shouldSaveOutput || delayOutputToApplyInstructions)
             {
                 await Task.WhenAll(tasksThisCommand.ToArray());
@@ -70,36 +65,35 @@ class Program
 
                 if (delayOutputToApplyInstructions)
                 {
-                    commandOutput = AiInstructionProcessor.ApplyAllInstructions(findFileCommand.InstructionsList, commandOutput, findFileCommand.UseBuiltInFunctions);
+                    commandOutput = AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, commandOutput, command.UseBuiltInFunctions);
                     ConsoleHelpers.PrintLine(commandOutput);
                 }
 
                 if (shouldSaveOutput)
                 {
-                    var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", findFileCommand.SaveOutput);
+                    var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", command.SaveOutput);
                     File.WriteAllText(saveFileName, commandOutput);
                 }
             }
         }
 
-        await Task.WhenAll(tasks.ToArray());
+        await Task.WhenAll(allTasks.ToArray());
         ConsoleHelpers.PrintStatusErase();
 
         return 0;
     }
 
-    private static void HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFileCommand, List<Task<string>> tasks, SemaphoreSlim throttler, out bool delayOutputToApplyInstructions, out List<Task<string>> tasksThisCommand)
+    private static List<Task<string>> HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFilesCommand, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
     {
         var files = FileHelpers.FindMatchingFiles(
-            findFileCommand.Globs,
-            findFileCommand.ExcludeGlobs,
-            findFileCommand.ExcludeFileNamePatternList,
-            findFileCommand.IncludeFileContainsPatternList,
-            findFileCommand.ExcludeFileContainsPatternList)
+            findFilesCommand.Globs,
+            findFilesCommand.ExcludeGlobs,
+            findFilesCommand.ExcludeFileNamePatternList,
+            findFilesCommand.IncludeFileContainsPatternList,
+            findFilesCommand.ExcludeFileContainsPatternList)
             .ToList();
 
-        delayOutputToApplyInstructions = findFileCommand.InstructionsList.Any();
-        tasksThisCommand = new List<Task<string>>();
+        var tasks = new List<Task<string>>();
         foreach (var file in files)
         {
             var onlyOneFile = files.Count == 1 && commandLineOptions.Commands.Count == 1;
@@ -110,14 +104,14 @@ class Program
                 file,
                 throttler,
                 wrapInMarkdown,
-                findFileCommand.IncludeLineContainsPatternList,
-                findFileCommand.IncludeLineCountBefore,
-                findFileCommand.IncludeLineCountAfter,
-                findFileCommand.IncludeLineNumbers,
-                findFileCommand.RemoveAllLineContainsPatternList,
-                findFileCommand.FileInstructionsList,
-                findFileCommand.UseBuiltInFunctions,
-                findFileCommand.SaveFileOutput);
+                findFilesCommand.IncludeLineContainsPatternList,
+                findFilesCommand.IncludeLineCountBefore,
+                findFilesCommand.IncludeLineCountAfter,
+                findFilesCommand.IncludeLineNumbers,
+                findFilesCommand.RemoveAllLineContainsPatternList,
+                findFilesCommand.FileInstructionsList,
+                findFilesCommand.UseBuiltInFunctions,
+                findFilesCommand.SaveFileOutput);
 
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
@@ -128,8 +122,9 @@ class Program
                 });
 
             tasks.Add(taskToAdd);
-            tasksThisCommand.Add(taskToAdd);
         }
+
+        return tasks;
     }
 
     private static void PrintBanner()
