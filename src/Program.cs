@@ -17,7 +17,7 @@ class Program
             if (ex != null)
             {
                 PrintException(ex);
-                PrintUsage();
+                PrintUsage(ex.GetCommand());
                 return 2;
             }
             else
@@ -140,49 +140,78 @@ class Program
         if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
     }
 
-    private static void PrintUsage()
+    private static void PrintUsage(string command = "")
     {
         var processorCount = Environment.ProcessorCount;
-        ConsoleHelpers.PrintLine(
-            "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
-            "OPTIONS\n\n" +
-            "  --contains REGEX               Match only files and lines that contain the specified regex pattern\n\n" +
-            "  --file-contains REGEX          Match only files that contain the specified regex pattern\n" +
-            "  --file-not-contains REGEX      Exclude files that contain the specified regex pattern\n" +
-            "  --exclude PATTERN              Exclude files that match the specified pattern\n\n" +
-            "  --line-contains REGEX          Match only lines that contain the specified regex pattern\n" +
-            "  --lines-before N               Include N lines before matching lines (default 0)\n" +
-            "  --lines-after N                Include N lines after matching lines (default 0)\n" +
-            "  --lines N                      Include N lines both before and after matching lines\n\n" +
-            "  --line-numbers                 Include line numbers in the output\n" +
-            "  --remove-all-lines REGEX       Remove lines that contain the specified regex pattern\n\n" +
-            "  --built-in-functions           Enable built-in functions in AI CLI (file system access)\n" +
-            "  --instructions \"...\"           Apply the specified instructions to all output using AI CLI\n" +
-            "  --file-instructions \"...\"      Apply the specified instructions to each file using AI CLI\n" +
-            "  --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n\n" +
-            $"  --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-            "  --save-file-output FILENAME    Save file output to the specified file (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
-            "  --save-output FILENAME         Save the entire output to the specified file\n\n" +
-            "  --save-options FILENAME        Save the current options to the specified file\n\n" +
-            "  @ARGUMENTS\n\n" +
-            "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
-            "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
-            "EXAMPLES\n\n" +
-            "  mdcc file1.cs\n" +
-            "  mdcc file1.md file2.md\n" +
-            "  mdcc @@filelist.txt\n\n" +
-            "  mdcc \"src/**/*.cs\" \"*.md\"\n" +
-            "  mdcc \"src/**/*.js\" --contains \"export\"\n" +
-            "  mdcc \"src/**\" --contains \"(?i)LLM\" --lines 2\n" +
-            "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
-            "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
-            "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
-            "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
-            "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md\n" +
-            "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\"\n" +
-            "  mdcc \"**/*\" --cs-file-instructions \"Only keep public methods\"\n" +
-            "  mdcc README.md \"**/*.cs\" --instructions \"Output only an updated README.md\""
-        );
+
+        if (command == "web search")
+        {
+            ConsoleHelpers.PrintLine(
+                "USAGE: mdcc web search \"TERMS\" [...]\n\n" +
+                "OPTIONS:\n\n" +
+                "  --headless       Run in headless mode (default: false)\n" +
+                "  --strip          Strip HTML tags from downloaded content (default: false)\n" +
+                "  --save [FOLDER]  Save downloaded content to disk\n" +
+                "\nSEARCH OPTIONS:\n\n" +
+                "  --bing           Use Bing search engine\n" +
+                "  --google         Use Google search engine (default)\n" +
+                "  --get            Download content from search results (default: false)\n" +
+                "  --max NUMBER     Maximum number of search results (default: 10)"
+                );
+        }
+        else if (command == "web get")
+        {
+            ConsoleHelpers.PrintLine(
+                "USAGE: mdcc web get \"URL\" [...]\n\n" +
+                "OPTIONS:\n\n" +
+                "  --headless       Run in headless mode (default: false)\n" +
+                "  --strip          Strip HTML tags from downloaded content (default: false)\n" +
+                "  --save [FOLDER]  Save downloaded content to disk"
+                );
+        }
+        else
+        {
+            ConsoleHelpers.PrintLine(
+                "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
+                "OPTIONS:\n\n" +
+                "  --contains REGEX               Match only files and lines that contain the specified regex pattern\n\n" +
+                "  --file-contains REGEX          Match only files that contain the specified regex pattern\n" +
+                "  --file-not-contains REGEX      Exclude files that contain the specified regex pattern\n" +
+                "  --exclude PATTERN              Exclude files that match the specified pattern\n\n" +
+                "  --line-contains REGEX          Match only lines that contain the specified regex pattern\n" +
+                "  --lines-before N               Include N lines before matching lines (default 0)\n" +
+                "  --lines-after N                Include N lines after matching lines (default 0)\n" +
+                "  --lines N                      Include N lines both before and after matching lines\n\n" +
+                "  --line-numbers                 Include line numbers in the output\n" +
+                "  --remove-all-lines REGEX       Remove lines that contain the specified regex pattern\n\n" +
+                "  --built-in-functions           Enable built-in functions in AI CLI (file system access)\n" +
+                "  --instructions \"...\"           Apply the specified instructions to all output using AI CLI\n" +
+                "  --file-instructions \"...\"      Apply the specified instructions to each file using AI CLI\n" +
+                "  --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n\n" +
+                $"  --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
+                "  --save-file-output FILENAME    Save file output to the specified file (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
+                "  --save-output FILENAME         Save the entire output to the specified file\n\n" +
+                "  --save-options FILENAME        Save the current options to the specified file\n\n" +
+                "  @ARGUMENTS\n\n" +
+                "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
+                "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
+                "EXAMPLES\n\n" +
+                "  mdcc file1.cs\n" +
+                "  mdcc file1.md file2.md\n" +
+                "  mdcc @@filelist.txt\n\n" +
+                "  mdcc \"src/**/*.cs\" \"*.md\"\n" +
+                "  mdcc \"src/**/*.js\" --contains \"export\"\n" +
+                "  mdcc \"src/**\" --contains \"(?i)LLM\" --lines 2\n" +
+                "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
+                "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
+                "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
+                "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
+                "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md\n" +
+                "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\"\n" +
+                "  mdcc \"**/*\" --cs-file-instructions \"Only keep public methods\"\n" +
+                "  mdcc README.md \"**/*.cs\" --instructions \"Output only an updated README.md\""
+                );
+        }
     }
 
     private static void PrintSavedOptionFiles(List<string> filesSaved)

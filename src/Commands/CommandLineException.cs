@@ -18,4 +18,9 @@ internal class CommandLineException : Exception
     public CommandLineException(string message) : base(message)
     {
     }
+
+    virtual public string GetCommand()
+    {
+        return "";
+    }
 }

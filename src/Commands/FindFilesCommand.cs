@@ -21,10 +21,6 @@ class FindFilesCommand : Command
 
         RemoveAllLineContainsPatternList = new List<Regex>();
         FileInstructionsList = new List<Tuple<string, string>>();
-        InstructionsList = new List<string>();
-        UseBuiltInFunctions = false;
-        
-        ThreadCount = 0;
     }
 
     override public bool IsEmpty()

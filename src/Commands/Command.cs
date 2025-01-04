@@ -8,6 +8,13 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 abstract class Command
 {
+    public Command()
+    {
+        InstructionsList = new List<string>();
+        UseBuiltInFunctions = false;
+        ThreadCount = 0;
+    }
+
     abstract public bool IsEmpty();
 
     public List<string> InstructionsList;
