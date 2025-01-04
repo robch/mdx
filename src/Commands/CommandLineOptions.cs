@@ -216,7 +216,7 @@ class CommandLineOptions
         {
             // ignore --and ... used when combining @@ files
         }
-        if (arg == "--debug")
+        else if (arg == "--debug")
         {
             commandLineOptions.Debug = true;
         }
