@@ -7,6 +7,14 @@ using System.Text.RegularExpressions;
 
 class FileHelpers
 {
+    public static void EnsureDirectoryExists(string folder)
+    {
+        if (!Directory.Exists(folder))
+        {
+            Directory.CreateDirectory(folder);
+        }
+    }
+
     public static bool IsFileMatch(string fileName, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
     {
         var checkContent = includeFileContainsPatternList.Any() || excludeFileContainsPatternList.Any();
@@ -208,4 +216,39 @@ class FileHelpers
         return sizeFormatted;
     }
 
+    public static string GenerateUniqueFileNameFromUrl(string url, string saveToFolder)
+    {
+        FileHelpers.EnsureDirectoryExists(saveToFolder);
+
+        var uri = new Uri(url);
+        var path = uri.Host + uri.AbsolutePath + uri.Query;
+
+        var parts = path.Split(_invalidFileNameCharsForWeb, StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim())
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .ToArray();
+
+        var check = Path.Combine(saveToFolder, string.Join("-", parts));
+        if (!File.Exists(check)) return check;
+
+        while (true)
+        {
+            var guidPart = Guid.NewGuid().ToString().Substring(0, 8);
+            var fileTimePart = DateTime.Now.ToFileTimeUtc().ToString();
+            var tryThis = check + "-" + fileTimePart + "-" + guidPart;
+            if (!File.Exists(tryThis)) return tryThis;
+        }
+    }
+
+    private static char[] GetInvalidFileNameCharsForWeb()
+    {
+        var invalidCharList = Path.GetInvalidFileNameChars().ToList();
+        for (char c = (char)0; c < 128; c++)
+        {
+            if (!char.IsLetterOrDigit(c)) invalidCharList.Add(c);
+        }
+        return invalidCharList.Distinct().ToArray();
+    }
+
+    private static char[] _invalidFileNameCharsForWeb = GetInvalidFileNameCharsForWeb();
 }

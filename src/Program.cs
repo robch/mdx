@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
 using Microsoft.Playwright;
 
 class Program
@@ -529,7 +527,7 @@ class Program
 
         var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
 
-        var urls = await GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, headless);
+        var urls = await PlaywrightHelpers.GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, headless);
         if (urls.Count == 0)
         {
             var message = $"{searchSectionHeader}\n\nNo results found\n";
@@ -560,48 +558,12 @@ class Program
         return tasks;
     }
 
-    private static async Task<List<string>> GetWebSearchResultUrlsAsync(string searchEngine, string query, int maxResults, bool headless)
-    {
-        // Initialize Playwright
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless });
-        var context = await browser.NewContextAsync();
-        var page = await context.NewPageAsync();
-
-        // Determine the search URL based on the chosen search engine
-        var searchUrl = searchEngine == "bing"
-            ? $"https://www.bing.com/search?q={Uri.EscapeDataString(query)}"
-            : $"https://www.google.com/search?q={Uri.EscapeDataString(query)}";
-
-        // Navigate to the search engine
-        await page.GotoAsync(searchUrl);
-
-        // Extract search result URLs
-        var urls = (searchEngine == "google")
-            ? await ExtractGoogleSearchResults(page, maxResults)
-            : await ExtractBingSearchResults(page, maxResults);
-
-        return urls;
-    }
-
     private static async Task<string> GetFormattedPageContentFromUrlAsync(string url, bool stripHtml, string saveToFolder, bool headless)
     {
         try
         {
-            // Initialize Playwright
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless });
-            var context = await browser.NewContextAsync();
-            var page = await context.NewPageAsync();
+            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, headless);
 
-            // Navigate to the URL
-            await page.GotoAsync(url);
-
-            // Fetch the page content and title
-            var content = await FetchPageContent(page, url, stripHtml, saveToFolder);
-            var title = await page.TitleAsync();
-
-            // Wrap the content in markdown
             var sb = new StringBuilder();
             sb.AppendLine($"## {title}\n");
             sb.AppendLine($"url: {url}\n");
@@ -652,202 +614,4 @@ class Program
 
         return tasks;
     }
-
-    private static async Task<List<string>> ExtractGoogleSearchResults(IPage page, int maxResults)
-    {
-        var urls = new List<string>();
-        while (urls.Count < maxResults)
-        {
-            var elements = await page.QuerySelectorAllAsync("div#search a[href]");
-            foreach (var element in elements)
-            {
-                var href = await element.GetAttributeAsync("href");
-                if (href != null && href.StartsWith("http") && !href.Contains("google"))
-                {
-                    if (!urls.Contains(href))
-                    {
-                        urls.Add(href);
-                    }
-                }
-                if (urls.Count >= maxResults) break;
-            }
-
-            if (urls.Count >= maxResults) break;
-
-            var nextButton = await page.QuerySelectorAsync("a#pnnext");
-            if (nextButton != null)
-            {
-                await nextButton.ClickAsync();
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            }
-            else
-            {
-                break;
-            }
-        }
-        return urls.Take(maxResults).ToList();
-    }
-
-    private static async Task<List<string>> ExtractBingSearchResults(IPage page, int maxResults)
-    {
-        var urls = new List<string>();
-        while (urls.Count < maxResults)
-        {
-            var elements = await page.QuerySelectorAllAsync("li.b_algo a[href]");
-            foreach (var element in elements)
-            {
-                var href = await element.GetAttributeAsync("href");
-                if (href != null && href.StartsWith("http"))
-                {
-                    if (!urls.Contains(href))
-                    {
-                        urls.Add(href);
-                    }
-                }
-                if (urls.Count >= maxResults) break;
-            }
-
-            if (urls.Count >= maxResults) break;
-
-            var nextButton = await page.QuerySelectorAsync("a.sb_pagN");
-            if (nextButton != null)
-            {
-                await nextButton.ClickAsync();
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            }
-            else
-            {
-                break;
-            }
-        }
-        return urls.Take(maxResults).ToList();
-    }
-
-    private static async Task<string> FetchPageContent(IPage page, string url, bool stripHtml, string saveToFolder)
-    {
-        try
-        {
-            // Navigate to the URL
-            await page.GotoAsync(url);
-
-            // Get the main content text
-            var content = await FetchPageContentWithRetries(page);
-
-            if (content.Contains("Rate limit is exceeded. Try again in"))
-            {
-                // Rate limit exceeded, wait and try again
-                var seconds = int.Parse(content.Split("Try again in ")[1].Split(" seconds.")[0]);
-                await Task.Delay(seconds * 1000);
-                return await FetchPageContent(page, url, stripHtml, saveToFolder);
-            }
-
-            if (stripHtml)
-            {
-                content = StripHtmlContent(content);
-            }
-
-            if (!string.IsNullOrEmpty(saveToFolder))
-            {
-                var fileName = GenerateUniqueFileNameFromUrl(url, saveToFolder);
-                File.WriteAllText(fileName, content);
-            }
-
-            return content;
-        }
-        catch (Exception ex)
-        {
-            return $"Error fetching content from {url}: {ex.Message}\n{ex.StackTrace}";
-        }
-    }
-
-    private static async Task<string> FetchPageContentWithRetries(IPage page, int retries = 3)
-    {
-        var tryCount = retries + 1;
-        while (true)
-        {
-            try
-            {
-                return await page.ContentAsync();
-            }
-            catch (Exception ex)
-            {
-                var rethrow = --tryCount == 0 || !ex.Message.Contains("navigating");
-                if (rethrow) throw;
-                await Task.Delay(1000);
-            }
-        }
-    }
-
-    private static string StripHtmlContent(string html)
-    {
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
-
-        var innerText = WebUtility.HtmlDecode(doc.DocumentNode.InnerText);
-        var innerTextLines = innerText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-        var lines = new List<string>();
-        var blanks = new List<string>();
-        foreach (var line in innerTextLines)
-        {
-            var trimmed = line.Trim(new[] { ' ', '\t', '\r', '\n', '\v', '\f', '\u00A0', '\u200B' });
-            if (string.IsNullOrEmpty(trimmed))
-            {
-                blanks.Add(line);
-                continue;
-            }
-
-            // Only insert one blank line at a time
-            var addBlanks = Math.Min(blanks.Count, 1);
-            while (addBlanks-- > 0) lines.Add(string.Empty);
-            blanks.Clear();
-
-            lines.Add(line);
-        }
-        return string.Join(Environment.NewLine, lines);
-    }
-
-    private static string GenerateUniqueFileNameFromUrl(string url, string saveToFolder)
-    {
-        EnsureDirectoryExists(saveToFolder);
-
-        var uri = new Uri(url);
-        var path = uri.Host + uri.AbsolutePath + uri.Query;
-
-        var parts = path.Split(_invalidFileNameCharsForWeb, StringSplitOptions.RemoveEmptyEntries)
-            .Select(p => p.Trim())
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .ToArray();
-
-        var check = Path.Combine(saveToFolder, string.Join("-", parts));
-        if (!File.Exists(check)) return check;
-
-        while (true)
-        {
-            var guidPart = Guid.NewGuid().ToString().Substring(0, 8);
-            var fileTimePart = DateTime.Now.ToFileTimeUtc().ToString();
-            var tryThis = check + "-" + fileTimePart + "-" + guidPart;
-            if (!File.Exists(tryThis)) return tryThis;
-        }
-    }
-
-    private static void EnsureDirectoryExists(string folder)
-    {
-        if (!Directory.Exists(folder))
-        {
-            Directory.CreateDirectory(folder);
-        }
-    }
-
-    private static char[] GetInvalidFileNameCharsForWeb()
-    {
-        var invalidCharList = Path.GetInvalidFileNameChars().ToList();
-        for (char c = (char)0; c < 128; c++)
-        {
-            if (!char.IsLetterOrDigit(c)) invalidCharList.Add(c);
-        }
-        return invalidCharList.Distinct().ToArray();
-    }
-
-    private static char[] _invalidFileNameCharsForWeb = GetInvalidFileNameCharsForWeb();
 }
