@@ -400,7 +400,7 @@ class CommandLineOptions
     {
         bool parsed = true;
 
-        if (arg == "--save-file-output")
+        if (arg == "--save-file-output" || arg == "--save-web-page-output" || arg == "--save-page-output")
         {
             var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
             var saveFileOutput = max1Arg.FirstOrDefault() ?? DefaultSaveFileOutputTemplate;

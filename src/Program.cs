@@ -259,6 +259,7 @@ class Program
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
         var headless = command.Headless;
+        var saveWebPageOutput = command.SaveFileOutput;
 
         var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
 
@@ -279,14 +280,16 @@ class Program
 
         foreach (var url in urls)
         {
-            var getFormattedPageContentTask = GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
-            tasks.Add(delayOutputToApplyInstructions
-                ? getFormattedPageContentTask
-                : getFormattedPageContentTask.ContinueWith(t =>
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, saveWebPageOutput);
+            var taskToAdd = delayOutputToApplyInstructions
+                ? getCheckSaveTask
+                : getCheckSaveTask.ContinueWith(t =>
                 {
                     ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
                     return t.Result;
-                }));
+                });
+
+            tasks.Add(taskToAdd);
         }
 
         return tasks;
@@ -298,6 +301,7 @@ class Program
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
         var headless = command.Headless;
+        var saveWebPageOutput = command.SaveFileOutput;
 
         var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
         if (badUrls.Any())
@@ -311,31 +315,22 @@ class Program
         var tasks = new List<Task<string>>();
         foreach (var url in urls)
         {
-            var getFormattedPageContentTask = GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
-            tasks.Add(delayOutputToApplyInstructions
-                ? getFormattedPageContentTask
-                : getFormattedPageContentTask.ContinueWith(t =>
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, saveWebPageOutput);
+            var taskToAdd = delayOutputToApplyInstructions
+                ? getCheckSaveTask
+                : getCheckSaveTask.ContinueWith(t =>
                 {
                     ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
                     return t.Result;
-                }));
+                });
+
+            tasks.Add(taskToAdd);
         }
 
         return tasks;
     }
 
-    private static Task<string> GetCheckSaveFileContentAsync(
-        string fileName,
-        SemaphoreSlim throttler,
-        bool wrapInMarkdown,
-        List<Regex> includeLineContainsPatternList,
-        int includeLineCountBefore,
-        int includeLineCountAfter,
-        bool includeLineNumbers,
-        List<Regex> removeAllLineContainsPatternList,
-        List<Tuple<string, string>> fileInstructionsList,
-        bool useBuiltInFunctions,
-        string saveFileOutput)
+    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
     {
         var getCheckSaveFileContent = new Func<string>(() =>
             GetCheckSaveFileContent(
@@ -369,17 +364,7 @@ class Program
         });
     }
 
-    private static string GetCheckSaveFileContent(
-        string fileName,
-        bool wrapInMarkdown,
-        List<Regex> includeLineContainsPatternList,
-        int includeLineCountBefore,
-        int includeLineCountAfter,
-        bool includeLineNumbers,
-        List<Regex> removeAllLineContainsPatternList,
-        List<Tuple<string, string>> fileInstructionsList,
-        bool useBuiltInFunctions,
-        string saveFileOutput)
+    private static string GetCheckSaveFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
     {
         try
         {
@@ -410,16 +395,7 @@ class Program
         }
     }
 
-    private static string GetFinalFileContent(
-        string fileName,
-        bool wrapInMarkdown,
-        List<Regex> includeLineContainsPatternList,
-        int includeLineCountBefore,
-        int includeLineCountAfter,
-        bool includeLineNumbers,
-        List<Regex> removeAllLineContainsPatternList,
-        List<Tuple<string, string>> fileInstructionsList,
-        bool useBuiltInFunctions)
+    private static string GetFinalFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions)
     {
         var formatted = GetFormattedFileContent(
             fileName,
@@ -449,14 +425,7 @@ class Program
             fileName == fileNameCriteria;
     }
 
-    private static string GetFormattedFileContent(
-        string fileName,
-        bool wrapInMarkdown,
-        List<Regex> includeLineContainsPatternList,
-        int includeLineCountBefore,
-        int includeLineCountAfter,
-        bool includeLineNumbers,
-        List<Regex> removeAllLineContainsPatternList)
+    private static string GetFormattedFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList)
     {
         try
         {
@@ -516,14 +485,7 @@ class Program
         return string.Join('\n', lines.Select((line, index) => $"{index + 1}: {line}"));
     }
 
-    private static string GetContentFilteredAndFormatted(
-        string content,
-        List<Regex> includeLineContainsPatternList,
-        int includeLineCountBefore,
-        int includeLineCountAfter,
-        bool includeLineNumbers,
-        List<Regex> removeAllLineContainsPatternList,
-        string backticks)
+    private static string GetContentFilteredAndFormatted(string content, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, string backticks)
     {
         // Find the matching lines/indices (line numbers are 1-based, indices are 0-based)
         var allLines = content.Split('\n');
@@ -583,6 +545,43 @@ class Program
         }
 
         return string.Join("\n", output);
+    }
+
+    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless, string saveWebPageOutput)
+    {
+        try
+        {
+            ConsoleHelpers.PrintStatus($"Processing: {url} ...");
+            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, headless);
+
+            if (!string.IsNullOrEmpty(saveWebPageOutput))
+            {
+                var fileName = FileHelpers.GenerateUniqueFileNameFromUrl(url, saveToFolder ?? "web-pages");
+                var saveFileName = FileHelpers.GetFileNameFromTemplate(fileName, saveWebPageOutput);
+                File.WriteAllText(saveFileName, finalContent);
+                ConsoleHelpers.PrintStatus($"Saving to: {saveFileName} ... Done!");
+            }
+
+            return finalContent;
+        }
+        finally
+        {
+            ConsoleHelpers.PrintStatusErase();
+        }
+    }
+
+    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless)
+    {
+        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
+
+        var pageInstructions = new List<Tuple<string, string>>(); // TODO: Enable `--web-page-instructions`
+        var instructionsForThisPage = new List<string>(); // TODO: Filter pageInstructions by URL host part
+
+        var afterInstructions = instructionsForThisPage.Any()
+            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisPage, formatted, false)
+            : formatted;
+
+        return afterInstructions;
     }
 
     private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless)
