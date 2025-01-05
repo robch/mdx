@@ -380,7 +380,7 @@ class CommandLineOptions
         }
         else if (arg == "--get" && command != null)
         {
-            command.DownloadContent = true;
+            command.GetContent = true;
         }
         else if (arg == "--max" && command != null)
         {

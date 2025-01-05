@@ -5,7 +5,7 @@ abstract class WebCommand : Command
     public string SaveFolder { get; set; }
     public bool UseBing { get; set; }
     public bool UseGoogle { get; set; }
-    public bool DownloadContent { get; set; }
+    public bool GetContent { get; set; }
     public int MaxResults { get; set; }
 
     public WebCommand()
@@ -15,7 +15,7 @@ abstract class WebCommand : Command
         SaveFolder = null;
         UseBing = false;
         UseGoogle = true;
-        DownloadContent = false;
+        GetContent = false;
         MaxResults = 10;
     }
 }
