@@ -87,50 +87,6 @@ class Program
         return 0;
     }
 
-    private static List<Task<string>> HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFilesCommand, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
-    {
-        var files = FileHelpers.FindMatchingFiles(
-            findFilesCommand.Globs,
-            findFilesCommand.ExcludeGlobs,
-            findFilesCommand.ExcludeFileNamePatternList,
-            findFilesCommand.IncludeFileContainsPatternList,
-            findFilesCommand.ExcludeFileContainsPatternList)
-            .ToList();
-
-        var tasks = new List<Task<string>>();
-        foreach (var file in files)
-        {
-            var onlyOneFile = files.Count == 1 && commandLineOptions.Commands.Count == 1;
-            var skipMarkdownWrapping = onlyOneFile && FileConverters.CanConvert(file);
-            var wrapInMarkdown = !skipMarkdownWrapping; ;
-
-            var getCheckSaveTask = GetCheckSaveFileContentAsync(
-                file,
-                throttler,
-                wrapInMarkdown,
-                findFilesCommand.IncludeLineContainsPatternList,
-                findFilesCommand.IncludeLineCountBefore,
-                findFilesCommand.IncludeLineCountAfter,
-                findFilesCommand.IncludeLineNumbers,
-                findFilesCommand.RemoveAllLineContainsPatternList,
-                findFilesCommand.FileInstructionsList,
-                findFilesCommand.UseBuiltInFunctions,
-                findFilesCommand.SaveFileOutput);
-
-            var taskToAdd = delayOutputToApplyInstructions
-                ? getCheckSaveTask
-                : getCheckSaveTask.ContinueWith(t =>
-                {
-                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
-                    return t.Result;
-                });
-
-            tasks.Add(taskToAdd);
-        }
-
-        return tasks;
-    }
-
     private static void PrintBanner()
     {
         ConsoleHelpers.PrintLine(
@@ -248,6 +204,124 @@ class Program
         {
             ConsoleHelpers.PrintLine("USAGE: mdcc @@" + firstFileSaved);
         }
+    }
+
+    private static List<Task<string>> HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFilesCommand, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
+    {
+        var files = FileHelpers.FindMatchingFiles(
+            findFilesCommand.Globs,
+            findFilesCommand.ExcludeGlobs,
+            findFilesCommand.ExcludeFileNamePatternList,
+            findFilesCommand.IncludeFileContainsPatternList,
+            findFilesCommand.ExcludeFileContainsPatternList)
+            .ToList();
+
+        var tasks = new List<Task<string>>();
+        foreach (var file in files)
+        {
+            var onlyOneFile = files.Count == 1 && commandLineOptions.Commands.Count == 1;
+            var skipMarkdownWrapping = onlyOneFile && FileConverters.CanConvert(file);
+            var wrapInMarkdown = !skipMarkdownWrapping; ;
+
+            var getCheckSaveTask = GetCheckSaveFileContentAsync(
+                file,
+                throttler,
+                wrapInMarkdown,
+                findFilesCommand.IncludeLineContainsPatternList,
+                findFilesCommand.IncludeLineCountBefore,
+                findFilesCommand.IncludeLineCountAfter,
+                findFilesCommand.IncludeLineNumbers,
+                findFilesCommand.RemoveAllLineContainsPatternList,
+                findFilesCommand.FileInstructionsList,
+                findFilesCommand.UseBuiltInFunctions,
+                findFilesCommand.SaveFileOutput);
+
+            var taskToAdd = delayOutputToApplyInstructions
+                ? getCheckSaveTask
+                : getCheckSaveTask.ContinueWith(t =>
+                {
+                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
+                    return t.Result;
+                });
+
+            tasks.Add(taskToAdd);
+        }
+
+        return tasks;
+    }
+
+    private static async Task<List<Task<string>>> HandleWebSearchCommandAsync(CommandLineOptions commandLineOptions, WebSearchCommand command, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
+    {
+        var searchEngine = command.UseBing ? "bing" : "google";
+        var query = string.Join(" ", command.Terms);
+        var maxResults = command.MaxResults;
+        var getContent = command.GetContent;
+        var stripHtml = command.StripHtml;
+        var saveToFolder = command.SaveFolder;
+        var headless = command.Headless;
+
+        var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
+
+        var urls = await PlaywrightHelpers.GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, headless);
+        var searchSection = urls.Count == 0
+            ? $"{searchSectionHeader}\n\nNo results found\n"
+            : $"{searchSectionHeader}\n\n" + string.Join("\n", urls) + "\n";
+
+        if (!delayOutputToApplyInstructions) ConsoleHelpers.PrintLine(searchSection);
+
+        if (urls.Count == 0 || !getContent)
+        {
+            return new List<Task<string>>() { Task.FromResult(searchSection) };
+        }
+
+        var tasks = new List<Task<string>>();
+        tasks.Add(Task.FromResult(searchSection));
+
+        foreach (var url in urls)
+        {
+            var getFormattedPageContentTask = GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
+            tasks.Add(delayOutputToApplyInstructions
+                ? getFormattedPageContentTask
+                : getFormattedPageContentTask.ContinueWith(t =>
+                {
+                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
+                    return t.Result;
+                }));
+        }
+
+        return tasks;
+    }
+
+    private static List<Task<string>> HandleWebGetCommand(CommandLineOptions commandLineOptions, WebGetCommand command, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
+    {
+        var urls = command.Urls;
+        var stripHtml = command.StripHtml;
+        var saveToFolder = command.SaveFolder;
+        var headless = command.Headless;
+
+        var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
+        if (badUrls.Any())
+        {
+            var message = (badUrls.Count == 1)
+                ? $"Invalid URL: {badUrls[0]}"
+                : "Invalid URLs:\n" + string.Join(Environment.NewLine, badUrls.Select(url => "  " + url));
+            return new List<Task<string>>() { Task.FromResult(message) };
+        }
+
+        var tasks = new List<Task<string>>();
+        foreach (var url in urls)
+        {
+            var getFormattedPageContentTask = GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
+            tasks.Add(delayOutputToApplyInstructions
+                ? getFormattedPageContentTask
+                : getFormattedPageContentTask.ContinueWith(t =>
+                {
+                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
+                    return t.Result;
+                }));
+        }
+
+        return tasks;
     }
 
     private static Task<string> GetCheckSaveFileContentAsync(
@@ -511,54 +585,7 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static async Task<List<Task<string>>> HandleWebSearchCommandAsync(
-        CommandLineOptions commandLineOptions,
-        WebSearchCommand command,
-        SemaphoreSlim throttler,
-        bool delayOutputToApplyInstructions)
-    {
-        var searchEngine = command.UseBing ? "bing" : "google";
-        var query = string.Join(" ", command.Terms);
-        var maxResults = command.MaxResults;
-        var getContent = command.GetContent;
-        var stripHtml = command.StripHtml;
-        var saveToFolder = command.SaveFolder;
-        var headless = command.Headless;
-
-        var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
-
-        var urls = await PlaywrightHelpers.GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, headless);
-        if (urls.Count == 0)
-        {
-            var message = $"{searchSectionHeader}\n\nNo results found\n";
-            return new List<Task<string>>() { Task.FromResult(message) };
-        }
-
-        var searchSection = $"{searchSectionHeader}\n\n" + string.Join("\n", urls) + "\n\n";
-        if (!getContent)
-        {
-            return new List<Task<string>>() { Task.FromResult(searchSection) };
-        }
-
-        var tasks = new List<Task<string>>();
-        tasks.Add(Task.FromResult(searchSection));
-
-        foreach (var url in urls)
-        {
-            var getFormattedPageContentTask = GetFormattedPageContentFromUrlAsync(url, stripHtml, saveToFolder, headless);
-            tasks.Add(delayOutputToApplyInstructions
-                ? getFormattedPageContentTask
-                : getFormattedPageContentTask.ContinueWith(t =>
-                {
-                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
-                    return t.Result;
-                }));
-        }
-
-        return tasks;
-    }
-
-    private static async Task<string> GetFormattedPageContentFromUrlAsync(string url, bool stripHtml, string saveToFolder, bool headless)
+    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless)
     {
         try
         {
@@ -577,41 +604,5 @@ class Program
         {
             return $"## Error fetching {url}\n\n{ex.Message}\n{ex.StackTrace}";
         }
-    }
-
-    private static List<Task<string>> HandleWebGetCommand(
-        CommandLineOptions commandLineOptions,
-        WebGetCommand command,
-        SemaphoreSlim throttler,
-        bool delayOutputToApplyInstructions)
-    {
-        var urls = command.Urls;
-        var stripHtml = command.StripHtml;
-        var saveToFolder = command.SaveFolder;
-        var headless = command.Headless;
-
-        var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
-        if (badUrls.Any())
-        {
-            var message = (badUrls.Count == 1)
-                ? $"Invalid URL: {badUrls[0]}"
-                : "Invalid URLs:\n" + string.Join(Environment.NewLine, badUrls.Select(url => "  " + url));
-            return new List<Task<string>>() { Task.FromResult(message) };
-        }
-
-        var tasks = new List<Task<string>>();
-        foreach (var url in urls)
-        {
-            var getFormattedPageContentTask = GetFormattedPageContentFromUrlAsync(url, stripHtml, saveToFolder, headless);
-            tasks.Add(delayOutputToApplyInstructions
-                ? getFormattedPageContentTask
-                : getFormattedPageContentTask.ContinueWith(t =>
-                {
-                    ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
-                    return t.Result;
-                }));
-        }
-
-        return tasks;
     }
 }
