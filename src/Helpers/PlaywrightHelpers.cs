@@ -157,19 +157,27 @@ class PlaywrightHelpers
         }
     }
 
-    private static async Task<string> FetchPageContentWithRetries(IPage page, int retries = 3)
+    private static async Task<string> FetchPageContentWithRetries(IPage page, int timeoutInMs = 10000, int retries = 3)
     {
+        var timeoutTime = DateTime.Now.AddMilliseconds(timeoutInMs);
+
         var tryCount = retries + 1;
         while (true)
         {
             try
             {
-                return await page.ContentAsync();
+                var waitForLoadTask = page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                var delayTask = Task.Delay((int)timeoutTime.Subtract(DateTime.Now).TotalMilliseconds);
+                await Task.WhenAny(waitForLoadTask, delayTask);
+
+                var content = await page.ContentAsync();
+                return content;
             }
             catch (Exception ex)
             {
                 var rethrow = --tryCount == 0 || !ex.Message.Contains("navigating");
                 if (rethrow) throw;
+
                 await Task.Delay(1000);
             }
         }
