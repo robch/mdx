@@ -1,14 +1,18 @@
 # MDCC - Markdown Context Creator CLI
 
-MDCC is a command-line tool that takes file pattern inputs and outputs the contents of those files in a markdown-friendly format. It offers various options to include or exclude files and lines based on regular expressions, line numbers, and other criteria.
+MDCC is a command-line tool that helps build markdown files from various sources. It can process files, search the web, and apply AI processing to create markdown content. The tool supports file and line filtering, line formatting, AI processing, and output options. It can be used to create markdown files for documentation, research, and other purposes.
 
 ## Features
+- Integrates AI processing for applying instructions to files, pages, or command outputs.
 - Supports glob patterns for specifying multiple files.
 - Outputs filenames as markdown headers followed by content in code blocks.
 - Handles relative and absolute file paths efficiently.
 - Allows filtering of files and lines based on regular expressions.
 - Provides options to include or exclude specific lines and add line numbers.
 - Capable of handling multiple threads for file processing.
+- Supports web search and retrieval with markdown formatting.
+- Allows headless browsing and HTML stripping for web content.
+- Enables saving output and configuration options to specified files.
 
 ## Installation
 To build the project, ensure you have .NET SDK 8.0 installed. Then, navigate to the project directory and run:

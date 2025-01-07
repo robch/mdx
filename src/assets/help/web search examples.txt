@@ -14,11 +14,11 @@
 
   EXAMPLE 4: Apply AI multi-step instructions
 
-    mdcc web search "how to fly kite" --page-instructions @step1-instructions.txt @step2-instructions.txt
+    mdcc web search "how to fly kite" --get --strip --page-instructions @step1-instructions.txt @step2-instructions.txt
 
   EXAMPLE 5: Apply AI to the final output
 
-    mdcc web search "how to fly kite" --instructions "Create a markdown summary from all pages"
+    mdcc web search "how to fly kite" --max 2 --get --strip --instructions "Create a markdown summary from all pages"
 
 SEE ALSO
 
