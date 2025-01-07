@@ -14,4 +14,9 @@ class WebSearchCommand : WebCommand
     {
         return !Terms.Any();
     }
+
+    override public string GetCommandName()
+    {
+        return "web search";
+    }
 }

@@ -23,7 +23,7 @@ class Program
             }
             else
             {
-                PrintUsage();
+                PrintUsage(commandLineOptions.HelpRequested);
                 return 1;
             }
         }
@@ -96,7 +96,7 @@ class Program
 
     private static void PrintException(CommandLineException ex)
     {
-        var printMessage = !string.IsNullOrEmpty(ex.Message) && !(ex is CommandLineHelpRequestedException);
+        var printMessage = !string.IsNullOrEmpty(ex.Message);
         if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
     }
 
@@ -108,68 +108,91 @@ class Program
         {
             ConsoleHelpers.PrintLine(
                 "USAGE: mdcc web search \"TERMS\" [...]\n\n" +
-                "OPTIONS:\n\n" +
-                "  --headless       Run in headless mode (default: false)\n" +
-                "  --strip          Strip HTML tags from downloaded content (default: false)\n" +
-                "  --save [FOLDER]  Save downloaded content to disk\n" +
-                "\nSEARCH OPTIONS:\n\n" +
-                "  --bing           Use Bing search engine\n" +
-                "  --google         Use Google search engine (default)\n" +
-                "  --get            Download content from search results (default: false)\n" +
-                "  --max NUMBER     Maximum number of search results (default: 10)"
+                "OPTIONS\n" +
+                "\n  BROWSER/HTML\n\n" +
+                "    --headless                         Run in headless mode (default: false)\n" +
+                "    --strip                            Strip HTML tags from downloaded content (default: false)\n" +
+                "\n  SEARCH ENGINE\n\n" +    
+                "    --bing                             Use Bing search engine\n" +
+                "    --google                           Use Google search engine (default)\n" +
+                "    --get                              Download content from search results (default: false)\n" +
+                "    --max NUMBER                       Maximum number of search results (default: 10)\n" +
+                "\n  AI PROCESSING\n\n" +    
+                "    --page-instructions \"...\"          Apply the specified instructions to each page (uses AI CLI)\n" +
+                "    --SITE-page-instructions \"...\"     Apply the specified instructions to each page (for matching SITEs)\n" +
+                "\n" +    
+                "    --instructions \"...\"               Apply the specified instructions to command output (uses AI CLI)\n" +
+                "\n" +            
+                "    --built-in-functions               Enable built-in functions (AI CLI can use file system)\n" +
+                $"    --threads N                        Limit the number of concurrent file processing threads (default {processorCount})\n" +
+                "\n  OUTPUT\n\n" +        
+                "    --save-page-output [FILE]          Save each web page output to the specified template file\n" +
+                "                                       (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
+                "\n" +
+                "    --save-output [FILE]               Save command output to the specified template file\n" +
+                "    --save-options [FILE]              Save current options to the specified file"
                 );
         }
         else if (command == "web get")
         {
             ConsoleHelpers.PrintLine(
                 "USAGE: mdcc web get \"URL\" [...]\n\n" +
-                "OPTIONS:\n\n" +
-                "  --headless       Run in headless mode (default: false)\n" +
-                "  --strip          Strip HTML tags from downloaded content (default: false)\n" +
-                "  --save [FOLDER]  Save downloaded content to disk"
+                "OPTIONS\n" +
+                "\n  BROWSER/HTML\n\n" +
+                "    --headless                         Run in headless mode (default: false)\n" +
+                "    --strip                            Strip HTML tags from downloaded content (default: false)\n" +
+                "\n  AI PROCESSING\n\n" +
+                "    --page-instructions \"...\"          Apply the specified instructions to each page (uses AI CLI)\n" +
+                "    --SITE-page-instructions \"...\"     Apply the specified instructions to each page (for matching SITEs)\n" +
+                "\n" +     
+                "    --instructions \"...\"               Apply the specified instructions to command output (uses AI CLI)\n" +
+                "\n" +             
+                "    --built-in-functions               Enable built-in functions (AI CLI can use file system)\n" +
+                $"    --threads N                        Limit the number of concurrent file processing threads (default {processorCount})\n" +
+                "\n  OUTPUT\n\n" +
+                "    --save-page-output [FILE]          Save each web page output to the specified template file\n" +
+                "                                       (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
+                "\n" +
+                "    --save-output [FILE]               Save command output to the specified template file\n" +
+                "    --save-options [FILE]              Save current options to the specified file"
                 );
         }
         else
         {
             ConsoleHelpers.PrintLine(
-                "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n\n" +
-                "OPTIONS:\n\n" +
-                "  --contains REGEX               Match only files and lines that contain the specified regex pattern\n\n" +
-                "  --file-contains REGEX          Match only files that contain the specified regex pattern\n" +
-                "  --file-not-contains REGEX      Exclude files that contain the specified regex pattern\n" +
-                "  --exclude PATTERN              Exclude files that match the specified pattern\n\n" +
-                "  --line-contains REGEX          Match only lines that contain the specified regex pattern\n" +
-                "  --lines-before N               Include N lines before matching lines (default 0)\n" +
-                "  --lines-after N                Include N lines after matching lines (default 0)\n" +
-                "  --lines N                      Include N lines both before and after matching lines\n\n" +
-                "  --line-numbers                 Include line numbers in the output\n" +
-                "  --remove-all-lines REGEX       Remove lines that contain the specified regex pattern\n\n" +
-                "  --built-in-functions           Enable built-in functions in AI CLI (file system access)\n" +
-                "  --instructions \"...\"           Apply the specified instructions to all output using AI CLI\n" +
-                "  --file-instructions \"...\"      Apply the specified instructions to each file using AI CLI\n" +
-                "  --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n\n" +
-                $"  --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n\n" +
-                "  --save-file-output FILENAME    Save file output to the specified file (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
-                "  --save-output FILENAME         Save the entire output to the specified file\n\n" +
-                "  --save-options FILENAME        Save the current options to the specified file\n\n" +
-                "  @ARGUMENTS\n\n" +
-                "    Arguments starting with @ (e.g. @file) will use file content as argument.\n" +
-                "    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.\n\n" +
-                "EXAMPLES\n\n" +
-                "  mdcc file1.cs\n" +
-                "  mdcc file1.md file2.md\n" +
-                "  mdcc @@filelist.txt\n\n" +
-                "  mdcc \"src/**/*.cs\" \"*.md\"\n" +
-                "  mdcc \"src/**/*.js\" --contains \"export\"\n" +
-                "  mdcc \"src/**\" --contains \"(?i)LLM\" --lines 2\n" +
-                "  mdcc \"src/**\" --file-not-contains \"TODO\" --exclude \"drafts/*\"\n" +
-                "  mdcc \"*.cs\" --remove-all-lines \"^\\s*//\"\n\n" +
-                "  mdcc \"**/*.json\" --file-instructions \"convert the JSON to YAML\"\n" +
-                "  mdcc \"**/*.json\" --file-instructions @instructions.md --threads 5\n" +
-                "  mdcc \"**/*.cs\" --file-instructions @step1-instructions.md @step2-instructions.md\n" +
-                "  mdcc \"**/*.py\" --file-instructions @instructions --save-file-output \"{filePath}/{fileBase}-{timeStamp}.md\"\n" +
-                "  mdcc \"**/*\" --cs-file-instructions \"Only keep public methods\"\n" +
-                "  mdcc README.md \"**/*.cs\" --instructions \"Output only an updated README.md\""
+                "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n" +
+                "   OR: mdcc web search \"TERMS\" [...]\n" +
+                "   OR: mdcc web get \"URL\" [...]\n\n" +
+                "OPTIONS\n" +
+                "\n  FILE/LINE FILTERING\n\n" +
+                "    --exclude PATTERN              Exclude files that match the specified pattern\n" +
+                "\n" +
+                "    --contains REGEX               Match only files and lines that contain the specified regex pattern\n" +
+                "    --file-contains REGEX          Match only files that contain the specified regex pattern\n" +
+                "    --file-not-contains REGEX      Exclude files that contain the specified regex pattern\n" +
+                "\n" +
+                "    --line-contains REGEX          Match only lines that contain the specified regex pattern\n" +
+                "    --remove-all-lines REGEX       Remove lines that contain the specified regex pattern\n" +
+                "\n  LINE FORMATTING\n\n" +
+                "    --lines N                      Include N lines both before and after matching lines\n" +
+                "    --lines-after N                Include N lines after matching lines (default 0)\n" +
+                "    --lines-before N               Include N lines before matching lines (default 0)\n" +
+                "\n" +
+                "    --line-numbers                 Include line numbers in the output\n" +
+                "\n  AI PROCESSING\n\n" +
+                "    --file-instructions \"...\"      Apply the specified instructions to each file (uses AI CLI)\n" +
+                "    --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n" +
+                "\n" +
+                "    --instructions \"...\"           Apply the specified instructions to command output (uses AI CLI)\n" +
+                "\n" +
+                "    --built-in-functions           Enable built-in functions (AI CLI can use file system)\n" +
+                $"    --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n" +
+                "\n  OUTPUT\n\n" +
+                "    --save-page-output [FILE]      Save each file output to the specified template file\n" +
+                "                                   (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
+                "\n" +
+                "    --save-output [FILE]           Save command output to the specified template file\n" +
+                "    --save-options [FILE]          Save current options to the specified file"
                 );
         }
     }
@@ -259,7 +282,9 @@ class Program
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
         var headless = command.Headless;
-        var saveWebPageOutput = command.SaveFileOutput;
+        var pageInstructionsList = command.PageInstructionsList;
+        var useBuiltInFunctions = command.UseBuiltInFunctions;
+        var savePageOutput = command.SavePageOutput;
 
         var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
 
@@ -280,7 +305,7 @@ class Program
 
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, saveWebPageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, pageInstructionsList, useBuiltInFunctions, savePageOutput);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -301,7 +326,9 @@ class Program
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
         var headless = command.Headless;
-        var saveWebPageOutput = command.SaveFileOutput;
+        var pageInstructionsList = command.PageInstructionsList;
+        var useBuiltInFunctions = command.UseBuiltInFunctions;
+        var savePageOutput = command.SavePageOutput;
 
         var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
         if (badUrls.Any())
@@ -315,7 +342,7 @@ class Program
         var tasks = new List<Task<string>>();
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, saveWebPageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, pageInstructionsList, useBuiltInFunctions, savePageOutput);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -547,17 +574,17 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless, string saveWebPageOutput)
+    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string savePageOutput)
     {
         try
         {
             ConsoleHelpers.PrintStatus($"Processing: {url} ...");
-            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, headless);
+            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, headless, pageInstructionsList, useBuiltInFunctions);
 
-            if (!string.IsNullOrEmpty(saveWebPageOutput))
+            if (!string.IsNullOrEmpty(savePageOutput))
             {
                 var fileName = FileHelpers.GenerateUniqueFileNameFromUrl(url, saveToFolder ?? "web-pages");
-                var saveFileName = FileHelpers.GetFileNameFromTemplate(fileName, saveWebPageOutput);
+                var saveFileName = FileHelpers.GetFileNameFromTemplate(fileName, savePageOutput);
                 File.WriteAllText(saveFileName, finalContent);
                 ConsoleHelpers.PrintStatus($"Saving to: {saveFileName} ... Done!");
             }
@@ -570,18 +597,27 @@ class Program
         }
     }
 
-    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless)
+    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions)
     {
         var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
 
-        var pageInstructions = new List<Tuple<string, string>>(); // TODO: Enable `--web-page-instructions`
-        var instructionsForThisPage = new List<string>(); // TODO: Filter pageInstructions by URL host part
+        var instructionsForThisPage = pageInstructionsList
+            .Where(x => WebPageMatchesInstructionsCriteria(url, x.Item2))
+            .Select(x => x.Item1)
+            .ToList();
 
         var afterInstructions = instructionsForThisPage.Any()
             ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisPage, formatted, false)
             : formatted;
 
         return afterInstructions;
+    }
+
+    private static bool WebPageMatchesInstructionsCriteria(string url, string webPageCriteria)
+    {
+        return string.IsNullOrEmpty(webPageCriteria) ||
+            url.Contains($".{webPageCriteria}") ||
+            url == webPageCriteria;
     }
 
     private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless)

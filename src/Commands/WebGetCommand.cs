@@ -12,6 +12,12 @@ class WebGetCommand : WebCommand
 
     override public bool IsEmpty()
     {
+        
         return !Urls.Any();
+    }
+
+    override public string GetCommandName()
+    {
+        return "web get";
     }
 }

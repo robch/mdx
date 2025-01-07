@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 abstract class WebCommand : Command
 {
     public WebCommand()
@@ -9,6 +12,8 @@ abstract class WebCommand : Command
         UseGoogle = true;
         GetContent = false;
         MaxResults = 10;
+
+        PageInstructionsList = new();
     }
 
     public bool Headless { get; set; }
@@ -18,4 +23,8 @@ abstract class WebCommand : Command
     public bool UseGoogle { get; set; }
     public bool GetContent { get; set; }
     public int MaxResults { get; set; }
+
+    public List<Tuple<string, string>> PageInstructionsList;
+
+    public string SavePageOutput { get; set; }
 }

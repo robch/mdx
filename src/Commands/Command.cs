@@ -16,11 +16,11 @@ abstract class Command
     }
 
     abstract public bool IsEmpty();
+    abstract public string GetCommandName();
 
     public List<string> InstructionsList;
     public bool UseBuiltInFunctions;
 
-    public string SaveFileOutput;
     public string SaveOutput;
 
     public int ThreadCount;

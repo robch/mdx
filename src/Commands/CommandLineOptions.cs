@@ -10,6 +10,7 @@ class CommandLineOptions
 {
     public const string DefaultOptionsFileName = "options";
     public const string DefaultSaveFileOutputTemplate = "{filePath}/{fileBase}-output.md";
+    public const string DefaultSavePageOutputTemplate = "{filePath}/{fileBase}-output.md";
     public const string DefaultSaveOutputTemplate = "output.md";
 
     public CommandLineOptions()
@@ -24,6 +25,8 @@ class CommandLineOptions
 
     public bool Debug;
     public bool Verbose;
+
+    public string HelpRequested;
     public List<Command> Commands;
 
     public string[] AllOptions;
@@ -167,12 +170,17 @@ class CommandLineOptions
             }
 
             var parsedOption = ParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
-                ParseSharedCommandOptions(command, args, ref i, arg) ||
                 ParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
-                ParseWebCommandOptions(command as WebCommand, args, ref i, arg);
+                ParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
+                ParseSharedCommandOptions(command, args, ref i, arg);
             if (parsedOption) continue;
 
-            if (arg.StartsWith("--"))
+            if (arg == "--help")
+            {
+                commandLineOptions.HelpRequested = command.GetCommandName();
+                break;
+            }
+            else if (arg.StartsWith("--"))
             {
                 throw InvalidArgException(command, arg);
             }
@@ -192,6 +200,11 @@ class CommandLineOptions
             {
                 throw InvalidArgException(command, arg);
             }
+        }
+
+        if (string.IsNullOrEmpty(commandLineOptions.HelpRequested) && command != null && command.IsEmpty())
+        {
+            commandLineOptions.HelpRequested = command.GetCommandName();
         }
 
         if (command != null && !command.IsEmpty())
@@ -223,10 +236,6 @@ class CommandLineOptions
         else if (arg == "--verbose")
         {
             commandLineOptions.Verbose = true;
-        }
-        else if (arg == "--help")
-        {
-            throw new CommandLineHelpRequestedException();
         }
         else if (arg == "--save-options")
         {
@@ -342,6 +351,13 @@ class CommandLineOptions
             command.ExcludeGlobs.AddRange(asGlobs);
             i += patterns.Count();
         }
+        else if (arg == "--save-file-output")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            var saveFileOutput = max1Arg.FirstOrDefault() ?? DefaultSaveFileOutputTemplate;
+            command.SaveFileOutput = saveFileOutput;
+            i += max1Arg.Count();
+        }
         else
         {
             parsed = false;
@@ -354,38 +370,63 @@ class CommandLineOptions
     {
         bool parsed = true;
 
-        if (arg == "--headless" && command != null)
+        if (command == null)
+        {
+            parsed = false;
+        }
+        else if (arg == "--headless")
         {
             command.Headless = true;
         }
-        else if (arg == "--strip" && command != null)
+        else if (arg == "--strip")
         {
             command.StripHtml = true;
         }
-        else if (arg == "--save" && command != null)
+        else if (arg == "--save-page-folder")
         {
             var max1Arg = GetInputOptionArgs(i + 1, args, 1);
-            command.SaveFolder = max1Arg.FirstOrDefault();
+            command.SaveFolder = max1Arg.FirstOrDefault() ?? "web-pages";
             i += max1Arg.Count();
         }
-        else if (arg == "--bing" && command != null)
+        else if (arg == "--bing")
         {
             command.UseBing = true;
             command.UseGoogle = false;
         }
-        else if (arg == "--google" && command != null)
+        else if (arg == "--google")
         {
             command.UseGoogle = true;
             command.UseBing = false;
         }
-        else if (arg == "--get" && command != null)
+        else if (arg == "--get")
         {
             command.GetContent = true;
         }
-        else if (arg == "--max" && command != null)
+        else if (arg == "--max")
         {
             var max1Arg = GetInputOptionArgs(i + 1, args, 1);
             command.MaxResults = ValidateInt(arg, max1Arg.FirstOrDefault(), "max results");
+            i += max1Arg.Count();
+        }
+        else if (arg.StartsWith("--") && arg.EndsWith("page-instructions"))
+        {
+            var instructions = GetInputOptionArgs(i + 1, args);
+            if (instructions.Count() == 0)
+            {
+                throw new CommandLineException($"Missing instructions for {arg}");
+            }
+            var webPageCriteria = arg != "--page-instructions"
+                ? arg.Substring(2, arg.Length - 20)
+                : string.Empty;
+            var withCriteria = instructions.Select(x => Tuple.Create(x, webPageCriteria));
+            command.PageInstructionsList.AddRange(withCriteria);
+            i += instructions.Count();
+        }
+        else if (arg == "--save-page-output" ||arg == "--save-web-output" || arg == "--save-web-page-output")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            var savePageOutput = max1Arg.FirstOrDefault() ?? DefaultSavePageOutputTemplate;
+            command.SavePageOutput = savePageOutput;
             i += max1Arg.Count();
         }
         else
@@ -400,12 +441,9 @@ class CommandLineOptions
     {
         bool parsed = true;
 
-        if (arg == "--save-file-output" || arg == "--save-web-page-output" || arg == "--save-page-output")
+        if (command == null)
         {
-            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-            var saveFileOutput = max1Arg.FirstOrDefault() ?? DefaultSaveFileOutputTemplate;
-            command.SaveFileOutput = saveFileOutput;
-            i += max1Arg.Count();
+            parsed = false;
         }
         else if (arg == "--instructions")
         {

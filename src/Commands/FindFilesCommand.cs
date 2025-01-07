@@ -7,20 +7,20 @@ class FindFilesCommand : Command
 {
     public FindFilesCommand()
     {
-        Globs = new List<string>();
-        ExcludeGlobs = new List<string>();
-        ExcludeFileNamePatternList = new List<Regex>();
+        Globs = new();
+        ExcludeGlobs = new();
+        ExcludeFileNamePatternList = new();
 
-        IncludeFileContainsPatternList = new List<Regex>();
-        ExcludeFileContainsPatternList = new List<Regex>();
+        IncludeFileContainsPatternList = new();
+        ExcludeFileContainsPatternList = new();
 
-        IncludeLineContainsPatternList = new List<Regex>();
+        IncludeLineContainsPatternList = new();
         IncludeLineCountBefore = 0;
         IncludeLineCountAfter = 0;
         IncludeLineNumbers = false;
 
-        RemoveAllLineContainsPatternList = new List<Regex>();
-        FileInstructionsList = new List<Tuple<string, string>>();
+        RemoveAllLineContainsPatternList = new();
+        FileInstructionsList = new();
     }
 
     override public bool IsEmpty()
@@ -39,6 +39,11 @@ class FindFilesCommand : Command
             ThreadCount == 0;
     }
 
+    override public string GetCommandName()
+    {
+        return "";
+    }
+
     public List<string> Globs;
     public List<string> ExcludeGlobs;
     public List<Regex> ExcludeFileNamePatternList;
@@ -50,8 +55,9 @@ class FindFilesCommand : Command
     public int IncludeLineCountBefore;
     public int IncludeLineCountAfter;
     public bool IncludeLineNumbers;
-
     public List<Regex> RemoveAllLineContainsPatternList;
 
     public List<Tuple<string, string>> FileInstructionsList;
+
+    public string SaveFileOutput;
 }
