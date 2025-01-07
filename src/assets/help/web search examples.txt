@@ -1,0 +1,29 @@
+  EXAMPLE 1: Create markdown for web search URLs
+
+    mdcc web search "Rob Chambers Microsoft"
+    mdcc web search "Rob Chambers Microsoft" --bing
+
+  EXAMPLE 2: Create markdown for web page content
+
+    mdcc web search "Rob Chambers Microsoft" --max 5 --get --strip
+    mdcc web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+
+  EXAMPLE 3: Apply AI processing on each web page
+
+    mdcc web search "web components" --get --strip --page-instructions "reformat markdown"
+
+  EXAMPLE 4: Apply AI multi-step instructions
+
+    mdcc web search "how to fly kite" --page-instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 5: Apply AI to the final output
+
+    mdcc web search "how to fly kite" --instructions "Create a markdown summary from all pages"
+
+SEE ALSO
+
+  mdcc help web search
+
+  mdcc help web get
+  mdcc help web get examples
+

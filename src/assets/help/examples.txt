@@ -1,0 +1,46 @@
+  EXAMPLE 1: Create markdown for one or more files
+
+    mdcc BackgroundInfo.docx
+    mdcc Presentation2.pptx
+    mdcc ResearchPaper.pdf
+    mdcc "../plans/*.md"
+
+  EXAMPLE 2: Find files recursively, exclude certain files
+
+    mdcc "**/*.cs" "**/*.md"
+    mdcc "**/*.cs" --exclude "**/bin/" "**/obj/"
+
+  EXAMPLE 3: Filter and format based on file or line content
+
+    mdcc "**/*.js" --file-contains "export"
+    mdcc "**/*.cs" --file-contains "public class"
+    mdcc "**/*.cs" --remove-all-lines "^\s//"
+
+    mdcc "**/*.md" --contains "TODO" --line-numbers
+    mdcc "**/*.md" --contains "(?i)LLM" --lines-after 10
+
+  EXAMPLE 4: Apply AI processing on each found file
+
+    mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
+    mdcc "**/*.json" --file-instructions @instructions.md --threads 5
+
+  EXAMPLE 5: Apply AI to specific file types; multi-step instructions
+
+    mdcc --cs-file-instructions @cs-instructions.txt --md-file-instructions @md-instructions.txt
+    mdcc --file-instructions @step1-instructions.md @step2-instructions.md
+
+  EXAMPLE 6: Apply AI to the final output
+
+    mdcc "**/*.md" --instructions "Create a markdown summary table for each file"
+    mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
+
+SEE ALSO
+
+  mdcc help
+  
+  mdcc help web search
+  mdcc help web search examples
+
+  mdcc help web get
+  mdcc help web get examples
+  

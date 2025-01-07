@@ -151,25 +151,31 @@ class CommandLineOptions
             {
                 var name1 = GetInputOptionArgs(i, args, max: 1).FirstOrDefault();
                 var name2 = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
-                var fullName = $"{name1} {name2}".Trim();
+                var commandName = name1 switch
+                {
+                    "help" => "help",
+                    _ => $"{name1} {name2}".Trim()
+                };
 
-                command = fullName switch
+                command = commandName switch
                 {
                     "web search" => new WebSearchCommand(),
                     "web get" => new WebGetCommand(),
+                    "help" => new HelpCommand(),
                     _ => new FindFilesCommand()
                 };
 
                 var needToRestartLoop = command is not FindFilesCommand;
                 if (needToRestartLoop)
                 {
-                    var skipHowManyExtraArgs = fullName.Count(x => x == ' ');
+                    var skipHowManyExtraArgs = commandName.Count(x => x == ' ');
                     i += skipHowManyExtraArgs;
                     continue;
                 }
             }
 
             var parsedOption = ParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
+                ParseHelpCommandOptions(command as HelpCommand, args, ref i, arg) ||
                 ParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
                 ParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
                 ParseSharedCommandOptions(command, args, ref i, arg);
@@ -183,6 +189,10 @@ class CommandLineOptions
             else if (arg.StartsWith("--"))
             {
                 throw InvalidArgException(command, arg);
+            }
+            else if (command is HelpCommand helpCommand)
+            {
+                commandLineOptions.HelpRequested = $"{commandLineOptions.HelpRequested} {arg}".Trim();
             }
             else if (command is FindFilesCommand findFilesCommand)
             {
@@ -250,6 +260,11 @@ class CommandLineOptions
         }
 
         return parsed;
+    }
+
+    private static bool ParseHelpCommandOptions(HelpCommand helpCommand, string[] args, ref int i, string arg)
+    {
+        return false;
     }
 
     private static bool ParseFindFilesCommandOptions(FindFilesCommand command, string[] args, ref int i, string arg)

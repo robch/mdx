@@ -30,6 +30,14 @@ class Program
 
         ConsoleHelpers.Configure(commandLineOptions.Debug, commandLineOptions.Verbose);
 
+        var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
+        if (helpCommand != null)
+        {
+            PrintBanner();
+            PrintHelpTopic(commandLineOptions.HelpRequested);
+            return 0;
+        }
+
         var shouldSaveOptions = !string.IsNullOrEmpty(commandLineOptions.SaveOptionsTemplate);
         if (shouldSaveOptions)
         {
@@ -89,8 +97,9 @@ class Program
 
     private static void PrintBanner()
     {
+        var programNameUppercase = ProgramName.ToUpper();
         ConsoleHelpers.PrintLine(
-            "MDCC - Markdown Context Creator CLI, Version 1.0.0\n" +
+            $"{programNameUppercase} - Markdown Context Creator CLI, Version 1.0.0\n" +
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
 
@@ -100,101 +109,36 @@ class Program
         if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
     }
 
-    private static void PrintUsage(string command = "")
+    private static void PrintUsage(string command)
     {
-        var processorCount = Environment.ProcessorCount;
+        var validTopic = !string.IsNullOrEmpty(command) && FileHelpers.HasHelpTopic(command);
+        var helpContent = validTopic
+            ? FileHelpers.GetHelpTopicText(command)
+            : FileHelpers.GetHelpTopicText(UsageHelpTopic);
 
-        if (command == "web search")
+        helpContent ??=
+            $"USAGE: {ProgramName} [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n" +
+            $"   OR: {ProgramName} web search \"TERMS\" [...]\n" +
+            $"   OR: {ProgramName} web get \"URL\" [...]";
+
+        ConsoleHelpers.PrintLine(helpContent.TrimEnd());
+    }
+
+    private static void PrintHelpTopic(string topic)
+    {
+        topic ??= UsageHelpTopic;
+
+        var hasHelpTopic = FileHelpers.HasHelpTopic(topic);
+        if (!hasHelpTopic)
         {
             ConsoleHelpers.PrintLine(
-                "USAGE: mdcc web search \"TERMS\" [...]\n\n" +
-                "OPTIONS\n" +
-                "\n  BROWSER/HTML\n\n" +
-                "    --headless                         Run in headless mode (default: false)\n" +
-                "    --strip                            Strip HTML tags from downloaded content (default: false)\n" +
-                "\n  SEARCH ENGINE\n\n" +    
-                "    --bing                             Use Bing search engine\n" +
-                "    --google                           Use Google search engine (default)\n" +
-                "    --get                              Download content from search results (default: false)\n" +
-                "    --max NUMBER                       Maximum number of search results (default: 10)\n" +
-                "\n  AI PROCESSING\n\n" +    
-                "    --page-instructions \"...\"          Apply the specified instructions to each page (uses AI CLI)\n" +
-                "    --SITE-page-instructions \"...\"     Apply the specified instructions to each page (for matching SITEs)\n" +
-                "\n" +    
-                "    --instructions \"...\"               Apply the specified instructions to command output (uses AI CLI)\n" +
-                "\n" +            
-                "    --built-in-functions               Enable built-in functions (AI CLI can use file system)\n" +
-                $"    --threads N                        Limit the number of concurrent file processing threads (default {processorCount})\n" +
-                "\n  OUTPUT\n\n" +        
-                "    --save-page-output [FILE]          Save each web page output to the specified template file\n" +
-                "                                       (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
-                "\n" +
-                "    --save-output [FILE]               Save command output to the specified template file\n" +
-                "    --save-options [FILE]              Save current options to the specified file"
-                );
+                $"  WARNING: No help topic found for '{topic}'\n\n" +
+                $"      TRY: {ProgramName} help\n");
+            return;
         }
-        else if (command == "web get")
-        {
-            ConsoleHelpers.PrintLine(
-                "USAGE: mdcc web get \"URL\" [...]\n\n" +
-                "OPTIONS\n" +
-                "\n  BROWSER/HTML\n\n" +
-                "    --headless                         Run in headless mode (default: false)\n" +
-                "    --strip                            Strip HTML tags from downloaded content (default: false)\n" +
-                "\n  AI PROCESSING\n\n" +
-                "    --page-instructions \"...\"          Apply the specified instructions to each page (uses AI CLI)\n" +
-                "    --SITE-page-instructions \"...\"     Apply the specified instructions to each page (for matching SITEs)\n" +
-                "\n" +     
-                "    --instructions \"...\"               Apply the specified instructions to command output (uses AI CLI)\n" +
-                "\n" +             
-                "    --built-in-functions               Enable built-in functions (AI CLI can use file system)\n" +
-                $"    --threads N                        Limit the number of concurrent file processing threads (default {processorCount})\n" +
-                "\n  OUTPUT\n\n" +
-                "    --save-page-output [FILE]          Save each web page output to the specified template file\n" +
-                "                                       (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
-                "\n" +
-                "    --save-output [FILE]               Save command output to the specified template file\n" +
-                "    --save-options [FILE]              Save current options to the specified file"
-                );
-        }
-        else
-        {
-            ConsoleHelpers.PrintLine(
-                "USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n" +
-                "   OR: mdcc web search \"TERMS\" [...]\n" +
-                "   OR: mdcc web get \"URL\" [...]\n\n" +
-                "OPTIONS\n" +
-                "\n  FILE/LINE FILTERING\n\n" +
-                "    --exclude PATTERN              Exclude files that match the specified pattern\n" +
-                "\n" +
-                "    --contains REGEX               Match only files and lines that contain the specified regex pattern\n" +
-                "    --file-contains REGEX          Match only files that contain the specified regex pattern\n" +
-                "    --file-not-contains REGEX      Exclude files that contain the specified regex pattern\n" +
-                "\n" +
-                "    --line-contains REGEX          Match only lines that contain the specified regex pattern\n" +
-                "    --remove-all-lines REGEX       Remove lines that contain the specified regex pattern\n" +
-                "\n  LINE FORMATTING\n\n" +
-                "    --lines N                      Include N lines both before and after matching lines\n" +
-                "    --lines-after N                Include N lines after matching lines (default 0)\n" +
-                "    --lines-before N               Include N lines before matching lines (default 0)\n" +
-                "\n" +
-                "    --line-numbers                 Include line numbers in the output\n" +
-                "\n  AI PROCESSING\n\n" +
-                "    --file-instructions \"...\"      Apply the specified instructions to each file (uses AI CLI)\n" +
-                "    --EXT-file-instructions \"...\"  Apply the specified instructions to each file with the specified extension\n" +
-                "\n" +
-                "    --instructions \"...\"           Apply the specified instructions to command output (uses AI CLI)\n" +
-                "\n" +
-                "    --built-in-functions           Enable built-in functions (AI CLI can use file system)\n" +
-                $"    --threads N                    Limit the number of concurrent file processing threads (default {processorCount})\n" +
-                "\n  OUTPUT\n\n" +
-                "    --save-page-output [FILE]      Save each file output to the specified template file\n" +
-                "                                   (e.g. " + CommandLineOptions.DefaultSaveFileOutputTemplate + ")\n" +
-                "\n" +
-                "    --save-output [FILE]           Save command output to the specified template file\n" +
-                "    --save-options [FILE]          Save current options to the specified file"
-                );
-        }
+
+        var helpContent = FileHelpers.GetHelpTopicText(topic);
+        ConsoleHelpers.PrintLine(helpContent.TrimEnd());
     }
 
     private static void PrintSavedOptionFiles(List<string> filesSaved)
@@ -220,12 +164,12 @@ class Program
 
         if (savedAsDefault)
         {
-            ConsoleHelpers.PrintLine("NOTE: These options will be used by default when invoking mdcc in this directory.");
-            ConsoleHelpers.PrintLine("      To stop using these options by default, delete the file: " + firstFileSaved);
+            ConsoleHelpers.PrintLine($"NOTE: These options will be used by default when invoking {ProgramName} in this directory.");
+            ConsoleHelpers.PrintLine($"      To stop using these options by default, delete the file: {firstFileSaved}");
         }
         else
         {
-            ConsoleHelpers.PrintLine("USAGE: mdcc @@" + firstFileSaved);
+            ConsoleHelpers.PrintLine($"USAGE: {ProgramName} @@" + firstFileSaved);
         }
     }
 
@@ -640,4 +584,7 @@ class Program
             return $"## Error fetching {url}\n\n{ex.Message}\n{ex.StackTrace}";
         }
     }
+
+    private const string ProgramName = "mdcc";
+    private const string UsageHelpTopic = "usage";
 }

@@ -58,7 +58,7 @@ OPTIONS
     --instructions "..."           Apply the specified instructions to command output (uses AI CLI)
 
     --built-in-functions           Enable built-in functions (AI CLI can use file system)
-    --threads N                    Limit the number of concurrent file processing threads (default 36)
+    --threads N                    Limit the number of concurrent file processing threads
 
   OUTPUT
 
@@ -99,7 +99,7 @@ OPTIONS
     --instructions "..."               Apply the specified instructions to command output (uses AI CLI)
 
     --built-in-functions               Enable built-in functions (AI CLI can use file system)
-    --threads N                        Limit the number of concurrent file processing threads (default 36)
+    --threads N                        Limit the number of concurrent file processing threads
 
   OUTPUT
 
@@ -133,7 +133,7 @@ OPTIONS
     --instructions "..."               Apply the specified instructions to command output (uses AI CLI)
 
     --built-in-functions               Enable built-in functions (AI CLI can use file system)
-    --threads N                        Limit the number of concurrent file processing threads (default 36)
+    --threads N                        Limit the number of concurrent file processing threads
 
   OUTPUT
 

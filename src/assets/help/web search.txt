@@ -1,0 +1,41 @@
+USAGE: mdcc web search "TERMS" [...]
+
+OPTIONS
+
+  BROWSER/HTML
+
+    --headless                         Run in headless mode (default: false)
+    --strip                            Strip HTML tags from downloaded content (default: false)
+
+  SEARCH ENGINE
+
+    --bing                             Use Bing search engine
+    --google                           Use Google search engine (default)
+    --get                              Download content from search results (default: false)
+    --max NUMBER                       Maximum number of search results (default: 10)
+
+  AI PROCESSING
+
+    --page-instructions "..."          Apply the specified instructions to each page (uses AI CLI)
+    --SITE-page-instructions "..."     Apply the specified instructions to each page (for matching SITEs)
+
+    --instructions "..."               Apply the specified instructions to command output (uses AI CLI)
+
+    --built-in-functions               Enable built-in functions (AI CLI can use file system)
+    --threads N                        Limit the number of concurrent file processing threads
+
+  OUTPUT
+
+    --save-page-output [FILE]          Save each web page output to the specified template file
+                                       (e.g. {filePath}/{fileBase}-output.md)
+
+    --save-output [FILE]               Save command output to the specified template file
+    --save-options [FILE]              Save current options to the specified file
+
+SEE ALSO
+
+  mdcc help web search examples
+
+  mdcc help web get
+  mdcc help web get examples
+  

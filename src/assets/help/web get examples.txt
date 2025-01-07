@@ -1,0 +1,24 @@
+  EXAMPLE 1: Create markdown for web page content
+
+    mdcc web get https://example.com
+    mdcc web get https://mbers.us/bio --strip
+
+  EXAMPLE 2: Apply AI processing on each web page
+
+    mdcc web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
+
+  EXAMPLE 3: Apply AI multi-step instructions
+
+    mdcc web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 4: Apply AI to the final output
+
+    mdcc web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
+
+SEE ALSO
+
+  mdcc help web get
+
+  mdcc help web search
+  mdcc help web search examples
+

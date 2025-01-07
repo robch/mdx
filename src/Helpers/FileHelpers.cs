@@ -240,6 +240,30 @@ class FileHelpers
         }
     }
 
+    public static bool HasHelpTopic(string topic)
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        var resourceName = assembly.GetManifestResourceNames()
+            .FirstOrDefault(name => name.EndsWith($"{topic}.txt", StringComparison.OrdinalIgnoreCase));
+
+        return resourceName != null;
+    }
+
+    public static string GetHelpTopicText(string topic)
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        var resourceName = assembly.GetManifestResourceNames()
+            .FirstOrDefault(name => name.EndsWith($"{topic}.txt", StringComparison.OrdinalIgnoreCase));
+
+        if (resourceName == null) return null;
+
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return null;
+
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
     private static char[] GetInvalidFileNameCharsForWeb()
     {
         var invalidCharList = Path.GetInvalidFileNameChars().ToList();
