@@ -1,4 +1,4 @@
-USAGE: mdcc web get "URL" [...]
+USAGE: mdx web get "URL" [...]
 
 OPTIONS
 
@@ -27,8 +27,8 @@ OPTIONS
 
 SEE ALSO
 
-  mdcc help web get examples
+  mdx help web get examples
 
-  mdcc help web search
-  mdcc help web search examples
+  mdx help web search
+  mdx help web search examples
   

@@ -1,6 +1,6 @@
-# MDCC - Markdown Context Creator CLI
+# MDX - Markdown Context Creator CLI
 
-MDCC is a command-line tool that helps build markdown files from various sources. It can process files, search the web, and apply AI processing to create markdown content. The tool supports file and line filtering, line formatting, AI processing, and output options. It can be used to create markdown files for documentation, research, and other purposes.
+MDX is a command-line tool that helps build markdown files from various sources. It can process files, search the web, and apply AI processing to create markdown content. The tool supports file and line filtering, line formatting, AI processing, and output options. It can be used to create markdown files for documentation, research, and other purposes.
 
 ## Features
 - Integrates AI processing for applying instructions to files, pages, or command outputs.
@@ -23,15 +23,15 @@ dotnet build
 
 ## Usage
 
-`mdcc`
+`mdx`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0
+MDX - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
-   OR: mdcc web search "TERMS" [...]
-   OR: mdcc web get "URL" [...]
+USAGE: mdx [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
+   OR: mdx web search "TERMS" [...]
+   OR: mdx web get "URL" [...]
 
 OPTIONS
 
@@ -74,22 +74,22 @@ OPTIONS
 
 SEE ALSO
 
-  mdcc help examples
+  mdx help examples
 
-  mdcc help web search
-  mdcc help web search examples
+  mdx help web search
+  mdx help web search examples
 
-  mdcc help web get
-  mdcc help web get examples
+  mdx help web get
+  mdx help web get examples
 ```
 
 `mdc web search`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0
+MDX - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdcc web search "TERMS" [...]
+USAGE: mdx web search "TERMS" [...]
 
 OPTIONS
 
@@ -125,19 +125,19 @@ OPTIONS
 
 SEE ALSO
 
-  mdcc help web search examples
+  mdx help web search examples
 
-  mdcc help web get
-  mdcc help web get examples
+  mdx help web get
+  mdx help web get examples
 ```
 
 `mdc web get`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0
+MDX - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdcc web get "URL" [...]
+USAGE: mdx web get "URL" [...]
 
 OPTIONS
 
@@ -166,128 +166,128 @@ OPTIONS
 
 SEE ALSO
 
-  mdcc help web get examples
+  mdx help web get examples
 
-  mdcc help web search
-  mdcc help web search examples
+  mdx help web search
+  mdx help web search examples
 ```
 
-`mdcc help examples`
+`mdx help examples`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0
+MDX - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
   EXAMPLE 1: Create markdown for one or more files
 
-    mdcc BackgroundInfo.docx
-    mdcc Presentation2.pptx
-    mdcc ResearchPaper.pdf
-    mdcc "../plans/*.md"
+    mdx BackgroundInfo.docx
+    mdx Presentation2.pptx
+    mdx ResearchPaper.pdf
+    mdx "../plans/*.md"
 
   EXAMPLE 2: Find files recursively, exclude certain files
 
-    mdcc "**/*.cs" "**/*.md"
-    mdcc "**/*.cs" --exclude "**/bin/" "**/obj/"
+    mdx "**/*.cs" "**/*.md"
+    mdx "**/*.cs" --exclude "**/bin/" "**/obj/"
 
   EXAMPLE 3: Filter and format based on file or line content
 
-    mdcc "**/*.js" --file-contains "export"
-    mdcc "**/*.cs" --file-contains "public class"
-    mdcc "**/*.cs" --remove-all-lines "^\s//"
+    mdx "**/*.js" --file-contains "export"
+    mdx "**/*.cs" --file-contains "public class"
+    mdx "**/*.cs" --remove-all-lines "^\s//"
 
-    mdcc "**/*.md" --contains "TODO" --line-numbers
-    mdcc "**/*.md" --contains "(?i)LLM" --lines-after 10
+    mdx "**/*.md" --contains "TODO" --line-numbers
+    mdx "**/*.md" --contains "(?i)LLM" --lines-after 10
 
   EXAMPLE 4: Apply AI processing on each found file
 
-    mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
-    mdcc "**/*.json" --file-instructions @instructions.md --threads 5
+    mdx "**/*.json" --file-instructions "convert the JSON to YAML"
+    mdx "**/*.json" --file-instructions @instructions.md --threads 5
 
   EXAMPLE 5: Apply AI to specific file types; multi-step instructions
 
-    mdcc --cs-file-instructions @cs-instructions.txt --md-file-instructions @md-instructions.txt
-    mdcc --file-instructions @step1-instructions.md @step2-instructions.md
+    mdx --cs-file-instructions @cs-instructions.txt --md-file-instructions @md-instructions.txt
+    mdx --file-instructions @step1-instructions.md @step2-instructions.md
 
   EXAMPLE 6: Apply AI to the final output
 
-    mdcc "**/*.md" --instructions "Create a markdown summary table for each file"
-    mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
+    mdx "**/*.md" --instructions "Create a markdown summary table for each file"
+    mdx README.md "**/*.cs" --instructions "Output only an updated README.md"
 
 SEE ALSO
 
-  mdcc help
+  mdx help
   
-  mdcc help web search
-  mdcc help web search examples
+  mdx help web search
+  mdx help web search examples
 
-  mdcc help web get
-  mdcc help web get examples
+  mdx help web get
+  mdx help web get examples
 ```
 
-`mdcc help web search examples`
+`mdx help web search examples`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0
+MDX - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
   EXAMPLE 1: Create markdown for web search URLs
 
-    mdcc web search "Rob Chambers Microsoft"
-    mdcc web search "Rob Chambers Microsoft" --bing
+    mdx web search "Rob Chambers Microsoft"
+    mdx web search "Rob Chambers Microsoft" --bing
 
   EXAMPLE 2: Create markdown for web page content
 
-    mdcc web search "Rob Chambers Microsoft" --max 5 --get --strip
-    mdcc web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+    mdx web search "Rob Chambers Microsoft" --max 5 --get --strip
+    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
 
   EXAMPLE 3: Apply AI processing on each web page
 
-    mdcc web search "web components" --get --strip --page-instructions "reformat markdown"
+    mdx web search "web components" --get --strip --page-instructions "reformat markdown"
 
   EXAMPLE 4: Apply AI multi-step instructions
 
-    mdcc web search "how to fly kite" --page-instructions @step1-instructions.txt @step2-instructions.txt
+    mdx web search "how to fly kite" --page-instructions @step1-instructions.txt @step2-instructions.txt
 
   EXAMPLE 5: Apply AI to the final output
 
-    mdcc web search "how to fly kite" --instructions "Create a markdown summary from all pages"
+    mdx web search "how to fly kite" --instructions "Create a markdown summary from all pages"
 
 SEE ALSO
 
-  mdcc help web search
+  mdx help web search
 
-  mdcc help web get
-  mdcc help web get examples
+  mdx help web get
+  mdx help web get examples
 ```
 
-`mdcc help web get examples`
+`mdx help web get examples`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0
+MDX - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
   EXAMPLE 1: Create markdown for web page content
 
-    mdcc web get https://example.com
-    mdcc web get https://mbers.us/bio --strip
+    mdx web get https://example.com
+    mdx web get https://mbers.us/bio --strip
 
   EXAMPLE 2: Apply AI processing on each web page
 
-    mdcc web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
+    mdx web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
 
   EXAMPLE 3: Apply AI multi-step instructions
 
-    mdcc web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
+    mdx web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
 
   EXAMPLE 4: Apply AI to the final output
 
-    mdcc web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
+    mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
 
 SEE ALSO
 
-  mdcc help web get
+  mdx help web get
 
-  mdcc help web search
-  mdcc help web search examples
+  mdx help web search
+  mdx help web search examples
 ```

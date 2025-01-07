@@ -2,7 +2,7 @@ tests:
 
 - name: Test .docx file
   parallelize: true
-  bash: mdcc test.docx
+  bash: mdx test.docx
   expect-regex: |
     # This is a header, of the first kind
     This is text

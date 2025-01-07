@@ -3,8 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>mdcc</RootNamespace>
-    <AssemblyName>mdcc</AssemblyName>
+    <RootNamespace>mdx</RootNamespace>
+    <AssemblyName>mdx</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-USAGE: mdcc web search "TERMS" [...]
+USAGE: mdx web search "TERMS" [...]
 
 OPTIONS
 
@@ -34,8 +34,8 @@ OPTIONS
 
 SEE ALSO
 
-  mdcc help web search examples
+  mdx help web search examples
 
-  mdcc help web get
-  mdcc help web get examples
+  mdx help web get
+  mdx help web get examples
   

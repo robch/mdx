@@ -586,6 +586,6 @@ class Program
         }
     }
 
-    private const string ProgramName = "mdcc";
+    private const string ProgramName = "mdx";
     private const string UsageHelpTopic = "usage";
 }
