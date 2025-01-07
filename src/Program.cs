@@ -433,8 +433,9 @@ class Program
                     var fileInfo = new FileInfo(fileName);
                     var modified = FileHelpers.GetFriendlyLastModified(fileInfo);
                     var size = FileHelpers.GetFriendlySize(fileInfo);
+                    var lang = FileHelpers.GetMarkdownLanguage(fileInfo.Extension);
 
-                    content = $"## {fileName}\n\nModified: {modified}\nSize: {size}\n\n{backticks}\n{content}\n{backticks}\n";
+                    content = $"## {fileName}\n\nModified: {modified}\nSize: {size}\n\n{backticks}{lang}\n{content}\n{backticks}\n";
                 }
                 else
                 {

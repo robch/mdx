@@ -216,6 +216,45 @@ class FileHelpers
         return sizeFormatted;
     }
 
+    public static string GetMarkdownLanguage(string extension)
+    {
+        return extension switch
+        {
+            ".bat" => "batch",
+            ".cpp" => "cpp",
+            ".cs" => "csharp",
+            ".csproj" => "xml",
+            ".css" => "css",
+            ".docx" => "md",
+            ".go" => "go",
+            ".html" => "html",
+            ".java" => "java",
+            ".js" => "javascript",
+            ".json" => "json",
+            ".kt" => "kotlin",
+            ".m" => "objective-c",
+            ".md" => "markdown",
+            ".php" => "php",
+            ".pl" => "perl",
+            ".pdf" => "md",
+            ".pptx" => "md",
+            ".py" => "python",
+            ".r" => "r",
+            ".rb" => "ruby",
+            ".rs" => "rust",
+            ".scala" => "scala",
+            ".sh" => "bash",
+            ".sln" => "xml",
+            ".sql" => "sql",
+            ".swift" => "swift",
+            ".ts" => "typescript",
+            ".xml" => "xml",
+            ".yaml" => "yaml",
+            ".yml" => "yaml",
+            _ => "plaintext"
+        };
+    }
+
     public static string GenerateUniqueFileNameFromUrl(string url, string saveToFolder)
     {
         FileHelpers.EnsureDirectoryExists(saveToFolder);
