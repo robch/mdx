@@ -22,7 +22,7 @@ dotnet build
 `mdcc`
 
 ```plaintext
-MDCC - Markdown Context Creator CLI, Version 1.0.0                                                                               
+MDCC - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
 USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
@@ -67,9 +67,19 @@ OPTIONS
 
     --save-output [FILE]           Save command output to the specified template file
     --save-options [FILE]          Save current options to the specified file
+
+SEE ALSO
+
+  mdcc help examples
+
+  mdcc help web search
+  mdcc help web search examples
+
+  mdcc help web get
+  mdcc help web get examples
 ```
 
-`mdcc web search`
+`mdc web search`
 
 ```plaintext
 MDCC - Markdown Context Creator CLI, Version 1.0.0
@@ -108,9 +118,16 @@ OPTIONS
 
     --save-output [FILE]               Save command output to the specified template file
     --save-options [FILE]              Save current options to the specified file
+
+SEE ALSO
+
+  mdcc help web search examples
+
+  mdcc help web get
+  mdcc help web get examples
 ```
 
-`mdcc web get`
+`mdc web get`
 
 ```plaintext
 MDCC - Markdown Context Creator CLI, Version 1.0.0
@@ -142,4 +159,131 @@ OPTIONS
 
     --save-output [FILE]               Save command output to the specified template file
     --save-options [FILE]              Save current options to the specified file
+
+SEE ALSO
+
+  mdcc help web get examples
+
+  mdcc help web search
+  mdcc help web search examples
+```
+
+`mdcc help examples`
+
+```plaintext
+MDCC - Markdown Context Creator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+  EXAMPLE 1: Create markdown for one or more files
+
+    mdcc BackgroundInfo.docx
+    mdcc Presentation2.pptx
+    mdcc ResearchPaper.pdf
+    mdcc "../plans/*.md"
+
+  EXAMPLE 2: Find files recursively, exclude certain files
+
+    mdcc "**/*.cs" "**/*.md"
+    mdcc "**/*.cs" --exclude "**/bin/" "**/obj/"
+
+  EXAMPLE 3: Filter and format based on file or line content
+
+    mdcc "**/*.js" --file-contains "export"
+    mdcc "**/*.cs" --file-contains "public class"
+    mdcc "**/*.cs" --remove-all-lines "^\s//"
+
+    mdcc "**/*.md" --contains "TODO" --line-numbers
+    mdcc "**/*.md" --contains "(?i)LLM" --lines-after 10
+
+  EXAMPLE 4: Apply AI processing on each found file
+
+    mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
+    mdcc "**/*.json" --file-instructions @instructions.md --threads 5
+
+  EXAMPLE 5: Apply AI to specific file types; multi-step instructions
+
+    mdcc --cs-file-instructions @cs-instructions.txt --md-file-instructions @md-instructions.txt
+    mdcc --file-instructions @step1-instructions.md @step2-instructions.md
+
+  EXAMPLE 6: Apply AI to the final output
+
+    mdcc "**/*.md" --instructions "Create a markdown summary table for each file"
+    mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
+
+SEE ALSO
+
+  mdcc help
+  
+  mdcc help web search
+  mdcc help web search examples
+
+  mdcc help web get
+  mdcc help web get examples
+```
+
+`mdcc help web search examples`
+
+```plaintext
+MDCC - Markdown Context Creator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+  EXAMPLE 1: Create markdown for web search URLs
+
+    mdcc web search "Rob Chambers Microsoft"
+    mdcc web search "Rob Chambers Microsoft" --bing
+
+  EXAMPLE 2: Create markdown for web page content
+
+    mdcc web search "Rob Chambers Microsoft" --max 5 --get --strip
+    mdcc web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+
+  EXAMPLE 3: Apply AI processing on each web page
+
+    mdcc web search "web components" --get --strip --page-instructions "reformat markdown"
+
+  EXAMPLE 4: Apply AI multi-step instructions
+
+    mdcc web search "how to fly kite" --page-instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 5: Apply AI to the final output
+
+    mdcc web search "how to fly kite" --instructions "Create a markdown summary from all pages"
+
+SEE ALSO
+
+  mdcc help web search
+
+  mdcc help web get
+  mdcc help web get examples
+```
+
+`mdcc help web get examples`
+
+```plaintext
+MDCC - Markdown Context Creator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+  EXAMPLE 1: Create markdown for web page content
+
+    mdcc web get https://example.com
+    mdcc web get https://mbers.us/bio --strip
+
+  EXAMPLE 2: Apply AI processing on each web page
+
+    mdcc web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
+
+  EXAMPLE 3: Apply AI multi-step instructions
+
+    mdcc web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 4: Apply AI to the final output
+
+    mdcc web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
+
+SEE ALSO
+
+  mdcc help web get
+
+  mdcc help web search
+  mdcc help web search examples
 ```
