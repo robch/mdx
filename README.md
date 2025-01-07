@@ -1,4 +1,4 @@
-# MDX - Markdown Context Creator CLI
+# MDX - AI-Powered Markdown Generator CLI
 
 MDX is a command-line tool that helps build markdown files from various sources. It can process files, search the web, and apply AI processing to create markdown content. The tool supports file and line filtering, line formatting, AI processing, and output options. It can be used to create markdown files for documentation, research, and other purposes.
 
@@ -26,7 +26,7 @@ dotnet build
 `mdx`
 
 ```plaintext
-MDX - Markdown Context Creator CLI, Version 1.0.0
+MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
 USAGE: mdx [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
@@ -86,7 +86,7 @@ SEE ALSO
 `mdc web search`
 
 ```plaintext
-MDX - Markdown Context Creator CLI, Version 1.0.0
+MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
 USAGE: mdx web search "TERMS" [...]
@@ -134,7 +134,7 @@ SEE ALSO
 `mdc web get`
 
 ```plaintext
-MDX - Markdown Context Creator CLI, Version 1.0.0
+MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
 USAGE: mdx web get "URL" [...]
@@ -175,7 +175,7 @@ SEE ALSO
 `mdx help examples`
 
 ```plaintext
-MDX - Markdown Context Creator CLI, Version 1.0.0
+MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
   EXAMPLE 1: Create markdown for one or more files
@@ -228,7 +228,7 @@ SEE ALSO
 `mdx help web search examples`
 
 ```plaintext
-MDX - Markdown Context Creator CLI, Version 1.0.0
+MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
   EXAMPLE 1: Create markdown for web search URLs
@@ -264,7 +264,7 @@ SEE ALSO
 `mdx help web get examples`
 
 ```plaintext
-MDX - Markdown Context Creator CLI, Version 1.0.0
+MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
   EXAMPLE 1: Create markdown for web page content
