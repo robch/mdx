@@ -1,11 +1,19 @@
-  EXAMPLE 1: Create markdown for web search URLs
+MDX WEB SEARCH
 
-    mdx web search "Rob Chambers Microsoft"
-    mdx web search "Rob Chambers Microsoft" --bing
+  Use the 'mdx web search' command to search the web and create markdown from the results.
 
-  EXAMPLE 2: Create markdown for web page content
+USAGE: mdx web search "TERMS" ["TERMS2" [...]] [...]
 
-    mdx web search "Rob Chambers Microsoft" --max 5 --get --strip
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for web search URL results
+
+    mdx web search "Azure AI"
+    mdx web search "Azure AI" --bing
+
+  EXAMPLE 2: Create markdown for web search result content
+
+    mdx web search "Azure AI" --max 5 --get --strip
     mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
 
   EXAMPLE 3: Apply AI processing on each web page
@@ -23,7 +31,9 @@
 SEE ALSO
 
   mdx help web search
+  mdx help web search options
 
   mdx help web get
   mdx help web get examples
+  mdx help web get options
 

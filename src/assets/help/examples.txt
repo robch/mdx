@@ -1,3 +1,10 @@
+USAGE: mdx FILE1 [FILE2 [...]] [...]
+   OR: mdx PATTERN1 [PATTERN2 [...]] [...]
+   OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
+   OR: mdx web get "URL" ["URL2" [...]] [...]
+
+EXAMPLES
+
   EXAMPLE 1: Create markdown for one or more files
 
     mdx BackgroundInfo.docx
@@ -40,11 +47,13 @@
 
 SEE ALSO
 
-  mdx help
-  
+  mdx help options
+
   mdx help web search
   mdx help web search examples
+  mdx help web search options
 
   mdx help web get
   mdx help web get examples
+  mdx help web get options
   

@@ -99,7 +99,7 @@ class Program
     {
         var programNameUppercase = ProgramName.ToUpper();
         ConsoleHelpers.PrintLine(
-            $"{programNameUppercase} - AI-Powered Markdown Generator CLI, Version 1.0.0\n" +
+            $"{programNameUppercase} - The AI-Powered Markdown Generator CLI, Version 1.0.0\n" +
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
     }
 

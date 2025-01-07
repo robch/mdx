@@ -26,12 +26,122 @@ dotnet build
 `mdx`
 
 ```plaintext
-MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdx [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
-   OR: mdx web search "TERMS" [...]
-   OR: mdx web get "URL" [...]
+Welcome to MDX, the AI-Powered Markdown Generator!
+
+Using MDX, you can:
+
+  - Convert files to markdown
+  - Search the web and convert search results to markdown
+  - Get web pages and convert them to markdown
+
+  AND ... You can apply AI processing to the output!
+
+USAGE: mdx FILE1 [FILE2 [...]] [...]
+   OR: mdx PATTERN1 [PATTERN2 [...]] [...]
+   OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
+   OR: mdx web get "URL" ["URL2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for one or more files
+
+    mdx BackgroundInfo.docx
+    mdx Presentation2.pptx
+    mdx *.pdf
+
+  EXAMPLE 2: Find files recursively and create markdown
+
+    mdx **/*.cs
+
+  EXAMPLE 3: Create markdown from a web search
+
+    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+
+SEE ALSO
+
+  mdx help examples
+  mdx help options
+```
+
+`mdx help examples`
+
+```plaintext
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+USAGE: mdx FILE1 [FILE2 [...]] [...]
+   OR: mdx PATTERN1 [PATTERN2 [...]] [...]
+   OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
+   OR: mdx web get "URL" ["URL2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for one or more files
+
+    mdx BackgroundInfo.docx
+    mdx Presentation2.pptx
+    mdx ResearchPaper.pdf
+    mdx "../plans/*.md"
+
+  EXAMPLE 2: Find files recursively, exclude certain files
+
+    mdx "**/*.cs" "**/*.md"
+    mdx "**/*.cs" --exclude "**/bin/" "**/obj/"
+
+  EXAMPLE 3: Filter and format based on file or line content
+
+    mdx "**/*.js" --file-contains "export"
+    mdx "**/*.cs" --file-contains "public class"
+    mdx "**/*.cs" --remove-all-lines "^\s//"
+
+    mdx "**/*.md" --contains "TODO" --line-numbers
+    mdx "**/*.md" --contains "(?i)LLM" --lines-after 10
+
+  EXAMPLE 4: Apply AI processing on each found file
+
+    mdx "**/*.json" --file-instructions "convert the JSON to YAML"
+    mdx "**/*.json" --file-instructions @instructions.md --threads 5
+
+  EXAMPLE 5: Apply AI to specific file types; multi-step instructions
+
+    mdx --cs-file-instructions @cs-instructions.txt --md-file-instructions @md-instructions.txt
+    mdx --file-instructions @step1-instructions.md @step2-instructions.md
+
+  EXAMPLE 6: Apply AI to the final output
+
+    mdx "**/*.md" --instructions "Create a markdown summary table for each file"
+    mdx README.md "**/*.cs" --instructions "Output only an updated README.md"
+
+  EXAMPLE 7: Save each file output to a specified template file
+
+    mdx "**/*.cs" --save-file-output "outputs/{fileBase}.md"
+
+SEE ALSO
+
+  mdx help options
+
+  mdx help web search
+  mdx help web search examples
+  mdx help web search options
+
+  mdx help web get
+  mdx help web get examples
+  mdx help web get options
+```
+
+`mdx help options`
+
+```plaintext
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+USAGE: mdx FILE1 [FILE2 [...]] [...]
+   OR: mdx PATTERN1 [PATTERN2 [...]] [...]
+   OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
+   OR: mdx web get "URL" ["URL2" [...]] [...]
 
 OPTIONS
 
@@ -78,18 +188,103 @@ SEE ALSO
 
   mdx help web search
   mdx help web search examples
+  mdx help web search options
 
   mdx help web get
   mdx help web get examples
+  mdx help web get options
 ```
 
-`mdc web search`
+`mdx help web search`
 
 ```plaintext
-MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdx web search "TERMS" [...]
+MDX WEB SEARCH
+
+  Use the 'mdx web search' command to search the web and create markdown from the results.
+
+USAGE: mdx web search "TERMS" ["TERMS2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for web search URL results
+
+    mdx web search "Azure AI" --google
+    mdx web search "Azure AI" --bing
+
+  EXAMPLE 2: Create markdown for web search result content
+
+    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+
+SEE ALSO
+
+  mdx help web search examples
+  mdx help web search options
+
+  mdx help web get
+  mdx help web get examples
+  mdx help web get options
+```
+
+`mdx help web search examples`
+
+```plaintext
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+MDX WEB SEARCH
+
+  Use the 'mdx web search' command to search the web and create markdown from the results.
+
+USAGE: mdx web search "TERMS" ["TERMS2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for web search URL results
+
+    mdx web search "Azure AI"
+    mdx web search "Azure AI" --bing
+
+  EXAMPLE 2: Create markdown for web search result content
+
+    mdx web search "Azure AI" --max 5 --get --strip
+    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+
+  EXAMPLE 3: Apply AI processing on each web page
+
+    mdx web search "web components" --get --strip --page-instructions "reformat markdown"
+
+  EXAMPLE 4: Apply AI multi-step instructions
+
+    mdx web search "how to fly kite" --get --strip --page-instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 5: Apply AI to the final output
+
+    mdx web search "how to fly kite" --max 2 --get --strip --instructions "Create a markdown summary from all pages"
+
+SEE ALSO
+
+  mdx help web search
+  mdx help web search options
+
+  mdx help web get
+  mdx help web get examples
+  mdx help web get options
+```
+
+`mdx help web search options`
+
+```plaintext
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+MDX WEB SEARCH
+
+  Use the 'mdx web search' command to search the web and create markdown from the results.
+
+USAGE: mdx web search "TERMS" ["TERMS2" [...]] [...]
 
 OPTIONS
 
@@ -125,19 +320,98 @@ OPTIONS
 
 SEE ALSO
 
+  mdx help web search
   mdx help web search examples
 
   mdx help web get
   mdx help web get examples
+  mdx help web get options
 ```
 
-`mdc web get`
+`mdx help web get`
 
 ```plaintext
-MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdx web get "URL" [...]
+MDX WEB GET
+
+  Use the 'mdx web get' command to create markdown from one or more web pages.
+
+USAGE: mdx web get "URL" ["URL2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown from a web page, keeping HTML tags
+
+    mdx web get "https://learnxinyminutes.com/docs/yaml/"
+
+  EXAMPLE 2: Create markdown from a web page, stripping HTML tags
+
+    mdx web get "https://learnxinyminutes.com/docs/yaml/" --strip
+
+SEE ALSO
+
+  mdx help web get options
+  mdx help web get examples
+
+  mdx help web search
+  mdx help web search examples
+  mdx help web search options
+```
+
+`mdx help web get examples`
+
+```plaintext
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+MDX WEB GET
+
+  Use the 'mdx web get' command to create markdown from one or more web pages.
+
+USAGE: mdx web get "URL" ["URL2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for web page content
+
+    mdx web get https://example.com
+    mdx web get https://mbers.us/bio --strip
+
+  EXAMPLE 2: Apply AI processing on each web page
+
+    mdx web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
+
+  EXAMPLE 3: Apply AI multi-step instructions
+
+    mdx web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 4: Apply AI to the final output
+
+    mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
+
+SEE ALSO
+
+  mdx help web get
+  mdx help web get options
+
+  mdx help web search
+  mdx help web search examples
+  mdx help web search options
+```
+
+`mdx help web get options`
+
+```plaintext
+MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+MDX WEB GET
+
+  Use the 'mdx web get' command to create markdown from one or more web pages.
+
+USAGE: mdx web get "URL" ["URL2" [...]] [...]
 
 OPTIONS
 
@@ -166,128 +440,10 @@ OPTIONS
 
 SEE ALSO
 
+  mdx help web get
   mdx help web get examples
 
   mdx help web search
   mdx help web search examples
-```
-
-`mdx help examples`
-
-```plaintext
-MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
-  EXAMPLE 1: Create markdown for one or more files
-
-    mdx BackgroundInfo.docx
-    mdx Presentation2.pptx
-    mdx ResearchPaper.pdf
-    mdx "../plans/*.md"
-
-  EXAMPLE 2: Find files recursively, exclude certain files
-
-    mdx "**/*.cs" "**/*.md"
-    mdx "**/*.cs" --exclude "**/bin/" "**/obj/"
-
-  EXAMPLE 3: Filter and format based on file or line content
-
-    mdx "**/*.js" --file-contains "export"
-    mdx "**/*.cs" --file-contains "public class"
-    mdx "**/*.cs" --remove-all-lines "^\s//"
-
-    mdx "**/*.md" --contains "TODO" --line-numbers
-    mdx "**/*.md" --contains "(?i)LLM" --lines-after 10
-
-  EXAMPLE 4: Apply AI processing on each found file
-
-    mdx "**/*.json" --file-instructions "convert the JSON to YAML"
-    mdx "**/*.json" --file-instructions @instructions.md --threads 5
-
-  EXAMPLE 5: Apply AI to specific file types; multi-step instructions
-
-    mdx --cs-file-instructions @cs-instructions.txt --md-file-instructions @md-instructions.txt
-    mdx --file-instructions @step1-instructions.md @step2-instructions.md
-
-  EXAMPLE 6: Apply AI to the final output
-
-    mdx "**/*.md" --instructions "Create a markdown summary table for each file"
-    mdx README.md "**/*.cs" --instructions "Output only an updated README.md"
-
-SEE ALSO
-
-  mdx help
-  
-  mdx help web search
-  mdx help web search examples
-
-  mdx help web get
-  mdx help web get examples
-```
-
-`mdx help web search examples`
-
-```plaintext
-MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
-  EXAMPLE 1: Create markdown for web search URLs
-
-    mdx web search "Rob Chambers Microsoft"
-    mdx web search "Rob Chambers Microsoft" --bing
-
-  EXAMPLE 2: Create markdown for web page content
-
-    mdx web search "Rob Chambers Microsoft" --max 5 --get --strip
-    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
-
-  EXAMPLE 3: Apply AI processing on each web page
-
-    mdx web search "web components" --get --strip --page-instructions "reformat markdown"
-
-  EXAMPLE 4: Apply AI multi-step instructions
-
-    mdx web search "how to fly kite" --page-instructions @step1-instructions.txt @step2-instructions.txt
-
-  EXAMPLE 5: Apply AI to the final output
-
-    mdx web search "how to fly kite" --instructions "Create a markdown summary from all pages"
-
-SEE ALSO
-
-  mdx help web search
-
-  mdx help web get
-  mdx help web get examples
-```
-
-`mdx help web get examples`
-
-```plaintext
-MDX - AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
-  EXAMPLE 1: Create markdown for web page content
-
-    mdx web get https://example.com
-    mdx web get https://mbers.us/bio --strip
-
-  EXAMPLE 2: Apply AI processing on each web page
-
-    mdx web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
-
-  EXAMPLE 3: Apply AI multi-step instructions
-
-    mdx web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
-
-  EXAMPLE 4: Apply AI to the final output
-
-    mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
-
-SEE ALSO
-
-  mdx help web get
-
-  mdx help web search
-  mdx help web search examples
+  mdx help web search options
 ```

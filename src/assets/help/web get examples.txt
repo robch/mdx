@@ -1,3 +1,11 @@
+MDX WEB GET
+
+  Use the 'mdx web get' command to create markdown from one or more web pages.
+
+USAGE: mdx web get "URL" ["URL2" [...]] [...]
+
+EXAMPLES
+
   EXAMPLE 1: Create markdown for web page content
 
     mdx web get https://example.com
@@ -18,7 +26,9 @@
 SEE ALSO
 
   mdx help web get
+  mdx help web get options
 
   mdx help web search
   mdx help web search examples
+  mdx help web search options
 

@@ -4,7 +4,7 @@ tests:
   parallelize: true
   bash: mdx
   expect-regex: |
-    MDX - AI-Powered Markdown Generator CLI, Version \d+\.\d+\.\d+
+    MDX - The AI-Powered Markdown Generator CLI, Version \d+\.\d+\.\d+
     Copyright\(c\) 2024, Rob Chambers. All rights reserved.
 
 - name: Find text in single file found recursively
