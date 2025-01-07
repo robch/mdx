@@ -423,6 +423,13 @@ class CommandLineOptions
             command.MaxResults = ValidateInt(arg, max1Arg.FirstOrDefault(), "max results");
             i += max1Arg.Count();
         }
+        else if (arg == "--exclude")
+        {
+            var patterns = GetInputOptionArgs(i + 1, args);
+            var asRegExs = ValidateRegExPatterns(arg, patterns);
+            command.ExcludeURLContainsPatternList.AddRange(asRegExs);
+            i += patterns.Count();
+        }
         else if (arg.StartsWith("--") && arg.EndsWith("page-instructions"))
         {
             var instructions = GetInputOptionArgs(i + 1, args);

@@ -298,6 +298,8 @@ OPTIONS
     --bing                             Use Bing search engine
     --google                           Use Google search engine (default)
     --get                              Download content from search results (default: false)
+
+    --exclude REGEX                    Exclude URLs that match the specified regular expression
     --max NUMBER                       Maximum number of search results (default: 10)
 
   AI PROCESSING

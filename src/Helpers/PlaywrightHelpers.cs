@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 
 class PlaywrightHelpers
 {
-    public static async Task<List<string>> GetWebSearchResultUrlsAsync(string searchEngine, string query, int maxResults, bool headless)
+    public static async Task<List<string>> GetWebSearchResultUrlsAsync(string searchEngine, string query, int maxResults, List<Regex> excludeURLContainsPatternList, bool headless)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
@@ -25,8 +26,8 @@ class PlaywrightHelpers
 
         // Extract search result URLs
         var urls = (searchEngine == "google")
-            ? await ExtractGoogleSearchResults(page, maxResults)
-            : await ExtractBingSearchResults(page, maxResults);
+            ? await ExtractGoogleSearchResults(page, maxResults, excludeURLContainsPatternList)
+            : await ExtractBingSearchResults(page, maxResults, excludeURLContainsPatternList);
 
         return urls;
     }
@@ -50,7 +51,7 @@ class PlaywrightHelpers
         return (content, title);
     }
 
-    private static async Task<List<string>> ExtractGoogleSearchResults(IPage page, int maxResults)
+    private static async Task<List<string>> ExtractGoogleSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList)
     {
         var urls = new List<string>();
         while (urls.Count < maxResults)
@@ -61,7 +62,7 @@ class PlaywrightHelpers
                 var href = await element.GetAttributeAsync("href");
                 if (href != null && href.StartsWith("http") && !href.Contains("google"))
                 {
-                    if (!urls.Contains(href))
+                    if (!urls.Contains(href) && !excludeURLContainsPatternList.Any(pattern => pattern.IsMatch(href)))
                     {
                         urls.Add(href);
                     }
@@ -85,7 +86,7 @@ class PlaywrightHelpers
         return urls.Take(maxResults).ToList();
     }
 
-    private static async Task<List<string>> ExtractBingSearchResults(IPage page, int maxResults)
+    private static async Task<List<string>> ExtractBingSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList)
     {
         var urls = new List<string>();
         while (urls.Count < maxResults)
@@ -96,7 +97,7 @@ class PlaywrightHelpers
                 var href = await element.GetAttributeAsync("href");
                 if (href != null && href.StartsWith("http"))
                 {
-                    if (!urls.Contains(href))
+                    if (!urls.Contains(href) && !excludeURLContainsPatternList.Any(pattern => pattern.IsMatch(href)))
                     {
                         urls.Add(href);
                     }

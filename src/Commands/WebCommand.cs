@@ -1,28 +1,38 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 abstract class WebCommand : Command
 {
     public WebCommand()
     {
         Headless = false;
-        StripHtml = false;
-        SaveFolder = null;
+
         UseBing = false;
         UseGoogle = true;
-        GetContent = false;
         MaxResults = 10;
+
+        ExcludeURLContainsPatternList = new();
+
+        GetContent = false;
+        StripHtml = false;
+
+        SaveFolder = null;
 
         PageInstructionsList = new();
     }
 
     public bool Headless { get; set; }
-    public bool StripHtml { get; set; }
-    public string SaveFolder { get; set; }
+
     public bool UseBing { get; set; }
     public bool UseGoogle { get; set; }
-    public bool GetContent { get; set; }
     public int MaxResults { get; set; }
+    public List<Regex> ExcludeURLContainsPatternList { get; set; }
+
+    public bool GetContent { get; set; }
+    public bool StripHtml { get; set; }
+
+    public string SaveFolder { get; set; }
 
     public List<Tuple<string, string>> PageInstructionsList;
 

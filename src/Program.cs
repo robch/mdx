@@ -222,6 +222,7 @@ class Program
         var searchEngine = command.UseBing ? "bing" : "google";
         var query = string.Join(" ", command.Terms);
         var maxResults = command.MaxResults;
+        var excludeURLContainsPatternList = command.ExcludeURLContainsPatternList;
         var getContent = command.GetContent;
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
@@ -232,7 +233,7 @@ class Program
 
         var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
 
-        var urls = await PlaywrightHelpers.GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, headless);
+        var urls = await PlaywrightHelpers.GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, excludeURLContainsPatternList, headless);
         var searchSection = urls.Count == 0
             ? $"{searchSectionHeader}\n\nNo results found\n"
             : $"{searchSectionHeader}\n\n" + string.Join("\n", urls) + "\n";
