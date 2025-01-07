@@ -19,61 +19,127 @@ dotnet build
 
 ## Usage
 
+`mdcc`
+
+```plaintext
+MDCC - Markdown Context Creator CLI, Version 1.0.0                                                                               
+Copyright(c) 2024, Rob Chambers. All rights reserved.
+
+USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
+   OR: mdcc web search "TERMS" [...]
+   OR: mdcc web get "URL" [...]
+
+OPTIONS
+
+  FILE/LINE FILTERING
+
+    --exclude PATTERN              Exclude files that match the specified pattern
+
+    --contains REGEX               Match only files and lines that contain the specified regex pattern
+    --file-contains REGEX          Match only files that contain the specified regex pattern
+    --file-not-contains REGEX      Exclude files that contain the specified regex pattern
+
+    --line-contains REGEX          Match only lines that contain the specified regex pattern
+    --remove-all-lines REGEX       Remove lines that contain the specified regex pattern
+
+  LINE FORMATTING
+
+    --lines N                      Include N lines both before and after matching lines
+    --lines-after N                Include N lines after matching lines (default 0)
+    --lines-before N               Include N lines before matching lines (default 0)
+
+    --line-numbers                 Include line numbers in the output
+
+  AI PROCESSING
+
+    --file-instructions "..."      Apply the specified instructions to each file (uses AI CLI)
+    --EXT-file-instructions "..."  Apply the specified instructions to each file with the specified extension
+
+    --instructions "..."           Apply the specified instructions to command output (uses AI CLI)
+
+    --built-in-functions           Enable built-in functions (AI CLI can use file system)
+    --threads N                    Limit the number of concurrent file processing threads (default 36)
+
+  OUTPUT
+
+    --save-page-output [FILE]      Save each file output to the specified template file
+                                   (e.g. {filePath}/{fileBase}-output.md)
+
+    --save-output [FILE]           Save command output to the specified template file
+    --save-options [FILE]          Save current options to the specified file
+```
+
+`mdcc web search`
+
 ```plaintext
 MDCC - Markdown Context Creator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-USAGE: mdcc [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]
+USAGE: mdcc web search "TERMS" [...]
 
 OPTIONS
 
-  --contains REGEX               Match only files and lines that contain the specified regex pattern
+  BROWSER/HTML
 
-  --file-contains REGEX          Match only files that contain the specified regex pattern
-  --file-not-contains REGEX      Exclude files that contain the specified regex pattern
-  --exclude PATTERN              Exclude files that match the specified pattern
+    --headless                         Run in headless mode (default: false)
+    --strip                            Strip HTML tags from downloaded content (default: false)
 
-  --line-contains REGEX          Match only lines that contain the specified regex pattern
-  --lines-before N               Include N lines before matching lines (default 0)
-  --lines-after N                Include N lines after matching lines (default 0)
-  --lines N                      Include N lines both before and after matching lines
+  SEARCH ENGINE
 
-  --line-numbers                 Include line numbers in the output
-  --remove-all-lines REGEX       Remove lines that contain the specified regex pattern
+    --bing                             Use Bing search engine
+    --google                           Use Google search engine (default)
+    --get                              Download content from search results (default: false)
+    --max NUMBER                       Maximum number of search results (default: 10)
 
-  --built-in-functions           Enable built-in functions in AI CLI (file system access)
-  --instructions "..."           Apply the specified instructions to all output using AI CLI
-  --file-instructions "..."      Apply the specified instructions to each file using AI CLI
-  --EXT-file-instructions "..."  Apply the specified instructions to each file with the specified extension
+  AI PROCESSING
 
-  --threads N                    Limit the number of concurrent file processing threads (default 16)
+    --page-instructions "..."          Apply the specified instructions to each page (uses AI CLI)
+    --SITE-page-instructions "..."     Apply the specified instructions to each page (for matching SITEs)
 
-  --save-file-output FILENAME    Save file output to the specified file (e.g. {filePath}/{fileBase}-output.md)
-  --save-output FILENAME         Save the entire output to the specified file
+    --instructions "..."               Apply the specified instructions to command output (uses AI CLI)
 
-  --save-options FILENAME        Save the current options to the specified file
+    --built-in-functions               Enable built-in functions (AI CLI can use file system)
+    --threads N                        Limit the number of concurrent file processing threads (default 36)
 
-  @ARGUMENTS
+  OUTPUT
 
-    Arguments starting with @ (e.g. @file) will use file content as argument.
-    Arguments starting with @@ (e.g. @@file) will use file content as arguments line by line.
+    --save-page-output [FILE]          Save each web page output to the specified template file
+                                       (e.g. {filePath}/{fileBase}-output.md)
 
-EXAMPLES
+    --save-output [FILE]               Save command output to the specified template file
+    --save-options [FILE]              Save current options to the specified file
+```
 
-  mdcc file1.cs
-  mdcc file1.md file2.md
-  mdcc @@filelist.txt
+`mdcc web get`
 
-  mdcc "src/**/*.cs" "*.md"
-  mdcc "src/**/*.js" --contains "export"
-  mdcc "src/**" --contains "(?i)LLM" --lines 2
-  mdcc "src/**" --file-not-contains "TODO" --exclude "drafts/*"
-  mdcc "*.cs" --remove-all-lines "^\s*//"
+```plaintext
+MDCC - Markdown Context Creator CLI, Version 1.0.0
+Copyright(c) 2024, Rob Chambers. All rights reserved.
 
-  mdcc "**/*.json" --file-instructions "convert the JSON to YAML"
-  mdcc "**/*.json" --file-instructions @instructions.md --threads 5
-  mdcc "**/*.cs" --file-instructions @step1-instructions.md @step2-instructions.md
-  mdcc "**/*.py" --file-instructions @instructions --save-file-output "{filePath}/{fileBase}-{timeStamp}.md"
-  mdcc "**/*" --cs-file-instructions "Only keep public methods"
-  mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
+USAGE: mdcc web get "URL" [...]
+
+OPTIONS
+
+  BROWSER/HTML
+
+    --headless                         Run in headless mode (default: false)
+    --strip                            Strip HTML tags from downloaded content (default: false)
+
+  AI PROCESSING
+
+    --page-instructions "..."          Apply the specified instructions to each page (uses AI CLI)
+    --SITE-page-instructions "..."     Apply the specified instructions to each page (for matching SITEs)
+
+    --instructions "..."               Apply the specified instructions to command output (uses AI CLI)
+
+    --built-in-functions               Enable built-in functions (AI CLI can use file system)
+    --threads N                        Limit the number of concurrent file processing threads (default 36)
+
+  OUTPUT
+
+    --save-page-output [FILE]          Save each web page output to the specified template file
+                                       (e.g. {filePath}/{fileBase}-output.md)
+
+    --save-output [FILE]               Save command output to the specified template file
+    --save-options [FILE]              Save current options to the specified file
 ```
