@@ -34,6 +34,10 @@
     mdcc "**/*.md" --instructions "Create a markdown summary table for each file"
     mdcc README.md "**/*.cs" --instructions "Output only an updated README.md"
 
+  EXAMPLE 7: Save each file output to a specified template file
+
+    mdcc "**/*.cs" --save-file-output "outputs/{fileBase}.md"
+
 SEE ALSO
 
   mdcc help

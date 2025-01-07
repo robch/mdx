@@ -33,8 +33,8 @@ class AiInstructionProcessor
         try
         {
             var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(content) + 3);
-            File.WriteAllText(userPromptFileName, GetUserPrompt(backticks, contentFileName, instructionsFileName));
             File.WriteAllText(systemPromptFileName, GetSystemPrompt());
+            File.WriteAllText(userPromptFileName, GetUserPrompt(backticks, contentFileName, instructionsFileName));
             File.WriteAllText(instructionsFileName, instructions);
             File.WriteAllText(contentFileName, content);
 
@@ -82,16 +82,14 @@ class AiInstructionProcessor
 
     private static string GetSystemPrompt()
     {
-        return "You are a helpful AI assistant.\n\n" +
-            "You will be provided with a set of instructions and a markdown file.\n\n" +
-            "Your task is to apply the instructions to the text and return the modified text.";
+        return FileHelpers.ReadEmbeddedStream("prompts.system.md");
     }
 
     private static string GetUserPrompt(string backticks, string contentFile, string instructionsFile)
     {
-        return 
-            "Instructions:\n" + backticks + "\n{@" + instructionsFile + "}\n" + backticks + "\n\n" +
-            "Markdown:\n" + backticks + "\n{@" + contentFile + "}\n" + backticks + "\n\n" +
-            "Modified markdown (do not enclose in backticks):\n\n";
+        return FileHelpers.ReadEmbeddedStream("prompts.user.md")
+            .Replace("{instructionsFile}", instructionsFile)
+            .Replace("{contentFile}", contentFile)
+            .Replace("{backticks}", backticks);
     }
 }

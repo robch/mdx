@@ -111,7 +111,7 @@ class Program
 
     private static void PrintUsage(string command)
     {
-        var validTopic = !string.IsNullOrEmpty(command) && FileHelpers.HasHelpTopic(command);
+        var validTopic = !string.IsNullOrEmpty(command) && FileHelpers.FindHelpTopic(command);
         var helpContent = validTopic
             ? FileHelpers.GetHelpTopicText(command)
             : FileHelpers.GetHelpTopicText(UsageHelpTopic);
@@ -128,8 +128,8 @@ class Program
     {
         topic ??= UsageHelpTopic;
 
-        var hasHelpTopic = FileHelpers.HasHelpTopic(topic);
-        if (!hasHelpTopic)
+        var findHelpTopic = FileHelpers.FindHelpTopic(topic);
+        if (!findHelpTopic)
         {
             ConsoleHelpers.PrintLine(
                 $"  WARNING: No help topic found for '{topic}'\n\n" +

@@ -279,20 +279,30 @@ class FileHelpers
         }
     }
 
-    public static bool HasHelpTopic(string topic)
+    public static bool FindEmbeddedStream(string fileName)
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(name => name.EndsWith($"{topic}.txt", StringComparison.OrdinalIgnoreCase));
+            .Where(name => name.EndsWith(fileName, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(name => name.Length)
+            .FirstOrDefault();
 
-        return resourceName != null;
+        var found = resourceName != null;
+        if (found) return true;
+
+        var allResourceNames = string.Join("\n  ", assembly.GetManifestResourceNames());
+        ConsoleHelpers.PrintDebugLine($"DEBUG: Embedded resources ({assembly.GetManifestResourceNames().Count()}):\n\n  {allResourceNames}\n");
+
+        return false;
     }
 
-    public static string GetHelpTopicText(string topic)
+    public static string ReadEmbeddedStream(string fileName)
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(name => name.EndsWith($"{topic}.txt", StringComparison.OrdinalIgnoreCase));
+            .Where(name => name.EndsWith(fileName, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(name => name.Length)
+            .FirstOrDefault();
 
         if (resourceName == null) return null;
 
@@ -301,6 +311,16 @@ class FileHelpers
 
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
+    }
+
+    public static bool FindHelpTopic(string topic)
+    {
+        return FindEmbeddedStream($"help.{topic}.txt");
+    }
+
+    public static string GetHelpTopicText(string topic)
+    {
+        return ReadEmbeddedStream($"help.{topic}.txt");
     }
 
     private static char[] GetInvalidFileNameCharsForWeb()
