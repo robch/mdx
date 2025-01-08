@@ -9,7 +9,8 @@ class FileHelpers
 {
     public static void EnsureDirectoryExists(string folder)
     {
-        if (!Directory.Exists(folder))
+        var validFolderName = !string.IsNullOrEmpty(folder);
+        if (validFolderName && !Directory.Exists(folder))
         {
             Directory.CreateDirectory(folder);
         }
