@@ -226,6 +226,8 @@ SEE ALSO
   mdx help web get
   mdx help web get examples
   mdx help web get options
+
+  mdx help bing api
 ```
 
 `mdx help web search examples`
@@ -273,6 +275,8 @@ SEE ALSO
   mdx help web get
   mdx help web get examples
   mdx help web get options
+
+  mdx help bing api
 ```
 
 `mdx help web search options`
@@ -329,6 +333,8 @@ SEE ALSO
   mdx help web get
   mdx help web get examples
   mdx help web get options
+
+  mdx help bing api
 ```
 
 `mdx help web get`

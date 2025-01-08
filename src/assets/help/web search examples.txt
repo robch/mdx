@@ -38,3 +38,4 @@ SEE ALSO
   mdx help web get examples
   mdx help web get options
 
+  mdx help bing api

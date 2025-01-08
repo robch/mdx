@@ -30,8 +30,8 @@ class Program
 
         ConsoleHelpers.Configure(commandLineOptions.Debug, commandLineOptions.Verbose);
         BingApiWebSearchHelpers.ConfigureEndpoint(
-            EnvironmentHelpers.FindEnvVar("BING_API_ENDPOINT"),
-            EnvironmentHelpers.FindEnvVar("BING_API_KEY"));
+            EnvironmentHelpers.FindEnvVar("BING_SEARCH_V7_ENDPOINT"),
+            EnvironmentHelpers.FindEnvVar("BING_SEARCH_V7_KEY"));
 
         var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
         if (helpCommand != null)
