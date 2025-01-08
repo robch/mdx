@@ -2,21 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 class AiInstructionProcessor
 {
-    public static string ApplyAllInstructions(List<string> instructionsList, string content, bool useBuiltInFunctions = false)
+    public static string ApplyAllInstructions(List<string> instructionsList, string content, bool useBuiltInFunctions, int retries = 1)
     {
         try
         {
-            ConsoleHelpers.PrintStatus("Applying file instructions ...");
-            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current, useBuiltInFunctions));
+            ConsoleHelpers.PrintStatus("Applying instructions ...");
+            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current, useBuiltInFunctions, retries));
         }
         finally
         {
@@ -24,8 +18,31 @@ class AiInstructionProcessor
         }
     }
 
-    public static string ApplyInstructions(string instructions, string content, bool useBuiltInFunctions = false)
+    public static string ApplyInstructions(string instructions, string content, bool useBuiltInFunctions, int retries = 1)
     {
+        while (true)
+        {
+            ApplyInstructions(instructions, content, useBuiltInFunctions, out var returnCode, out var stdOut, out var stdErr, out var exception);
+
+            var retryable = retries-- > 0;
+            var tryAgain = retryable && (returnCode != 0 || exception != null);
+            if (tryAgain) continue;
+
+            return exception != null
+                ? $"{stdOut}\n\n## Error Applying Instructions\n\nEXIT CODE: {returnCode}\n\nERROR: {exception.Message}\n\nSTDERR: {stdErr}"
+                : returnCode != 0
+                    ? $"{stdOut}\n\n## Error Applying Instructions\n\nEXIT CODE: {returnCode}\n\nSTDERR: {stdErr}"
+                    : stdOut;
+        }
+    }
+
+    private static void ApplyInstructions(string instructions, string content, bool useBuiltInFunctions, out int returnCode, out string stdOut, out string stdErr, out Exception exception)
+    {
+        returnCode = 0;
+        stdOut = null;
+        stdErr = null;
+        exception = null;
+
         var userPromptFileName = Path.GetTempFileName();
         var systemPromptFileName = Path.GetTempFileName();
         var instructionsFileName = Path.GetTempFileName();
@@ -55,22 +72,19 @@ class AiInstructionProcessor
             process.Start();
 
             ConsoleHelpers.PrintDebugLine(process.StartInfo.Arguments);
-            ConsoleHelpers.PrintStatus("Applying file instructions ...");
+            ConsoleHelpers.PrintStatus("Applying instructions ...");
 
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
+            stdOut = process.StandardOutput.ReadToEnd();
+            stdErr = process.StandardError.ReadToEnd();
 
             process.WaitForExit();
-
-            return process.ExitCode != 0
-                ? $"{output}\n\nEXIT CODE: {process.ExitCode}\n\nERROR: {error}"
-                : output;
+            returnCode = process.ExitCode;
         }
         catch (Exception ex)
         {
-            return $"## {ex.Message}\n\n";
+            exception = ex;
         }
-        finally 
+        finally
         {
             ConsoleHelpers.PrintStatusErase();
             if (File.Exists(userPromptFileName)) File.Delete(userPromptFileName);

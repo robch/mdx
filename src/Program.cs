@@ -553,7 +553,7 @@ class Program
             .ToList();
 
         var afterInstructions = instructionsForThisPage.Any()
-            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisPage, formatted, false)
+            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisPage, formatted, useBuiltInFunctions)
             : formatted;
 
         return afterInstructions;
