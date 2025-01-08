@@ -23,7 +23,7 @@ public static class BingApiWebSearchHelpers
         if (fallbackToPlaywright) return await PlaywrightHelpers.GetWebSearchResultUrlsAsync("bing", query, maxResults, excludeURLContainsPatternList, headless);
 
         using var httpClient = new HttpClient();
-        var requestUri = $"{endpoint}?q={Uri.EscapeDataString(query)}&count={maxResults}";
+        var requestUri = $"{endpoint}?q={Uri.EscapeDataString(query)}&count={maxResults * 5}";
         ConsoleHelpers.PrintDebugLine($"Sending request to Bing API: {requestUri}");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -52,6 +52,6 @@ public static class BingApiWebSearchHelpers
             ConsoleHelpers.PrintDebugLine($"No search results found, json response: {jsonResponse}");
         }
 
-        return urls;
+        return urls.Take(maxResults).ToList();
     }
 }

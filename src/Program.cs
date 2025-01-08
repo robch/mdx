@@ -230,9 +230,17 @@ class Program
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
         var headless = command.Headless;
-        var pageInstructionsList = command.PageInstructionsList;
         var useBuiltInFunctions = command.UseBuiltInFunctions;
         var savePageOutput = command.SavePageOutput;
+        var pageInstructionsList = command.PageInstructionsList
+            .Select(x => Tuple.Create(
+                x.Item1
+                    .Replace("{searchTerms}", query)
+                    .Replace("{query}", query)
+                    .Replace("{terms}", query)
+                    .Replace("{q}", query),
+                x.Item2.ToLowerInvariant()))
+            .ToList();
 
         var searchSectionHeader = $"## Web Search for '{query}' using {provider}";
 

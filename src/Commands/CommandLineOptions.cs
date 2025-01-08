@@ -228,6 +228,17 @@ class CommandLineOptions
             findFileCommand.Globs.Add("**");
         }
 
+        var webSearchCommands = commandLineOptions.Commands.OfType<WebSearchCommand>().ToList();
+        foreach (var webSearchCommand in webSearchCommands.Where(x => !x.GetContent))
+        {
+            var hasInstructions = webSearchCommand.PageInstructionsList.Any() || webSearchCommand.InstructionsList.Any();
+            if (hasInstructions)
+            {
+                webSearchCommand.GetContent = true;
+                webSearchCommand.StripHtml = true;
+            }
+        }
+
         return commandLineOptions;
     }
 
