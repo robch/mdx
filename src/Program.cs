@@ -84,7 +84,7 @@ class Program
                 if (shouldSaveOutput)
                 {
                     var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", command.SaveOutput);
-                    File.WriteAllText(saveFileName, commandOutput);
+                    FileHelpers.WriteAllText(saveFileName, commandOutput);
                 }
             }
         }
@@ -355,7 +355,7 @@ class Program
             if (!string.IsNullOrEmpty(saveFileOutput))
             {
                 var saveFileName = FileHelpers.GetFileNameFromTemplate(fileName, saveFileOutput);
-                File.WriteAllText(saveFileName, finalContent);
+                FileHelpers.WriteAllText(saveFileName, finalContent);
                 ConsoleHelpers.PrintStatus($"Saving to: {saveFileName} ... Done!");
             }
 
@@ -531,7 +531,7 @@ class Program
             {
                 var fileName = FileHelpers.GenerateUniqueFileNameFromUrl(url, saveToFolder ?? "web-pages");
                 var saveFileName = FileHelpers.GetFileNameFromTemplate(fileName, savePageOutput);
-                File.WriteAllText(saveFileName, finalContent);
+                FileHelpers.WriteAllText(saveFileName, finalContent);
                 ConsoleHelpers.PrintStatus($"Saving to: {saveFileName} ... Done!");
             }
 

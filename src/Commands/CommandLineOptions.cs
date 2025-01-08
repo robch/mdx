@@ -59,7 +59,7 @@ class CommandLineOptions
             .Select(x => SingleLineOrNewAtFile(x, fileName, ref filesSaved));
 
         var asMultiLineString = string.Join('\n', options);
-        File.WriteAllText(fileName, asMultiLineString, Encoding.UTF8);
+        FileHelpers.WriteAllText(fileName, asMultiLineString);
 
         filesSaved.Insert(0, fileName);
         return filesSaved;
@@ -74,7 +74,7 @@ class CommandLineOptions
         var additionalFileName = FileHelpers.GetFileNameFromTemplate(baseFileName, "{filepath}/{filebase}-" + additionalFileCount + "{fileext}");
         additionalFiles.Add(additionalFileName);
 
-        File.WriteAllText(additionalFileName, text);
+        FileHelpers.WriteAllText(additionalFileName, text);
 
         return "@" + additionalFileName;
     }

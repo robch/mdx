@@ -147,7 +147,7 @@ class PlaywrightHelpers
             if (!string.IsNullOrEmpty(saveToFolder))
             {
                 var fileName = FileHelpers.GenerateUniqueFileNameFromUrl(url, saveToFolder);
-                File.WriteAllText(fileName, content);
+                FileHelpers.WriteAllText(fileName, content);
             }
 
             return content;

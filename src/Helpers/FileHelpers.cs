@@ -15,6 +15,11 @@ class FileHelpers
         }
     }
 
+    public static void EnsureDirectoryForFileExists(string fileName)
+    {
+        EnsureDirectoryExists(Path.GetDirectoryName(fileName));
+    }
+
     public static bool IsFileMatch(string fileName, List<Regex> includeFileContainsPatternList, List<Regex> excludeFileContainsPatternList)
     {
         var checkContent = includeFileContainsPatternList.Any() || excludeFileContainsPatternList.Any();
@@ -180,6 +185,12 @@ class FileHelpers
         return !isBinary
             ? FileHelpers.ReadAllText(fileName)
             : FileConverters.ConvertToMarkdown(fileName);
+    }
+
+    public static void WriteAllText(string fileName, string content)
+    {
+        EnsureDirectoryForFileExists(fileName);
+        File.WriteAllText(fileName, content, Encoding.UTF8);
     }
 
     public static string GetFriendlyLastModified(FileInfo fileInfo)
