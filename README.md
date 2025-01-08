@@ -246,6 +246,7 @@ EXAMPLES
 
     mdx web search "Azure AI"
     mdx web search "Azure AI" --bing
+    mdx web search "Azure AI" --exclude youtube.com reddit.com
 
   EXAMPLE 2: Create markdown for web search result content
 
