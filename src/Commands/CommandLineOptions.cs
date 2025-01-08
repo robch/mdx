@@ -405,13 +405,15 @@ class CommandLineOptions
         }
         else if (arg == "--bing")
         {
-            command.UseBing = true;
-            command.UseGoogle = false;
+            command.SearchProvider = WebSearchProvider.Bing;
+        }
+        else if (arg == "--bing-api")
+        {
+            command.SearchProvider = WebSearchProvider.BingAPI;
         }
         else if (arg == "--google")
         {
-            command.UseGoogle = true;
-            command.UseBing = false;
+            command.SearchProvider = WebSearchProvider.Google;
         }
         else if (arg == "--get")
         {

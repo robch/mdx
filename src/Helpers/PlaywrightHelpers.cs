@@ -20,6 +20,7 @@ class PlaywrightHelpers
         var searchUrl = searchEngine == "bing"
             ? $"https://www.bing.com/search?q={Uri.EscapeDataString(query)}"
             : $"https://www.google.com/search?q={Uri.EscapeDataString(query)}";
+        ConsoleHelpers.PrintDebugLine($"Navigating to {searchUrl}");
 
         // Navigate to the URL
         await page.GotoAsync(searchUrl);
@@ -83,6 +84,15 @@ class PlaywrightHelpers
                 break;
             }
         }
+
+        if (urls.Count == 0)
+        {
+            var content = await FetchPageContentWithRetries(page);
+            var title = await page.TitleAsync();
+            ConsoleHelpers.PrintDebugLine($"No search results found, page title: {title}\n\n{content}");
+            Task.Delay(10000).Wait();
+        }
+
         return urls.Take(maxResults).ToList();
     }
 
@@ -118,6 +128,15 @@ class PlaywrightHelpers
                 break;
             }
         }
+
+        if (urls.Count == 0)
+        {
+            var content = await FetchPageContentWithRetries(page);
+            var title = await page.TitleAsync();
+            ConsoleHelpers.PrintDebugLine($"No search results found, page title: {title}\n\n{content}");
+            Task.Delay(10000).Wait();
+        }
+
         return urls.Take(maxResults).ToList();
     }
 

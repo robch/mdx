@@ -8,8 +8,7 @@ abstract class WebCommand : Command
     {
         Headless = false;
 
-        UseBing = false;
-        UseGoogle = true;
+        SearchProvider = WebSearchProvider.Google;
         MaxResults = 10;
 
         ExcludeURLContainsPatternList = new();
@@ -24,10 +23,10 @@ abstract class WebCommand : Command
 
     public bool Headless { get; set; }
 
-    public bool UseBing { get; set; }
-    public bool UseGoogle { get; set; }
-    public int MaxResults { get; set; }
+
+    public WebSearchProvider SearchProvider { get; set; }
     public List<Regex> ExcludeURLContainsPatternList { get; set; }
+    public int MaxResults { get; set; }
 
     public bool GetContent { get; set; }
     public bool StripHtml { get; set; }

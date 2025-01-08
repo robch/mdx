@@ -29,6 +29,9 @@ class Program
         }
 
         ConsoleHelpers.Configure(commandLineOptions.Debug, commandLineOptions.Verbose);
+        BingApiWebSearchHelpers.ConfigureEndpoint(
+            EnvironmentHelpers.FindEnvVar("BING_API_ENDPOINT"),
+            EnvironmentHelpers.FindEnvVar("BING_API_KEY"));
 
         var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
         if (helpCommand != null)
@@ -219,7 +222,7 @@ class Program
 
     private static async Task<List<Task<string>>> HandleWebSearchCommandAsync(CommandLineOptions commandLineOptions, WebSearchCommand command, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
     {
-        var searchEngine = command.UseBing ? "bing" : "google";
+        var provider = command.SearchProvider;
         var query = string.Join(" ", command.Terms);
         var maxResults = command.MaxResults;
         var excludeURLContainsPatternList = command.ExcludeURLContainsPatternList;
@@ -231,9 +234,9 @@ class Program
         var useBuiltInFunctions = command.UseBuiltInFunctions;
         var savePageOutput = command.SavePageOutput;
 
-        var searchSectionHeader = $"## Web Search for '{query}' using {searchEngine}";
+        var searchSectionHeader = $"## Web Search for '{query}' using {provider}";
 
-        var urls = await PlaywrightHelpers.GetWebSearchResultUrlsAsync(searchEngine, query, maxResults, excludeURLContainsPatternList, headless);
+        var urls = await WebSearchHelpers.GetWebSearchResultUrlsAsync(provider, query, maxResults, excludeURLContainsPatternList, headless);
         var searchSection = urls.Count == 0
             ? $"{searchSectionHeader}\n\nNo results found\n"
             : $"{searchSectionHeader}\n\n" + string.Join("\n", urls) + "\n";
