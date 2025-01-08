@@ -11,7 +11,7 @@ SETUP
   use the free tier, which allows for up to 3 requests per second and 1000 requests per month, or
   you can upgrade to a paid tier for more requests.
 
-  https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/create-bing-search-service-resource
+  https://learn.microsoft.com/bing/search-apis/bing-web-search/create-bing-search-service-resource
 
   Once you have created your resource, you can get your API key from the Azure portal on the Keys
   and Endpoint page. Using those values, you can set these two environment variables, either in
