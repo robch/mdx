@@ -22,34 +22,46 @@ public static class BingApiWebSearchHelpers
         var fallbackToPlaywright = string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey);
         if (fallbackToPlaywright) return await PlaywrightHelpers.GetWebSearchResultUrlsAsync("bing", query, maxResults, excludeURLContainsPatternList, headless);
 
-        using var httpClient = new HttpClient();
-        var requestUri = $"{endpoint}?q={Uri.EscapeDataString(query)}&count={maxResults * 5}";
-        ConsoleHelpers.PrintDebugLine($"Sending request to Bing API: {requestUri}");
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-        request.Headers.Add("Ocp-Apim-Subscription-Key", apiKey);
-
-        using var response = await httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(jsonResponse);
-        var searchResults = doc.RootElement.GetProperty("webPages").GetProperty("value").EnumerateArray();
-
         var urls = new List<string>();
+        var httpClient = new HttpClient();
+        int offset = 0;
+        int count = 50; // Bing API allows up to 50 results per request
 
-        foreach (var result in searchResults)
+        while (urls.Count < maxResults)
         {
-            var url = result.GetProperty("url").GetString();
-            if (!excludeURLContainsPatternList.Any(pattern => pattern.IsMatch(url)))
+            var requestUri = $"{endpoint}?q={Uri.EscapeDataString(query)}&count={count}&offset={offset}";
+            ConsoleHelpers.PrintDebugLine($"Sending request to Bing API: {requestUri}");
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            request.Headers.Add("Ocp-Apim-Subscription-Key", apiKey);
+
+            using var response = await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var searchResults = doc.RootElement.GetProperty("webPages").GetProperty("value").EnumerateArray();
+
+            foreach (var result in searchResults)
             {
-                urls.Add(url);
+                var url = result.GetProperty("url").GetString();
+                if (!excludeURLContainsPatternList.Any(pattern => pattern.IsMatch(url)))
+                {
+                    urls.Add(url);
+                    if (urls.Count == maxResults)
+                    {
+                        break;
+                    }
+                }
             }
-        }
 
-        if (urls.Count == 0)
-        {
-            ConsoleHelpers.PrintDebugLine($"No search results found, json response: {jsonResponse}");
+            if (!searchResults.Any())
+            {
+                ConsoleHelpers.PrintDebugLine($"No more search results found, json response: {jsonResponse}");
+                break;
+            }
+
+            offset += count;
         }
 
         return urls.Take(maxResults).ToList();
