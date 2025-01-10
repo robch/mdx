@@ -426,6 +426,10 @@ class CommandLineOptions
         {
             command.SearchProvider = WebSearchProvider.Google;
         }
+        else if (arg == "--google-api")
+        {
+            command.SearchProvider = WebSearchProvider.GoogleAPI;
+        }
         else if (arg == "--get")
         {
             command.GetContent = true;

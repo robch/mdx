@@ -49,3 +49,4 @@ SEE ALSO
   mdx help web get options
   
   mdx help bing api
+  mdx help google api

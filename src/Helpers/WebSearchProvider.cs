@@ -2,5 +2,6 @@ public enum WebSearchProvider
 {
     Bing,
     BingAPI,
-    Google
+    Google,
+    GoogleAPI,
 };

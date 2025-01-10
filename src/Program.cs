@@ -32,6 +32,10 @@ class Program
         BingApiWebSearchHelpers.ConfigureEndpoint(
             EnvironmentHelpers.FindEnvVar("BING_SEARCH_V7_ENDPOINT"),
             EnvironmentHelpers.FindEnvVar("BING_SEARCH_V7_KEY"));
+        GoogleApiWebSearchHelpers.ConfigureEndpoint(
+            EnvironmentHelpers.FindEnvVar("GOOGLE_SEARCH_ENDPOINT"),
+            EnvironmentHelpers.FindEnvVar("GOOGLE_SEARCH_KEY"),
+            EnvironmentHelpers.FindEnvVar("GOOGLE_SEARCH_ENGINE_ID"));
 
         var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
         if (helpCommand != null)
