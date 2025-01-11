@@ -6,12 +6,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Playwright;
 
 class Program
 {
     static async Task<int> Main(string[] args)
     {
+        var playwrightCommand = args.Length >= 1 && args[0] == "playwright";
+        if (playwrightCommand) return PlaywrightHelpers.RunCli(args.Skip(1).ToArray());
+
         if (!CommandLineOptions.Parse(args, out var commandLineOptions, out var ex))
         {
             PrintBanner();

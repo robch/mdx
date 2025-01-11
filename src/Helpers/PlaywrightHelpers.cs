@@ -8,11 +8,16 @@ using Microsoft.Playwright;
 
 class PlaywrightHelpers
 {
+    public static int RunCli(string[] args)
+    {
+        return Microsoft.Playwright.Program.Main(args);
+    }
+
     public static async Task<List<string>> GetWebSearchResultUrlsAsync(string searchEngine, string query, int maxResults, List<Regex> excludeURLContainsPatternList, bool headless)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless });
+        await using var browser = await GetBrowser(headless, playwright);
         var context = await browser.NewContextAsync();
         var page = await context.NewPageAsync();
 
@@ -37,7 +42,7 @@ class PlaywrightHelpers
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless });
+        await using var browser = await GetBrowser(headless, playwright);
         var context = await browser.NewContextAsync();
         var page = await context.NewPageAsync();
 
@@ -138,6 +143,22 @@ class PlaywrightHelpers
         }
 
         return urls.Take(maxResults).ToList();
+    }
+
+    private static async Task<IBrowser> GetBrowser(bool headless, IPlaywright playwright)
+    {
+        try
+        {
+            return await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless });
+        }
+        catch (Exception)
+        {
+            if (RunCli(["install", "chromium"]) == 0)
+            {
+                return await GetBrowser(headless, playwright);
+            }
+            throw;
+        }
     }
 
     private static async Task<string> FetchPageContent(IPage page, string url, bool stripHtml, string saveToFolder)
