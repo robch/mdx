@@ -291,7 +291,13 @@ class FileHelpers
         }
     }
 
-    public static bool FindEmbeddedStream(string fileName)
+    public static IEnumerable<string> GetEmbeddedStreamFileNames()
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        return assembly.GetManifestResourceNames();
+    }
+
+    public static bool EmbeddedStreamExists(string fileName)
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         var resourceName = assembly.GetManifestResourceNames()
@@ -323,16 +329,6 @@ class FileHelpers
 
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
-    }
-
-    public static bool FindHelpTopic(string topic)
-    {
-        return FindEmbeddedStream($"help.{topic}.txt");
-    }
-
-    public static string GetHelpTopicText(string topic)
-    {
-        return ReadEmbeddedStream($"help.{topic}.txt");
     }
 
     private static char[] GetInvalidFileNameCharsForWeb()

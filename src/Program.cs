@@ -20,12 +20,12 @@ class Program
             if (ex != null)
             {
                 PrintException(ex);
-                PrintUsage(ex.GetCommand());
+                HelpHelpers.PrintUsage(ex.GetCommand());
                 return 2;
             }
             else
             {
-                PrintUsage(commandLineOptions.HelpRequested);
+                HelpHelpers.PrintUsage(commandLineOptions.HelpTopic);
                 return 1;
             }
         }
@@ -43,7 +43,7 @@ class Program
         if (helpCommand != null)
         {
             PrintBanner();
-            PrintHelpTopic(commandLineOptions.HelpRequested);
+            HelpHelpers.PrintHelpTopic(commandLineOptions.HelpTopic, commandLineOptions.ExpandHelpTopics);
             return 0;
         }
 
@@ -106,7 +106,7 @@ class Program
 
     private static void PrintBanner()
     {
-        var programNameUppercase = ProgramName.ToUpper();
+        var programNameUppercase = Program.Name.ToUpper();
         ConsoleHelpers.PrintLine(
             $"{programNameUppercase} - The AI-Powered Markdown Generator CLI, Version 1.0.0\n" +
             "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
@@ -116,38 +116,6 @@ class Program
     {
         var printMessage = !string.IsNullOrEmpty(ex.Message);
         if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
-    }
-
-    private static void PrintUsage(string command)
-    {
-        var validTopic = !string.IsNullOrEmpty(command) && FileHelpers.FindHelpTopic(command);
-        var helpContent = validTopic
-            ? FileHelpers.GetHelpTopicText(command)
-            : FileHelpers.GetHelpTopicText(UsageHelpTopic);
-
-        helpContent ??=
-            $"USAGE: {ProgramName} [file1 [file2 [pattern1 [pattern2 [...]]]]] [...]\n" +
-            $"   OR: {ProgramName} web search \"TERMS\" [...]\n" +
-            $"   OR: {ProgramName} web get \"URL\" [...]";
-
-        ConsoleHelpers.PrintLine(helpContent.TrimEnd());
-    }
-
-    private static void PrintHelpTopic(string topic)
-    {
-        topic ??= UsageHelpTopic;
-
-        var findHelpTopic = FileHelpers.FindHelpTopic(topic);
-        if (!findHelpTopic)
-        {
-            ConsoleHelpers.PrintLine(
-                $"  WARNING: No help topic found for '{topic}'\n\n" +
-                $"      TRY: {ProgramName} help\n");
-            return;
-        }
-
-        var helpContent = FileHelpers.GetHelpTopicText(topic);
-        ConsoleHelpers.PrintLine(helpContent.TrimEnd());
     }
 
     private static void PrintSavedOptionFiles(List<string> filesSaved)
@@ -173,12 +141,12 @@ class Program
 
         if (savedAsDefault)
         {
-            ConsoleHelpers.PrintLine($"NOTE: These options will be used by default when invoking {ProgramName} in this directory.");
+            ConsoleHelpers.PrintLine($"NOTE: These options will be used by default when invoking {Program.Name} in this directory.");
             ConsoleHelpers.PrintLine($"      To stop using these options by default, delete the file: {firstFileSaved}");
         }
         else
         {
-            ConsoleHelpers.PrintLine($"USAGE: {ProgramName} @@" + firstFileSaved);
+            ConsoleHelpers.PrintLine($"USAGE: {Program.Name} @@" + firstFileSaved);
         }
     }
 
@@ -604,6 +572,5 @@ class Program
         }
     }
 
-    private const string ProgramName = "mdx";
-    private const string UsageHelpTopic = "usage";
+    public const string Name = "mdx";
 }

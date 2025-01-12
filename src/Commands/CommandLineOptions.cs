@@ -17,6 +17,10 @@ class CommandLineOptions
     {
         Debug = false;
         Verbose = false;
+
+        HelpTopic = string.Empty;
+        ExpandHelpTopics = false;
+
         Commands = new List<Command>();
 
         AllOptions = null;
@@ -26,7 +30,9 @@ class CommandLineOptions
     public bool Debug;
     public bool Verbose;
 
-    public string HelpRequested;
+    public string HelpTopic;
+    public bool ExpandHelpTopics;
+
     public List<Command> Commands;
 
     public string[] AllOptions;
@@ -175,7 +181,7 @@ class CommandLineOptions
             }
 
             var parsedOption = ParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
-                ParseHelpCommandOptions(command as HelpCommand, args, ref i, arg) ||
+                ParseHelpCommandOptions(commandLineOptions, command as HelpCommand, args, ref i, arg) ||
                 ParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
                 ParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
                 ParseSharedCommandOptions(command, args, ref i, arg);
@@ -183,7 +189,7 @@ class CommandLineOptions
 
             if (arg == "--help")
             {
-                commandLineOptions.HelpRequested = command.GetCommandName();
+                commandLineOptions.HelpTopic = command.GetCommandName();
                 break;
             }
             else if (arg.StartsWith("--"))
@@ -192,7 +198,7 @@ class CommandLineOptions
             }
             else if (command is HelpCommand helpCommand)
             {
-                commandLineOptions.HelpRequested = $"{commandLineOptions.HelpRequested} {arg}".Trim();
+                commandLineOptions.HelpTopic = $"{commandLineOptions.HelpTopic} {arg}".Trim();
             }
             else if (command is FindFilesCommand findFilesCommand)
             {
@@ -212,9 +218,9 @@ class CommandLineOptions
             }
         }
 
-        if (string.IsNullOrEmpty(commandLineOptions.HelpRequested) && command != null && command.IsEmpty())
+        if (string.IsNullOrEmpty(commandLineOptions.HelpTopic) && command != null && command.IsEmpty())
         {
-            commandLineOptions.HelpRequested = command.GetCommandName();
+            commandLineOptions.HelpTopic = command.GetCommandName();
         }
 
         if (command != null && !command.IsEmpty())
@@ -273,9 +279,24 @@ class CommandLineOptions
         return parsed;
     }
 
-    private static bool ParseHelpCommandOptions(HelpCommand helpCommand, string[] args, ref int i, string arg)
+    private static bool ParseHelpCommandOptions(CommandLineOptions commandLineOptions, HelpCommand helpCommand, string[] args, ref int i, string arg)
     {
-        return false;
+        bool parsed = true;
+
+        if (helpCommand == null)
+        {
+            parsed = false;
+        }
+        else if (arg == "--expand")
+        {
+            commandLineOptions.ExpandHelpTopics = true;
+        }
+        else
+        {
+            parsed = false;
+        }
+
+        return parsed;
     }
 
     private static bool ParseFindFilesCommandOptions(FindFilesCommand command, string[] args, ref int i, string arg)

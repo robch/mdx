@@ -31,5 +31,6 @@ EXAMPLES
 
 SEE ALSO
 
+  mdx help
   mdx help examples
   mdx help options

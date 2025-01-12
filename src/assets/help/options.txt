@@ -44,6 +44,7 @@ OPTIONS
 
 SEE ALSO
 
+  mdx help
   mdx help examples
 
   mdx help web search
