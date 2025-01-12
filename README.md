@@ -62,6 +62,7 @@ EXAMPLES
 
 SEE ALSO
 
+  mdx help
   mdx help examples
   mdx help options
 ```
@@ -184,6 +185,7 @@ OPTIONS
 
 SEE ALSO
 
+  mdx help
   mdx help examples
 
   mdx help web search
@@ -456,3 +458,4 @@ SEE ALSO
   mdx help web search examples
   mdx help web search options
 ```
+

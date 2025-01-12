@@ -100,7 +100,7 @@ class HelpHelpers
     public static void PrintHelpTopics(IEnumerable<string> topics, bool expandTopics)
     {
         topics = topics.Select(t => expandTopics
-            ? $"## `{t}`\n\n```\n{GetHelpTopicText(t)}\n```\n"
+            ? $"## `{Program.Name} help {t}`\n\n```\n{GetHelpTopicText(t)}\n```\n"
             : $"  {Program.Name} help {t}").ToList();
         ConsoleHelpers.PrintLine(string.Join("\n", topics));
     }
