@@ -54,10 +54,7 @@ class HelpHelpers
         {
             if (string.IsNullOrEmpty(topic))
             {
-                ConsoleHelpers.PrintLine(
-                    $"USAGE: {Program.Name} help topics\n" +
-                    $"   OR: {Program.Name} help topics --expand\n" +
-                    $"   OR: {Program.Name} help find \"TERMS\"");
+                PrintHelpTopic("help");
                 return;
             }
 
@@ -81,9 +78,8 @@ class HelpHelpers
 
             ConsoleHelpers.PrintLine(
                 $"  WARNING: No help topic found for '{topic}'\n\n" +
-                $"      TRY: {Program.Name} help topics\n" +
-                $"       OR: {Program.Name} help topics --expand\n" +
-                $"       OR: {Program.Name} help find \"TERMS\"");
+                "    " + GetHelpTopicText("help").Replace("\n", "\n    ")
+                );
             return;
         }
 
