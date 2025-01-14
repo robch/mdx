@@ -13,11 +13,11 @@ class PlaywrightHelpers
         return Microsoft.Playwright.Program.Main(args);
     }
 
-    public static async Task<List<string>> GetWebSearchResultUrlsAsync(string searchEngine, string query, int maxResults, List<Regex> excludeURLContainsPatternList, bool headless)
+    public static async Task<List<string>> GetWebSearchResultUrlsAsync(string searchEngine, string query, int maxResults, List<Regex> excludeURLContainsPatternList, BrowserType browserType, bool headless)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await GetBrowser(headless, playwright);
+        await using var browser = await GetBrowser(browserType, headless, playwright);
         var context = await browser.NewContextAsync();
         var page = await context.NewPageAsync();
 
@@ -38,11 +38,11 @@ class PlaywrightHelpers
         return urls;
     }
 
-    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, bool headless)
+    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool headless)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await GetBrowser(headless, playwright);
+        await using var browser = await GetBrowser(browserType, headless, playwright);
         var context = await browser.NewContextAsync();
         var page = await context.NewPageAsync();
 
@@ -145,17 +145,24 @@ class PlaywrightHelpers
         return urls.Take(maxResults).ToList();
     }
 
-    private static async Task<IBrowser> GetBrowser(bool headless, IPlaywright playwright)
+    private static async Task<IBrowser> GetBrowser(BrowserType browserType, bool headless, IPlaywright playwright)
     {
         try
         {
-            return await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless });
+            return browserType switch
+            {
+                BrowserType.Chromium => await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless }),
+                BrowserType.Firefox => await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless }),
+                BrowserType.Webkit => await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = headless }),
+                _ => throw new ArgumentOutOfRangeException(nameof(browserType), browserType, null)
+            };
         }
         catch (Exception)
         {
-            if (RunCli(["install", "chromium"]) == 0)
+            var browserArg = browserType.ToString().ToLower();
+            if (RunCli(["install", browserArg]) == 0)
             {
-                return await GetBrowser(headless, playwright);
+                return await GetBrowser(browserType, headless, playwright);
             }
             throw;
         }

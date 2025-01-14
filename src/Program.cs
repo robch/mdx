@@ -203,6 +203,7 @@ class Program
         var getContent = command.GetContent;
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
+        var browserType = command.Browser;
         var headless = command.Headless;
         var useBuiltInFunctions = command.UseBuiltInFunctions;
         var savePageOutput = command.SavePageOutput;
@@ -218,7 +219,7 @@ class Program
 
         var searchSectionHeader = $"## Web Search for '{query}' using {provider}";
 
-        var urls = await WebSearchHelpers.GetWebSearchResultUrlsAsync(provider, query, maxResults, excludeURLContainsPatternList, headless);
+        var urls = await WebSearchHelpers.GetWebSearchResultUrlsAsync(provider, query, maxResults, excludeURLContainsPatternList, browserType, headless);
         var searchSection = urls.Count == 0
             ? $"{searchSectionHeader}\n\nNo results found\n"
             : $"{searchSectionHeader}\n\n" + string.Join("\n", urls) + "\n";
@@ -235,7 +236,7 @@ class Program
 
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, pageInstructionsList, useBuiltInFunctions, savePageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, headless, pageInstructionsList, useBuiltInFunctions, savePageOutput);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -255,6 +256,7 @@ class Program
         var urls = command.Urls;
         var stripHtml = command.StripHtml;
         var saveToFolder = command.SaveFolder;
+        var browserType = command.Browser;
         var headless = command.Headless;
         var pageInstructionsList = command.PageInstructionsList;
         var useBuiltInFunctions = command.UseBuiltInFunctions;
@@ -272,7 +274,7 @@ class Program
         var tasks = new List<Task<string>>();
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, headless, pageInstructionsList, useBuiltInFunctions, savePageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, headless, pageInstructionsList, useBuiltInFunctions, savePageOutput);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -505,12 +507,12 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string savePageOutput)
+    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool headless, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string savePageOutput)
     {
         try
         {
             ConsoleHelpers.PrintStatus($"Processing: {url} ...");
-            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, headless, pageInstructionsList, useBuiltInFunctions);
+            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, headless, pageInstructionsList, useBuiltInFunctions);
 
             if (!string.IsNullOrEmpty(savePageOutput))
             {
@@ -528,9 +530,9 @@ class Program
         }
     }
 
-    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions)
+    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool headless, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions)
     {
-        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, headless);
+        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, browserType, headless);
 
         var instructionsForThisPage = pageInstructionsList
             .Where(x => WebPageMatchesInstructionsCriteria(url, x.Item2))
@@ -551,11 +553,11 @@ class Program
             url == webPageCriteria;
     }
 
-    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, bool headless)
+    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool headless)
     {
         try
         {
-            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, headless);
+            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, browserType, headless);
 
             var sb = new StringBuilder();
             sb.AppendLine($"## {title}\n");

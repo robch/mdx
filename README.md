@@ -298,6 +298,9 @@ OPTIONS
   BROWSER/HTML
 
     --headless                         Run in headless mode (default: false)
+    --chromium                         Use Chromium browser (default)
+    --firefox                          Use Firefox browser
+    --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
 
   SEARCH ENGINE
@@ -429,6 +432,9 @@ OPTIONS
   BROWSER/HTML
 
     --headless                         Run in headless mode (default: false)
+    --chromium                         Use Chromium browser (default)
+    --firefox                          Use Firefox browser
+    --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
 
   AI PROCESSING

@@ -425,6 +425,18 @@ class CommandLineOptions
         {
             command.Headless = true;
         }
+        else if (arg == "--chromium")
+        {
+            command.Browser = BrowserType.Chromium;
+        }
+        else if (arg == "--firefox")
+        {
+            command.Browser = BrowserType.Firefox;
+        }
+        else if (arg == "--webkit")
+        {
+            command.Browser = BrowserType.Webkit;
+        }
         else if (arg == "--strip")
         {
             command.StripHtml = true;
