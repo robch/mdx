@@ -3,7 +3,8 @@ public class ImageFileConverter : IFileConverter
     public bool CanConvert(string fileName)
     {
         var configured = OpenAIChatCompletionsClass.IsConfigured();
-        return configured && ImageTypeDetector.GetContentType(fileName) != null;
+        var stdin = fileName == "-";
+        return configured && !stdin && ImageTypeDetector.GetContentType(fileName) != null;
     }
 
     public string ConvertToMarkdown(string fileName)
