@@ -9,6 +9,7 @@ EXAMPLES
     mdx Presentation2.pptx
     mdx ResearchPaper.pdf
     mdx "../plans/*.md"
+    mdx *.png *.jpg *.gif *.bmp
 
   EXAMPLE 2: Find files recursively, exclude certain files
 

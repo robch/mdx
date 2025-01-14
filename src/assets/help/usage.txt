@@ -19,7 +19,7 @@ EXAMPLES
 
     mdx BackgroundInfo.docx
     mdx Presentation2.pptx
-    mdx *.pdf
+    mdx *.pdf *.png *.jpg *.gif *.bmp
 
   EXAMPLE 2: Find files recursively and create markdown
 
