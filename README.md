@@ -62,6 +62,7 @@ EXAMPLES
 
 SEE ALSO
 
+  mdx help
   mdx help examples
   mdx help options
 ```
@@ -184,6 +185,7 @@ OPTIONS
 
 SEE ALSO
 
+  mdx help
   mdx help examples
 
   mdx help web search
@@ -296,12 +298,17 @@ OPTIONS
   BROWSER/HTML
 
     --headless                         Run in headless mode (default: false)
+    --chromium                         Use Chromium browser (default)
+    --firefox                          Use Firefox browser
+    --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
 
   SEARCH ENGINE
 
     --bing                             Use Bing search engine
+    --bing-api                         Use Bing search API (requires API key and endpoint)
     --google                           Use Google search engine (default)
+    --google-api                       Use Google search API (requires API key, endpoint, and engine ID)
     --get                              Download content from search results (default: false)
 
     --exclude REGEX                    Exclude URLs that match the specified regular expression
@@ -427,6 +434,9 @@ OPTIONS
   BROWSER/HTML
 
     --headless                         Run in headless mode (default: false)
+    --chromium                         Use Chromium browser (default)
+    --firefox                          Use Firefox browser
+    --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
 
   AI PROCESSING
@@ -456,3 +466,4 @@ SEE ALSO
   mdx help web search examples
   mdx help web search options
 ```
+

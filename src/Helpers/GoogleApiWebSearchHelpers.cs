@@ -19,10 +19,10 @@ public static class GoogleApiWebSearchHelpers
         engineId = searchEngineId;
     }
 
-    public static async Task<List<string>> GetWebSearchResultUrlsAsync(string query, int maxResults, List<Regex> excludeURLContainsPatternList, bool headless)
+    public static async Task<List<string>> GetWebSearchResultUrlsAsync(string query, int maxResults, List<Regex> excludeURLContainsPatternList, BrowserType browserType, bool headless)
     {
         var fallbackToPlaywright = string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey);
-        if (fallbackToPlaywright) return await PlaywrightHelpers.GetWebSearchResultUrlsAsync("google", query, maxResults, excludeURLContainsPatternList, headless);
+        if (fallbackToPlaywright) return await PlaywrightHelpers.GetWebSearchResultUrlsAsync("google", query, maxResults, excludeURLContainsPatternList, browserType, headless);
 
         var urls = new List<string>();
         var httpClient = new HttpClient();

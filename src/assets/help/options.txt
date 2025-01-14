@@ -1,7 +1,5 @@
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
-   OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
-   OR: mdx web get "URL" ["URL2" [...]] [...]
 
 OPTIONS
 
@@ -42,8 +40,14 @@ OPTIONS
     --save-output [FILE]           Save command output to the specified template file
     --save-options [FILE]          Save current options to the specified file
 
+SUB COMMANDS
+
+  web search [...]                 Create markdown from web search results
+  web get [...]                    Create markdown from web page content
+
 SEE ALSO
 
+  mdx help
   mdx help examples
 
   mdx help web search
