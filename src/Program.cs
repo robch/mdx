@@ -38,6 +38,11 @@ class Program
             EnvironmentHelpers.FindEnvVar("GOOGLE_SEARCH_ENDPOINT"),
             EnvironmentHelpers.FindEnvVar("GOOGLE_SEARCH_KEY"),
             EnvironmentHelpers.FindEnvVar("GOOGLE_SEARCH_ENGINE_ID"));
+        OpenAIChatCompletionsClass.Configure(
+            EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_ENDPOINT"),
+            EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_API_KEY"),
+            EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_CHAT_DEPLOYMENT"),
+            EnvironmentHelpers.FindEnvVar("AZURE_OPENAI_SYSTEM_PROMPT"));
 
         var helpCommand = commandLineOptions.Commands.OfType<HelpCommand>().FirstOrDefault();
         if (helpCommand != null)
