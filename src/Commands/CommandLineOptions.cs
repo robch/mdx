@@ -421,9 +421,9 @@ class CommandLineOptions
         {
             parsed = false;
         }
-        else if (arg == "--headless")
+        else if (arg == "--interactive")
         {
-            command.Headless = true;
+            command.Interactive = true;
         }
         else if (arg == "--chromium")
         {

@@ -6,7 +6,7 @@ abstract class WebCommand : Command
 {
     public WebCommand()
     {
-        Headless = false;
+        Interactive = false;
 
         SearchProvider = WebSearchProvider.Google;
         MaxResults = 10;
@@ -22,7 +22,7 @@ abstract class WebCommand : Command
         PageInstructionsList = new();
     }
 
-    public bool Headless { get; set; }
+    public bool Interactive { get; set; }
 
     public WebSearchProvider SearchProvider { get; set; }
     public List<Regex> ExcludeURLContainsPatternList { get; set; }

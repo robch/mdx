@@ -462,7 +462,7 @@ OPTIONS
 
   BROWSER/HTML
 
-    --headless                         Run in headless mode (default: false)
+    --interactive                      Run in browser interactive mode (default: false)
     --chromium                         Use Chromium browser (default)
     --firefox                          Use Firefox browser
     --webkit                           Use WebKit browser
@@ -563,7 +563,7 @@ OPTIONS
 
   BROWSER/HTML
 
-    --headless                         Run in headless mode (default: false)
+    --interactive                      Run in browser interactive mode (default: false)
     --chromium                         Use Chromium browser (default)
     --firefox                          Use Firefox browser
     --webkit                           Use WebKit browser
