@@ -27,6 +27,7 @@ class PlaywrightHelpers
             "bing" => $"https://www.bing.com/search?q={Uri.EscapeDataString(query)}",
             "google" => $"https://www.google.com/search?q={Uri.EscapeDataString(query)}",
             "yahoo" => $"https://search.yahoo.com/search?p={Uri.EscapeDataString(query)}",
+            "duckduckgo" => $"https://duckduckgo.com/?q={Uri.EscapeDataString(query)}",
             _ => throw new ArgumentException($"Unsupported search engine: {searchEngine}")
         };
         ConsoleHelpers.PrintDebugLine($"Navigating to {searchUrl}");
@@ -40,6 +41,7 @@ class PlaywrightHelpers
             "bing" => await ExtractBingSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
             "google" => await ExtractGoogleSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
             "yahoo" => await ExtractYahooSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
+            "duckduckgo" => await ExtractDuckDuckGoSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
             _ => throw new ArgumentException($"Unsupported search engine: {searchEngine}")
         };
         
@@ -140,6 +142,44 @@ class PlaywrightHelpers
             {
                 break;
             }
+        }
+
+        if (urls.Count == 0)
+        {
+            var content = await FetchPageContentWithRetries(page);
+            var title = await page.TitleAsync();
+            ConsoleHelpers.PrintDebugLine($"No search results found, page title: {title}\n\n{content}");
+            if (interactive) Task.Delay(10000).Wait();
+        }
+
+        return urls.Take(maxResults).ToList();
+    }
+
+    private static async Task<List<string>> ExtractDuckDuckGoSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList, bool interactive)
+    {
+        var urls = new List<string>();
+        while (urls.Count < maxResults)
+        {
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            var elements = await page.QuerySelectorAllAsync("a[data-testid=result-title-a][href]");
+            foreach (var element in elements)
+            {
+                var href = await element.GetAttributeAsync("href");
+                if (href != null && href.StartsWith("http") && !href.Contains("duckduckgo.com"))
+                {
+                    if (!urls.Contains(href) && !excludeURLContainsPatternList.Any(pattern => pattern.IsMatch(href)))
+                    {
+                        urls.Add(href);
+                    }
+                }
+                if (urls.Count >= maxResults) break;
+            }
+
+            if (urls.Count >= maxResults) break;
+
+            var clicked = await TryClickWithRetriesAsync(page, "button#more-results");
+            if (!clicked) break;
         }
 
         if (urls.Count == 0)
@@ -281,5 +321,37 @@ class PlaywrightHelpers
                 await Task.Delay(1000);
             }
         }
+    }
+
+    private static async Task<bool> TryClickWithRetriesAsync(IPage page, string selector, int retryForMilliseconds = 10000, int retryInterval = 200)
+    {
+        var clicked = false;
+        var timeout = DateTime.Now.AddMilliseconds(retryForMilliseconds);
+
+        while (!clicked && DateTime.Now < timeout)
+        {
+            var element = await page.QuerySelectorAsync(selector);
+            if (element == null)
+            {
+                ConsoleHelpers.PrintDebugLine($"Element {selector} not found, will scroll and retry...");
+                await page.EvaluateAsync("window.scrollTo(0, document.body.scrollHeight)");
+                await Task.Delay(retryInterval);
+                continue;
+            }
+
+            try
+            {
+                await element.ScrollIntoViewIfNeededAsync();
+                await element.ClickAsync();
+                clicked = true;
+            }
+            catch (Exception)
+            {
+                ConsoleHelpers.PrintDebugLine($"Failed to click element {selector}, will retry...");
+                await Task.Delay(retryInterval);
+            }
+        }
+
+        return clicked;
     }
 }

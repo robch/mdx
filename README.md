@@ -385,7 +385,6 @@ EXAMPLES
 
     mdx web search "Azure AI" --google
     mdx web search "Azure AI" --bing
-    mdx web search "Azure AI" --yahoo
 
   EXAMPLE 2: Create markdown for web search result content
 
@@ -573,6 +572,7 @@ OPTIONS
   SEARCH ENGINE
 
     --bing                             Use Bing search engine
+    --duckduckgo                       Use DuckDuckGo search engine
     --google                           Use Google search engine (default)
     --yahoo                            Use Yahoo search engine
 

@@ -17,6 +17,7 @@ OPTIONS
   SEARCH ENGINE
 
     --bing                             Use Bing search engine
+    --duckduckgo                       Use DuckDuckGo search engine
     --google                           Use Google search engine (default)
     --yahoo                            Use Yahoo search engine
 

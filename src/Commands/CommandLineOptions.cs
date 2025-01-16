@@ -451,6 +451,10 @@ class CommandLineOptions
         {
             command.SearchProvider = WebSearchProvider.Bing;
         }
+        else if (arg == "--duck-duck-go" || arg == "--duckduckgo")
+        {
+            command.SearchProvider = WebSearchProvider.DuckDuckGo;
+        }
         else if (arg == "--google")
         {
             command.SearchProvider = WebSearchProvider.Google;

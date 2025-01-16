@@ -5,4 +5,5 @@ public enum WebSearchProvider
     Google,
     GoogleAPI,
     Yahoo,
+    DuckDuckGo,
 };
