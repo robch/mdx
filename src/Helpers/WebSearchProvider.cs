@@ -4,4 +4,5 @@ public enum WebSearchProvider
     BingAPI,
     Google,
     GoogleAPI,
+    Yahoo,
 };

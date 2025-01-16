@@ -22,19 +22,27 @@ class PlaywrightHelpers
         var page = await context.NewPageAsync();
 
         // Determine the search URL based on the chosen search engine
-        var searchUrl = searchEngine == "bing"
-            ? $"https://www.bing.com/search?q={Uri.EscapeDataString(query)}"
-            : $"https://www.google.com/search?q={Uri.EscapeDataString(query)}";
+        var searchUrl = searchEngine switch
+        {
+            "bing" => $"https://www.bing.com/search?q={Uri.EscapeDataString(query)}",
+            "google" => $"https://www.google.com/search?q={Uri.EscapeDataString(query)}",
+            "yahoo" => $"https://search.yahoo.com/search?p={Uri.EscapeDataString(query)}",
+            _ => throw new ArgumentException($"Unsupported search engine: {searchEngine}")
+        };
         ConsoleHelpers.PrintDebugLine($"Navigating to {searchUrl}");
 
         // Navigate to the URL
         await page.GotoAsync(searchUrl);
 
         // Extract search result URLs
-        var urls = (searchEngine == "google")
-            ? await ExtractGoogleSearchResults(page, maxResults, excludeURLContainsPatternList)
-            : await ExtractBingSearchResults(page, maxResults, excludeURLContainsPatternList);
-
+        var urls = searchEngine switch
+        {
+            "bing" => await ExtractBingSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
+            "google" => await ExtractGoogleSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
+            "yahoo" => await ExtractYahooSearchResults(page, maxResults, excludeURLContainsPatternList, interactive),
+            _ => throw new ArgumentException($"Unsupported search engine: {searchEngine}")
+        };
+        
         return urls;
     }
 
@@ -57,7 +65,7 @@ class PlaywrightHelpers
         return (content, title);
     }
 
-    private static async Task<List<string>> ExtractGoogleSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList)
+    private static async Task<List<string>> ExtractGoogleSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList, bool interactive)
     {
         var urls = new List<string>();
         while (urls.Count < maxResults)
@@ -95,13 +103,13 @@ class PlaywrightHelpers
             var content = await FetchPageContentWithRetries(page);
             var title = await page.TitleAsync();
             ConsoleHelpers.PrintDebugLine($"No search results found, page title: {title}\n\n{content}");
-            Task.Delay(10000).Wait();
+            if (interactive) Task.Delay(10000).Wait();
         }
 
         return urls.Take(maxResults).ToList();
     }
 
-    private static async Task<List<string>> ExtractBingSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList)
+    private static async Task<List<string>> ExtractBingSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList, bool interactive)
     {
         var urls = new List<string>();
         while (urls.Count < maxResults)
@@ -139,7 +147,51 @@ class PlaywrightHelpers
             var content = await FetchPageContentWithRetries(page);
             var title = await page.TitleAsync();
             ConsoleHelpers.PrintDebugLine($"No search results found, page title: {title}\n\n{content}");
-            Task.Delay(10000).Wait();
+            if (interactive) Task.Delay(10000).Wait();
+        }
+
+        return urls.Take(maxResults).ToList();
+    }
+
+    private static async Task<List<string>> ExtractYahooSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList, bool interactive)
+    {
+        var urls = new List<string>();
+        while (urls.Count < maxResults)
+        {
+            var elements = await page.QuerySelectorAllAsync("div#web a[href]");
+            foreach (var element in elements)
+            {
+                var href = await element.GetAttributeAsync("href");
+                if (href != null && href.StartsWith("http"))
+                {
+                    if (!urls.Contains(href) && !excludeURLContainsPatternList.Any(pattern => pattern.IsMatch(href)))
+                    {
+                        urls.Add(href);
+                    }
+                }
+                if (urls.Count >= maxResults) break;
+            }
+
+            if (urls.Count >= maxResults) break;
+
+            var nextButton = await page.QuerySelectorAsync("a.next");
+            if (nextButton != null)
+            {
+                await nextButton.ClickAsync();
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (urls.Count == 0)
+        {
+            var content = await FetchPageContentWithRetries(page);
+            var title = await page.TitleAsync();
+            ConsoleHelpers.PrintDebugLine($"No search results found, page title: {title}\n\n{content}");
+            if (interactive) Task.Delay(10000).Wait();
         }
 
         return urls.Take(maxResults).ToList();

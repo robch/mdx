@@ -385,6 +385,7 @@ EXAMPLES
 
     mdx web search "Azure AI" --google
     mdx web search "Azure AI" --bing
+    mdx web search "Azure AI" --yahoo
 
   EXAMPLE 2: Create markdown for web search result content
 
@@ -572,9 +573,12 @@ OPTIONS
   SEARCH ENGINE
 
     --bing                             Use Bing search engine
-    --bing-api                         Use Bing search API (requires API key and endpoint)
     --google                           Use Google search engine (default)
+    --yahoo                            Use Yahoo search engine
+
+    --bing-api                         Use Bing search API (requires API key and endpoint)
     --google-api                       Use Google search API (requires API key, endpoint, and engine ID)
+
     --get                              Download content from search results (default: false)
 
     --exclude REGEX                    Exclude URLs that match the specified regular expression

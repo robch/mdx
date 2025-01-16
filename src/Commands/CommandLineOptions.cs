@@ -451,13 +451,17 @@ class CommandLineOptions
         {
             command.SearchProvider = WebSearchProvider.Bing;
         }
-        else if (arg == "--bing-api")
-        {
-            command.SearchProvider = WebSearchProvider.BingAPI;
-        }
         else if (arg == "--google")
         {
             command.SearchProvider = WebSearchProvider.Google;
+        }
+        else if (arg == "--yahoo")
+        {
+            command.SearchProvider = WebSearchProvider.Yahoo;
+        }
+        else if (arg == "--bing-api")
+        {
+            command.SearchProvider = WebSearchProvider.BingAPI;
         }
         else if (arg == "--google-api")
         {
