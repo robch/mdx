@@ -14,6 +14,7 @@ FROM mcr.microsoft.com/dotnet/runtime:8.0
 
 # Install Playwright dependencies
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
     wget \
     libglib2.0-0 \
@@ -36,6 +37,32 @@ RUN apt-get update && \
     libpango-1.0-0 \
     libcairo2 \
     libasound2 \
+    libx11-xcb1 \
+    libxcursor1 \
+    libgtk-3-0 \
+    libgdk-pixbuf2.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo-gobject2 \
+    libgstreamer1.0-0 \
+    libgstreamer-plugins-base1.0-0 \
+    libatomic1 \
+    libxslt1.1 \
+    libwoff1 \
+    libvpx7 \
+    libevent-2.1-7 \
+    libopus0 \
+    libwebpdemux2 \
+    libharfbuzz-icu0 \
+    libenchant-2-2 \
+    libsecret-1-0 \
+    libhyphen0 \
+    libmanette-0.2-0 \
+    libflite1 \
+    libnghttp2-14 \
+    libgles2 \
+    libgstreamer-gl1.0-0 \
+    libgstreamer-plugins-bad1.0-0 \
+    libx264-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

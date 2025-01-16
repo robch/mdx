@@ -72,6 +72,8 @@ class PlaywrightHelpers
         var urls = new List<string>();
         while (urls.Count < maxResults)
         {
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
             var elements = await page.QuerySelectorAllAsync("div#search a[href]");
             foreach (var element in elements)
             {
@@ -88,16 +90,8 @@ class PlaywrightHelpers
 
             if (urls.Count >= maxResults) break;
 
-            var nextButton = await page.QuerySelectorAsync("a#pnnext");
-            if (nextButton != null)
-            {
-                await nextButton.ClickAsync();
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            }
-            else
-            {
-                break;
-            }
+            var clicked = await TryClickWithRetriesAsync(page, "a#pnnext");
+            if (!clicked) break;
         }
 
         if (urls.Count == 0)
@@ -116,6 +110,8 @@ class PlaywrightHelpers
         var urls = new List<string>();
         while (urls.Count < maxResults)
         {
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
             var elements = await page.QuerySelectorAllAsync("li.b_algo a[href]");
             foreach (var element in elements)
             {
@@ -132,16 +128,8 @@ class PlaywrightHelpers
 
             if (urls.Count >= maxResults) break;
 
-            var nextButton = await page.QuerySelectorAsync("a.sb_pagN");
-            if (nextButton != null)
-            {
-                await nextButton.ClickAsync();
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            }
-            else
-            {
-                break;
-            }
+            var clicked = await TryClickWithRetriesAsync(page, "a.sb_pagN");
+            if (!clicked) break;
         }
 
         if (urls.Count == 0)
@@ -198,6 +186,8 @@ class PlaywrightHelpers
         var urls = new List<string>();
         while (urls.Count < maxResults)
         {
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
             var elements = await page.QuerySelectorAllAsync("div#web a[href]");
             foreach (var element in elements)
             {
@@ -214,16 +204,8 @@ class PlaywrightHelpers
 
             if (urls.Count >= maxResults) break;
 
-            var nextButton = await page.QuerySelectorAsync("a.next");
-            if (nextButton != null)
-            {
-                await nextButton.ClickAsync();
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            }
-            else
-            {
-                break;
-            }
+            var clicked = await TryClickWithRetriesAsync(page, "a.next");
+            if (!clicked) break;
         }
 
         if (urls.Count == 0)
