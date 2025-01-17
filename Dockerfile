@@ -10,7 +10,7 @@ COPY src/. .
 RUN dotnet publish -c Release -o /app
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0
 
 # Install Playwright dependencies
 RUN apt-get update && \

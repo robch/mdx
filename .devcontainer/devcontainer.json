@@ -2,7 +2,7 @@
     "name": "MDX Development",
     "build": {
         "context": "..",
-        "dockerfile": "../Dockerfile.dev"
+        "dockerfile": "../Dockerfile"
     },
     "hostRequirements": {
 		"cpus": 8,
