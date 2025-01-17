@@ -16,66 +16,57 @@ MDX is a command-line tool that helps build markdown files from various sources.
 
 ## Installation
 
-There are several ways to install and run MDX:
+There are several ways to build and run MDX.
 
-### OPTION 1: Local Installation
+### OPTION 1: Local Build
 
 To build and run MDX locally:
 
 1. Install [.NET SDK 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
 2. Clone this repository
-3. Navigate to the project directory
-4. Build the project:
 ```bash
+git clone https://github.com/robch/mdx
+```
+3. Build the project:
+```bash
+cd mdx
 dotnet build
 ```
 
-### OPTION 2: Docker Runtime Version
+### OPTION 2: Docker Build
 
 To run MDX in a Docker container with all dependencies pre-installed:
 
-1. Build the Docker image:
+1. Clone this repository
 ```bash
+git clone https://github.com/robch/mdx
+```
+2. Build the Docker image:
+```bash
+cd mdx
 docker build -t mdx .
 ```
-
-2. Run MDX commands using the container:
+3. Run MDX commands using the container:
 ```bash
 docker run mdx [command arguments]
 ```
 
-### OPTION 3: Docker Development Version
+### OPTION 3: VS Code Dev Container
 
-For development work that requires the .NET SDK:
-
-1. Build using the development Dockerfile:
+1. Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Clone this repository
 ```bash
-docker build -f Dockerfile.dev -t mdx-dev .
+git clone https://github.com/robch/mdx
+```
+3. Open in VS Code and click "Reopen in Container" when prompted
+```bash
+code mdx
 ```
 
-2. Run MDX in development mode:
-```bash
-docker run mdx-dev [command arguments]
-```
+### OPTION 4: GitHub Codespaces
 
-### OPTION 4: VS Code Dev Container / GitHub Codespaces
-
-For the best development experience with pre-configured tools and extensions:
-
-1. **VS Code Dev Container:**
-   - Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-   - Clone this repository
-   - Open in VS Code and click "Reopen in Container" when prompted
-   
-2. **GitHub Codespaces:**
-   - Visit [codespaces.new/robch/mdx](https://codespaces.new/robch/mdx?quickstart=1)
-   - Or open in GitHub and click the "Code" button > "Create codespace"
-
-The dev container/codespace includes:
-- .NET SDK 8.0
-- Required VS Code extensions
-- All Playwright dependencies
-- Cached NuGet packages
+- Visit [codespaces.new/robch/mdx](https://codespaces.new/robch/mdx?quickstart=1)
+- Or open in GitHub and click the "Code" button > "Create codespace"
 
 ## Usage
 
