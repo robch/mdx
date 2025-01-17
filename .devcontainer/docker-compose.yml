@@ -4,7 +4,7 @@ services:
   app:
     build: 
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: ../Dockerfile.dev
       target: build
     volumes:
       - ..:/workspace:cached
