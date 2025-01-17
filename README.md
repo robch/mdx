@@ -15,11 +15,67 @@ MDX is a command-line tool that helps build markdown files from various sources.
 - Enables saving output and configuration options to specified files.
 
 ## Installation
-To build the project, ensure you have .NET SDK 8.0 installed. Then, navigate to the project directory and run:
 
+There are several ways to install and run MDX:
+
+### OPTION 1: Local Installation
+
+To build and run MDX locally:
+
+1. Install [.NET SDK 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
+2. Clone this repository
+3. Navigate to the project directory
+4. Build the project:
 ```bash
 dotnet build
 ```
+
+### OPTION 2: Docker Runtime Version
+
+To run MDX in a Docker container with all dependencies pre-installed:
+
+1. Build the Docker image:
+```bash
+docker build -t mdx .
+```
+
+2. Run MDX commands using the container:
+```bash
+docker run mdx [command arguments]
+```
+
+### OPTION 3: Docker Development Version
+
+For development work that requires the .NET SDK:
+
+1. Build using the development Dockerfile:
+```bash
+docker build -f Dockerfile.dev -t mdx-dev .
+```
+
+2. Run MDX in development mode:
+```bash
+docker run mdx-dev [command arguments]
+```
+
+### OPTION 4: VS Code Dev Container / GitHub Codespaces
+
+For the best development experience with pre-configured tools and extensions:
+
+1. **VS Code Dev Container:**
+   - Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+   - Clone this repository
+   - Open in VS Code and click "Reopen in Container" when prompted
+   
+2. **GitHub Codespaces:**
+   - Visit [codespaces.new/robch/mdx](https://codespaces.new/robch/mdx?quickstart=1)
+   - Or open in GitHub and click the "Code" button > "Create codespace"
+
+The dev container/codespace includes:
+- .NET SDK 8.0
+- Required VS Code extensions
+- All Playwright dependencies
+- Cached NuGet packages
 
 ## Usage
 
@@ -614,4 +670,3 @@ SEE ALSO
   mdx help bing api
   mdx help google api
 ```
-
