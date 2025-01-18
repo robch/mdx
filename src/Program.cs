@@ -349,15 +349,31 @@ class Program
     {
         try
         {
-            var output = await RunCommandHelpers.ExecuteCommand(command);
+            var script = command.ScriptToRun;
+            var shell = command.Type switch
+            {
+                RunCommand.ScriptType.Cmd => "cmd",
+                RunCommand.ScriptType.Bash => "bash",
+                RunCommand.ScriptType.PowerShell => "powershell",
+                _ => null
+            };
+
+            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell);
             var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
 
-            var sb = new StringBuilder();
-            sb.AppendLine($"## Command Output\n");
-            sb.AppendLine($"Command: {command.ScriptToRun}\n");
-            sb.AppendLine($"{backticks}\n{output}\n{backticks}\n");
+            var isMultiLine = script.Contains("\n");
+            var header = isMultiLine ? "## Run\n\n" : $"## `{script}`\n\n";
+            var scriptPart = isMultiLine ? $"Run:\n{backticks}\n{script.TrimEnd()}\n{backticks}\n\n" : string.Empty;
+            var outputPart = $"Output:\n{backticks}\n{output.TrimEnd()}\n{backticks}\n\n";
+            var exitCodePart = exitCode != 0 ? $"Exit code: {exitCode}\n\n" : string.Empty;
 
-            return sb.ToString();
+            var sb = new StringBuilder();
+            sb.Append(header);
+            sb.Append(scriptPart);
+            sb.Append(outputPart);
+            sb.Append(exitCodePart);
+
+            return sb.ToString().TrimEnd();
         }
         catch (Exception ex)
         {
