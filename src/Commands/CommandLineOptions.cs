@@ -168,6 +168,7 @@ class CommandLineOptions
                     "web search" => new WebSearchCommand(),
                     "web get" => new WebGetCommand(),
                     "help" => new HelpCommand(),
+                    "run" => new RunCommand(),
                     _ => new FindFilesCommand()
                 };
 
@@ -184,6 +185,7 @@ class CommandLineOptions
                 ParseHelpCommandOptions(commandLineOptions, command as HelpCommand, args, ref i, arg) ||
                 ParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
                 ParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
+                ParseRunCommandOptions(command as RunCommand, args, ref i, arg) ||
                 ParseSharedCommandOptions(command, args, ref i, arg);
             if (parsedOption) continue;
 
@@ -290,6 +292,50 @@ class CommandLineOptions
         else if (arg == "--expand")
         {
             commandLineOptions.ExpandHelpTopics = true;
+        }
+        else
+        {
+            parsed = false;
+        }
+
+        return parsed;
+    }
+
+    private static bool ParseRunCommandOptions(RunCommand command, string[] args, ref int i, string arg)
+    {
+        bool parsed = true;
+
+        if (command == null)
+        {
+            parsed = false;
+        }
+        else if (arg == "--script")
+        {
+            var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
+            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --script");
+            command.Type = RunCommand.ScriptType.Default;
+            i += scriptArgs.Count();
+        }
+        else if (arg == "--cmd")
+        {
+            var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
+            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --cmd");
+            command.Type = RunCommand.ScriptType.Cmd;
+            i += scriptArgs.Count();
+        }
+        else if (arg == "--bash")
+        {
+            var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
+            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --bash");
+            command.Type = RunCommand.ScriptType.Bash;
+            i += scriptArgs.Count();
+        }
+        else if (arg == "--powershell")
+        {
+            var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
+            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --powershell");
+            command.Type = RunCommand.ScriptType.PowerShell;
+            i += scriptArgs.Count();
         }
         else
         {

@@ -3,6 +3,7 @@ Welcome to MDX, the AI-Powered Markdown Generator!
 Using MDX, you can:
 
   - Convert files to markdown
+  - Run scripts and convert output to markdown
   - Search the web and convert search results to markdown
   - Get web pages and convert them to markdown
 
@@ -10,6 +11,7 @@ Using MDX, you can:
 
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
+   OR: mdx run [...]
    OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
    OR: mdx web get "URL" ["URL2" [...]] [...]
 
@@ -25,7 +27,11 @@ EXAMPLES
 
     mdx **/*.cs
 
-  EXAMPLE 3: Create markdown from a web search
+  EXAMPLE 3: Create markdown running a script
+
+    mdx run --powershell "Get-Process" --instructions "list running processes"
+
+  EXAMPLE 4: Create markdown from a web search
 
     mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
 

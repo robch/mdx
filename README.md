@@ -72,7 +72,7 @@ code mdx
 
 `mdx`
 
-```plaintext
+```
 MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
 Copyright(c) 2024, Rob Chambers. All rights reserved.
 
@@ -81,6 +81,7 @@ Welcome to MDX, the AI-Powered Markdown Generator!
 Using MDX, you can:
 
   - Convert files to markdown
+  - Run scripts and convert output to markdown
   - Search the web and convert search results to markdown
   - Get web pages and convert them to markdown
 
@@ -88,6 +89,7 @@ Using MDX, you can:
 
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
+   OR: mdx run [...]
    OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
    OR: mdx web get "URL" ["URL2" [...]] [...]
 
@@ -97,13 +99,17 @@ EXAMPLES
 
     mdx BackgroundInfo.docx
     mdx Presentation2.pptx
-    mdx *.pdf
+    mdx *.pdf *.png *.jpg *.gif *.bmp
 
   EXAMPLE 2: Find files recursively and create markdown
 
     mdx **/*.cs
 
-  EXAMPLE 3: Create markdown from a web search
+  EXAMPLE 3: Create markdown running a script
+
+    mdx run --powershell "Get-Process" --instructions "list running processes"
+
+  EXAMPLE 4: Create markdown from a web search
 
     mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
 
@@ -116,10 +122,7 @@ SEE ALSO
 
 `mdx help examples`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
 
@@ -131,6 +134,7 @@ EXAMPLES
     mdx Presentation2.pptx
     mdx ResearchPaper.pdf
     mdx "../plans/*.md"
+    mdx *.png *.jpg *.gif *.bmp
 
   EXAMPLE 2: Find files recursively, exclude certain files
 
@@ -176,68 +180,12 @@ SEE ALSO
   mdx help web get
   mdx help web get examples
   mdx help web get options
-```
-
-`mdx help images`
-
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
-MDX IMAGES
-
-  MDX can convert images to markdown by extracting a rich description and all visible text
-  using Azure OpenAI's vision capabilities.
-
-USAGE: mdx IMAGE_FILE1 [FILE2 [...]] [...]
-   OR: mdx IMAGE_PATTERN1 [PATTERN2 [...]] [...]
-
-SETUP
-
-  To use the Azure OpenAI vision capabilities, you'll need to create and deploy a resource and
-  vision compatible model in the Azure AI Foundry portal or using the Azure AI CLI.
-
-    TRY: https://ai.azure.com/
-     OR: https://thebookof.ai/setup/openai/
-
-  Once you have created your resource and deployed a compatible model, you can get your API key
-  from the Azure portal or using the `ai dev new .env` command. Using those values, you can set
-  these environment variables, either in the active shell or in a file called `.env` in the
-  current directory.
-
-    AZURE_OPENAI_API_KEY=********************************
-    AZURE_OPENAI_ENDPOINT=https://{resource}.cognitiveservices.azure.com/
-    AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
-
-EXAMPLES
-
-  EXAMPLE 1: Setup resource, deployment, and environment variables
-
-    ai init openai
-    ai dev new .env
-
-  EXAMPLE 2: Convert an image to markdown
-
-    mdx test.png
-
-  EXAMPLE 3: Convert multiple images to markdown
-
-    mdx **\*.png **\*.jpg **\*.jpeg **\*.gif **\*.bmp
-
-SEE ALSO
-
-  mdx help
-  mdx help examples
-  mdx help options
-
+  
 ```
 
 `mdx help options`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
 
@@ -282,6 +230,7 @@ OPTIONS
 
 SUB COMMANDS
 
+  run [...]                        Create markdown from shell script output
   web search [...]                 Create markdown from web search results
   web get [...]                    Create markdown from web page content
 
@@ -289,6 +238,10 @@ SEE ALSO
 
   mdx help
   mdx help examples
+
+  mdx help run
+  mdx help run examples
+  mdx help run options
 
   mdx help web search
   mdx help web search examples
@@ -300,93 +253,104 @@ SEE ALSO
   
 ```
 
-`mdx help bing api`
+`mdx help run`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
+```
+MDX RUN
 
-MDX BING API
+  Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
 
-  The `--bing-api` option allows you to use the Bing Web Search API for web searches
-  instead of UI automated scraping of Bing or Google search results (the default).
+USAGE: mdx run [...]
 
-USAGE: mdx web search "TERMS" --bing-api [...]
+EXAMPLES
 
-SETUP
+  EXAMPLE 1: Run a simple command and process the output
 
-  To use the Bing Web Search API, you need to get an API key and endpoint from Microsoft. You can
-  use the free tier, which allows for up to 3 requests per second and 1000 requests per month, or
-  you can upgrade to a paid tier for more requests.
+    mdx run --script "echo Hello, World!" --instructions "summarize the output"
 
-  https://learn.microsoft.com/bing/search-apis/bing-web-search/create-bing-search-service-resource
+  EXAMPLE 2: Run a script using PowerShell and process the output
 
-  Once you have created your resource, you can get your API key from the Azure portal on the Keys
-  and Endpoint page. Using those values, you can set these two environment variables, either in
-  the active shell or in a file called `.env` in the current directory.
+    mdx run --powershell "Get-Process" --instructions "list running processes"
 
-    BING_SEARCH_V7_ENDPOINT=https://api.bing.microsoft.com/v7.0/search
-    BING_SEARCH_V7_KEY=436172626F6E20697320636F6F6C2121
+  EXAMPLE 3: Run a bash script and apply multi-step AI instructions
 
-EXAMPLE
-
-  mdx web search "yaml site:learnxinyminutes.com" --bing-api --max 1 --get --strip
+    mdx run --bash "ls -la" --instructions @step1-instructions.txt @step2-instructions.txt
 
 SEE ALSO
 
-  mdx help web search
-  mdx help web search examples
-  mdx help web search options
+  mdx help run examples
+  mdx help run options
 
 ```
 
-`mdx help google api`
+`mdx help run examples`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
+```
+MDX RUN
 
-MDX GOOGLE API
+  Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
 
-  The `--google-api` option allows you to use the Google Custom Web Search API for web searches
-  instead of UI automated scraping of Bing or Google search results (the default).
+USAGE: mdx run [...]
 
-USAGE: mdx web search "TERMS" --google-api [...]
+EXAMPLES
 
-SETUP
+  EXAMPLE 1: Run a simple command and process the output
 
-  To use the Google Custom Web Search API, you need to get an API key and endpoint from Google. You can
-  use the free tier, which allows for up to 100 requests per day, or you can upgrade to a paid tier for
-  more requests.
+    mdx run --script "echo Hello, World!" --instructions "summarize the output"
 
-  https://developers.google.com/custom-search/v1/overview
+  EXAMPLE 2: Run a script using PowerShell and process the output
 
-  Once you have created your resource, you can get your API key from the Google Cloud Console on the
-  Credentials page. Using that value, you can set these three environment variables, either in the
-  active shell or in a file called `.env` in the current directory.
+    mdx run --powershell "Get-Process" --instructions "list running processes"
 
-    GOOGLE_SEARCH_API_KEY=********************************
-    GOOGLE_SEARCH_ENGINE_ID=********************************
-    GOOGLE_SEARCH_ENDPOINT=https://www.googleapis.com/customsearch/v1
-    
-EXAMPLE
+  EXAMPLE 3: Run a bash script and apply multi-step AI instructions
 
-  mdx web search "yaml site:learnxinyminutes.com" --google-api --max 1 --get --strip
+    mdx run --bash "ls -la" --instructions @step1-instructions.txt @step2-instructions.txt
 
 SEE ALSO
 
-  mdx help web search
-  mdx help web search examples
-  mdx help web search options
+  mdx help run
+  mdx help options
+
+```
+
+`mdx help run options`
+
+```
+MDX RUN
+
+  Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
+
+USAGE: mdx run [...]
+
+OPTIONS
+
+  SCRIPT
+
+    --script "COMMAND"            Specify the script or command to run (uses cmd or bash)
+    --cmd "COMMAND"               Specify the script or command to run (default for --script on Windows)
+    --bash "COMMAND"              Specify the script or command to run (default for --script on Linux/Mac)
+    --powershell "COMMAND"        Specify the script or command to run
+
+  AI PROCESSING
+
+    --instructions "..."          Apply the specified instructions to command output (uses AI CLI).
+    --built-in-functions          Enable built-in functions (AI CLI can use file system).
+
+  OUTPUT
+
+    --save-output [FILE]          Save command output to the specified template file.
+    --save-options [FILE]         Save current options to the specified file.
+
+SEE ALSO
+
+  mdx help run
+  mdx help run examples
 
 ```
 
 `mdx help web get`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 MDX WEB GET
 
   Use the 'mdx web get' command to create markdown from one or more web pages.
@@ -414,48 +378,9 @@ SEE ALSO
   
 ```
 
-`mdx help web search`
-
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
-MDX WEB SEARCH
-
-  Use the 'mdx web search' command to search the web and create markdown from the results.
-
-USAGE: mdx web search "TERMS" ["TERMS2" [...]] [...]
-
-EXAMPLES
-
-  EXAMPLE 1: Create markdown for web search URL results
-
-    mdx web search "Azure AI" --google
-    mdx web search "Azure AI" --bing
-
-  EXAMPLE 2: Create markdown for web search result content
-
-    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
-
-SEE ALSO
-
-  mdx help web search examples
-  mdx help web search options
-
-  mdx help web get
-  mdx help web get examples
-  mdx help web get options
-  
-  mdx help bing api
-  mdx help google api
-```
-
 `mdx help web get examples`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 MDX WEB GET
 
   Use the 'mdx web get' command to create markdown from one or more web pages.
@@ -495,10 +420,7 @@ SEE ALSO
 
 `mdx help web get options`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 MDX WEB GET
 
   Use the 'mdx web get' command to create markdown from one or more web pages.
@@ -544,12 +466,42 @@ SEE ALSO
   
 ```
 
+`mdx help web search`
+
+```
+MDX WEB SEARCH
+
+  Use the 'mdx web search' command to search the web and create markdown from the results.
+
+USAGE: mdx web search "TERMS" ["TERMS2" [...]] [...]
+
+EXAMPLES
+
+  EXAMPLE 1: Create markdown for web search URL results
+
+    mdx web search "Azure AI" --google
+    mdx web search "Azure AI" --bing
+
+  EXAMPLE 2: Create markdown for web search result content
+
+    mdx web search "yaml site:learnxinyminutes.com" --max 1 --get --strip
+
+SEE ALSO
+
+  mdx help web search examples
+  mdx help web search options
+
+  mdx help web get
+  mdx help web get examples
+  mdx help web get options
+  
+  mdx help bing api
+  mdx help google api
+```
+
 `mdx help web search examples`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 MDX WEB SEARCH
 
   Use the 'mdx web search' command to search the web and create markdown from the results.
@@ -596,10 +548,7 @@ SEE ALSO
 
 `mdx help web search options`
 
-```plaintext
-MDX - The AI-Powered Markdown Generator CLI, Version 1.0.0
-Copyright(c) 2024, Rob Chambers. All rights reserved.
-
+```
 MDX WEB SEARCH
 
   Use the 'mdx web search' command to search the web and create markdown from the results.
@@ -660,4 +609,127 @@ SEE ALSO
   
   mdx help bing api
   mdx help google api
+```
+
+`mdx help images`
+
+```
+MDX IMAGES
+
+  MDX can convert images to markdown by extracting a rich description and all visible text
+  using Azure OpenAI's vision capabilities.
+
+USAGE: mdx IMAGE_FILE1 [FILE2 [...]] [...]
+   OR: mdx IMAGE_PATTERN1 [PATTERN2 [...]] [...]
+
+SETUP
+
+  To use the Azure OpenAI vision capabilities, you'll need to create and deploy a resource and
+  vision compatible model in the Azure AI Foundry portal or using the Azure AI CLI.
+
+    TRY: https://ai.azure.com/
+     OR: https://thebookof.ai/setup/openai/
+
+  Once you have created your resource and deployed a compatible model, you can get your API key
+  from the Azure portal or using the `ai dev new .env` command. Using those values, you can set
+  these environment variables, either in the active shell or in a file called `.env` in the
+  current directory.
+
+    AZURE_OPENAI_API_KEY=********************************
+    AZURE_OPENAI_ENDPOINT=https://{resource}.cognitiveservices.azure.com/
+    AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
+
+EXAMPLES
+
+  EXAMPLE 1: Setup resource, deployment, and environment variables
+
+    ai init openai
+    ai dev new .env
+
+  EXAMPLE 2: Convert an image to markdown
+
+    mdx test.png
+
+  EXAMPLE 3: Convert multiple images to markdown
+
+    mdx **\*.png **\*.jpg **\*.jpeg **\*.gif **\*.bmp
+
+SEE ALSO
+
+  mdx help
+  mdx help examples
+  mdx help options
+```
+
+`mdx help bing api`
+
+```
+MDX BING API
+
+  The `--bing-api` option allows you to use the Bing Web Search API for web searches
+  instead of UI automated scraping of Bing or Google search results (the default).
+
+USAGE: mdx web search "TERMS" --bing-api [...]
+
+SETUP
+
+  To use the Bing Web Search API, you need to get an API key and endpoint from Microsoft. You can
+  use the free tier, which allows for up to 3 requests per second and 1000 requests per month, or
+  you can upgrade to a paid tier for more requests.
+
+  https://learn.microsoft.com/bing/search-apis/bing-web-search/create-bing-search-service-resource
+
+  Once you have created your resource, you can get your API key from the Azure portal on the Keys
+  and Endpoint page. Using those values, you can set these two environment variables, either in
+  the active shell or in a file called `.env` in the current directory.
+
+    BING_SEARCH_V7_ENDPOINT=https://api.bing.microsoft.com/v7.0/search
+    BING_SEARCH_V7_KEY=436172626F6E20697320636F6F6C2121
+
+EXAMPLE
+
+  mdx web search "yaml site:learnxinyminutes.com" --bing-api --max 1 --get --strip
+
+SEE ALSO
+
+  mdx help web search
+  mdx help web search examples
+  mdx help web search options
+```
+
+`mdx help google api`
+
+```
+MDX GOOGLE API
+
+  The `--google-api` option allows you to use the Google Custom Web Search API for web searches
+  instead of UI automated scraping of Bing or Google search results (the default).
+
+USAGE: mdx web search "TERMS" --google-api [...]
+
+SETUP
+
+  To use the Google Custom Web Search API, you need to get an API key and endpoint from Google. You can
+  use the free tier, which allows for up to 100 requests per day, or you can upgrade to a paid tier for
+  more requests.
+
+  https://developers.google.com/custom-search/v1/overview
+
+  Once you have created your resource, you can get your API key from the Google Cloud Console on the
+  Credentials page. Using that value, you can set these three environment variables, either in the
+  active shell or in a file called `.env` in the current directory.
+
+    GOOGLE_SEARCH_API_KEY=********************************
+    GOOGLE_SEARCH_ENGINE_ID=********************************
+    GOOGLE_SEARCH_ENDPOINT=https://www.googleapis.com/customsearch/v1
+    
+EXAMPLE
+
+  mdx web search "yaml site:learnxinyminutes.com" --google-api --max 1 --get --strip
+
+SEE ALSO
+
+  mdx help web search
+  mdx help web search examples
+  mdx help web search options
 ```

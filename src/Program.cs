@@ -78,6 +78,7 @@ class Program
                 FindFilesCommand findFilesCommand => HandleFindFileCommand(commandLineOptions, findFilesCommand, throttler, delayOutputToApplyInstructions),
                 WebSearchCommand webSearchCommand => await HandleWebSearchCommandAsync(commandLineOptions, webSearchCommand, throttler, delayOutputToApplyInstructions),
                 WebGetCommand webGetCommand => HandleWebGetCommand(commandLineOptions, webGetCommand, throttler, delayOutputToApplyInstructions),
+                RunCommand runCommand => HandleRunCommand(commandLineOptions, runCommand, throttler, delayOutputToApplyInstructions),
                 _ => new List<Task<string>>()
             };
 
@@ -292,6 +293,76 @@ class Program
         }
 
         return tasks;
+    }
+
+    private static List<Task<string>> HandleRunCommand(CommandLineOptions commandLineOptions, RunCommand command, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
+    {
+        var tasks = new List<Task<string>>();
+        var getCheckSaveTask = GetCheckSaveRunCommandContentAsync(command);
+        
+        var taskToAdd = delayOutputToApplyInstructions
+            ? getCheckSaveTask
+            : getCheckSaveTask.ContinueWith(t =>
+            {
+                ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
+                return t.Result;
+            });
+
+        tasks.Add(taskToAdd);
+        return tasks;
+    }
+
+    private static async Task<string> GetCheckSaveRunCommandContentAsync(RunCommand command)
+    {
+        try
+        {
+            ConsoleHelpers.PrintStatus($"Executing: {command.ScriptToRun} ...");
+            var finalContent = await GetFinalRunCommandContentAsync(command);
+
+            if (!string.IsNullOrEmpty(command.SaveOutput))
+            {
+                var saveFileName = FileHelpers.GetFileNameFromTemplate("command-output.md", command.SaveOutput);
+                FileHelpers.WriteAllText(saveFileName, finalContent);
+                ConsoleHelpers.PrintStatus($"Saving to: {saveFileName} ... Done!");
+            }
+
+            return finalContent;
+        }
+        finally
+        {
+            ConsoleHelpers.PrintStatusErase();
+        }
+    }
+
+    private static async Task<string> GetFinalRunCommandContentAsync(RunCommand command)
+    {
+        var formatted = await GetFormattedRunCommandContentAsync(command);
+
+        var afterInstructions = command.InstructionsList.Any()
+            ? AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, formatted, command.UseBuiltInFunctions)
+            : formatted;
+
+        return afterInstructions;
+    }
+
+    private static async Task<string> GetFormattedRunCommandContentAsync(RunCommand command)
+    {
+        try
+        {
+            var output = await RunCommandHelpers.ExecuteCommand(command);
+            var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"## Command Output\n");
+            sb.AppendLine($"Command: {command.ScriptToRun}\n");
+            sb.AppendLine($"{backticks}\n{output}\n{backticks}\n");
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            return $"## Error executing command: {command.ScriptToRun}\n\n{ex.Message}\n{ex.StackTrace}";
+        }
     }
 
     private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)

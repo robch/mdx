@@ -42,6 +42,7 @@ OPTIONS
 
 SUB COMMANDS
 
+  run [...]                        Create markdown from shell script output
   web search [...]                 Create markdown from web search results
   web get [...]                    Create markdown from web page content
 
@@ -49,6 +50,10 @@ SEE ALSO
 
   mdx help
   mdx help examples
+
+  mdx help run
+  mdx help run examples
+  mdx help run options
 
   mdx help web search
   mdx help web search examples
