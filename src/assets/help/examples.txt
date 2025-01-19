@@ -44,6 +44,11 @@ EXAMPLES
 
     mdx "**/*.cs" --save-file-output "outputs/{fileBase}.md"
 
+  EXAMPLE 8: Save the current options as an alias, and then use it
+
+    mdx "**/*.cs" --save-alias cs
+    mdx --cs
+
 SEE ALSO
 
   mdx help options

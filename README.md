@@ -13,6 +13,7 @@ MDX is a command-line tool that helps build markdown files from various sources.
 - Supports web search and retrieval with markdown formatting.
 - Allows headless browsing and HTML stripping for web content.
 - Enables saving output and configuration options to specified files.
+- Supports aliasing of options for easy reuse.
 
 ## Installation
 
@@ -168,6 +169,11 @@ EXAMPLES
   EXAMPLE 7: Save each file output to a specified template file
 
     mdx "**/*.cs" --save-file-output "outputs/{fileBase}.md"
+
+  EXAMPLE 8: Save the current options as an alias, and then use it
+
+    mdx "**/*.cs" --save-alias cs
+    mdx --cs
 
 SEE ALSO
 
