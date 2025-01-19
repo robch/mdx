@@ -8,7 +8,6 @@ using System.Text.RegularExpressions;
 
 class CommandLineOptions
 {
-    public const string DefaultOptionsFileName = "options";
     public const string DefaultSaveFileOutputTemplate = "{filePath}/{fileBase}-output.md";
     public const string DefaultSavePageOutputTemplate = "{filePath}/{fileBase}-output.md";
     public const string DefaultSaveOutputTemplate = "output.md";
@@ -24,7 +23,7 @@ class CommandLineOptions
         Commands = new List<Command>();
 
         AllOptions = null;
-        SaveOptionsTemplate = null;
+        SaveAliasName = null;
     }
 
     public bool Debug;
@@ -36,7 +35,7 @@ class CommandLineOptions
     public List<Command> Commands;
 
     public string[] AllOptions;
-    public string SaveOptionsTemplate;
+    public string SaveAliasName;
 
     public static bool Parse(string[] args, out CommandLineOptions options, out CommandLineException ex)
     {
@@ -56,12 +55,13 @@ class CommandLineOptions
         }
     }
 
-    public List<string> SaveOptions(string fileName)
+    public List<string> SaveAlias(string aliasName)
     {
         var filesSaved = new List<string>();
+        var fileName = aliasName + ".alias";
 
         var options = AllOptions
-            .Where(x => x != "--save-options" && x != SaveOptionsTemplate)
+            .Where(x => x != "--save-alias" && x != aliasName)
             .Select(x => SingleLineOrNewAtFile(x, fileName, ref filesSaved));
 
         var asMultiLineString = string.Join('\n', options);
@@ -87,12 +87,6 @@ class CommandLineOptions
 
     private static IEnumerable<string> ExpandedInputsFromCommandLine(string[] args)
     {
-        var hasArgs = args.Any();
-        if (hasArgs && File.Exists(DefaultOptionsFileName))
-        {
-            args = new[] { "@@" + DefaultOptionsFileName, "--and" }.Concat(args).ToArray();
-        }
-
         return args.SelectMany(arg => ExpandedInput(arg));
     }
     
@@ -142,81 +136,10 @@ class CommandLineOptions
         var args = commandLineOptions.AllOptions = allInputs.ToArray();
         for (int i = 0; i < args.Count(); i++)
         {
-            var arg = args[i];
-
-            var isEndOfCommand = arg == "--" && command != null && !command.IsEmpty();
-            if (isEndOfCommand)
+            var parsed = TryParseInputOptions(commandLineOptions, ref command, args, ref i, args[i]);
+            if (!parsed)
             {
-                commandLineOptions.Commands.Add(command);
-                command = null;
-                continue;
-            }
-
-            var needNewCommand = command == null;
-            if (needNewCommand)
-            {
-                var name1 = GetInputOptionArgs(i, args, max: 1).FirstOrDefault();
-                var name2 = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
-                var commandName = name1 switch
-                {
-                    "help" => "help",
-                    _ => $"{name1} {name2}".Trim()
-                };
-
-                command = commandName switch
-                {
-                    "web search" => new WebSearchCommand(),
-                    "web get" => new WebGetCommand(),
-                    "help" => new HelpCommand(),
-                    "run" => new RunCommand(),
-                    _ => new FindFilesCommand()
-                };
-
-                var needToRestartLoop = command is not FindFilesCommand;
-                if (needToRestartLoop)
-                {
-                    var skipHowManyExtraArgs = commandName.Count(x => x == ' ');
-                    i += skipHowManyExtraArgs;
-                    continue;
-                }
-            }
-
-            var parsedOption = ParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
-                ParseHelpCommandOptions(commandLineOptions, command as HelpCommand, args, ref i, arg) ||
-                ParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
-                ParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
-                ParseRunCommandOptions(command as RunCommand, args, ref i, arg) ||
-                ParseSharedCommandOptions(command, args, ref i, arg);
-            if (parsedOption) continue;
-
-            if (arg == "--help")
-            {
-                commandLineOptions.HelpTopic = command.GetCommandName();
-                break;
-            }
-            else if (arg.StartsWith("--"))
-            {
-                throw InvalidArgException(command, arg);
-            }
-            else if (command is HelpCommand helpCommand)
-            {
-                commandLineOptions.HelpTopic = $"{commandLineOptions.HelpTopic} {arg}".Trim();
-            }
-            else if (command is FindFilesCommand findFilesCommand)
-            {
-                findFilesCommand.Globs.Add(arg);
-            }
-            else if (command is WebSearchCommand webSearchCommand)
-            {
-                webSearchCommand.Terms.Add(arg);
-            }
-            else if (command is WebGetCommand webGetCommand)
-            {
-                webGetCommand.Urls.Add(arg);
-            }
-            else
-            {
-                throw InvalidArgException(command, arg);
+                throw InvalidArgException(command, args[i]);
             }
         }
 
@@ -250,7 +173,95 @@ class CommandLineOptions
         return commandLineOptions;
     }
 
-    private static bool ParseGlobalCommandLineOptions(CommandLineOptions commandLineOptions, string[] args, ref int i, string arg)
+    private static bool TryParseInputOptions(CommandLineOptions commandLineOptions, ref Command command, string[] args, ref int i, string arg)
+    {
+        var isEndOfCommand = arg == "--" && command != null && !command.IsEmpty();
+        if (isEndOfCommand)
+        {
+            commandLineOptions.Commands.Add(command);
+            command = null;
+            return true;
+        }
+
+        var needNewCommand = command == null;
+        if (needNewCommand)
+        {
+            if (arg.StartsWith("--"))
+            {
+                var parsedAsAlias = TryParseAliasOptions(commandLineOptions, ref command, args, ref i, arg.Substring(2));
+                if (parsedAsAlias) return true;
+            }
+
+            var name1 = GetInputOptionArgs(i, args, max: 1).FirstOrDefault();
+            var name2 = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
+            var commandName = name1 switch
+            {
+                "help" => "help",
+                "run" => "run",
+                _ => $"{name1} {name2}".Trim()
+            };
+
+            command = commandName switch
+            {
+                "web search" => new WebSearchCommand(),
+                "web get" => new WebGetCommand(),
+                "help" => new HelpCommand(),
+                "run" => new RunCommand(),
+                _ => new FindFilesCommand()
+            };
+
+            var needToRestartLoop = command is not FindFilesCommand;
+            if (needToRestartLoop)
+            {
+                var skipHowManyExtraArgs = commandName.Count(x => x == ' ');
+                i += skipHowManyExtraArgs;
+                return true;
+            }
+        }
+
+        var parsedOption = TryParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
+            TryParseHelpCommandOptions(commandLineOptions, command as HelpCommand, args, ref i, arg) ||
+            TryParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
+            TryParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
+            TryParseRunCommandOptions(command as RunCommand, args, ref i, arg) ||
+            TryParseSharedCommandOptions(command, args, ref i, arg);
+        if (parsedOption) return true;
+
+        if (arg == "--help")
+        {
+            commandLineOptions.HelpTopic = command.GetCommandName();
+            i = args.Count();
+            parsedOption = true;
+        }
+        else if (arg.StartsWith("--"))
+        {
+            parsedOption = TryParseAliasOptions(commandLineOptions, ref command, args, ref i, arg.Substring(2));
+        }
+        else if (command is HelpCommand helpCommand)
+        {
+            commandLineOptions.HelpTopic = $"{commandLineOptions.HelpTopic} {arg}".Trim();
+            parsedOption = true;
+        }
+        else if (command is FindFilesCommand findFilesCommand)
+        {
+            findFilesCommand.Globs.Add(arg);
+            parsedOption = true;
+        }
+        else if (command is WebSearchCommand webSearchCommand)
+        {
+            webSearchCommand.Terms.Add(arg);
+            parsedOption = true;
+        }
+        else if (command is WebGetCommand webGetCommand)
+        {
+            webGetCommand.Urls.Add(arg);
+            parsedOption = true;
+        }
+
+        return parsedOption;
+    }
+
+    private static bool TryParseGlobalCommandLineOptions(CommandLineOptions commandLineOptions, string[] args, ref int i, string arg)
     {
         var parsed = true;
 
@@ -266,11 +277,11 @@ class CommandLineOptions
         {
             commandLineOptions.Verbose = true;
         }
-        else if (arg == "--save-options")
+        else if (arg == "--save-alias")
         {
             var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
-            var saveOptionsTemplate = max1Arg.FirstOrDefault() ?? DefaultOptionsFileName;
-            commandLineOptions.SaveOptionsTemplate = saveOptionsTemplate;
+            var aliasName = max1Arg.FirstOrDefault() ?? throw new CommandLineException("Missing alias name for --save-alias");
+            commandLineOptions.SaveAliasName = aliasName;
             i += max1Arg.Count();
         }
         else
@@ -281,7 +292,7 @@ class CommandLineOptions
         return parsed;
     }
 
-    private static bool ParseHelpCommandOptions(CommandLineOptions commandLineOptions, HelpCommand helpCommand, string[] args, ref int i, string arg)
+    private static bool TryParseHelpCommandOptions(CommandLineOptions commandLineOptions, HelpCommand helpCommand, string[] args, ref int i, string arg)
     {
         bool parsed = true;
 
@@ -301,7 +312,7 @@ class CommandLineOptions
         return parsed;
     }
 
-    private static bool ParseRunCommandOptions(RunCommand command, string[] args, ref int i, string arg)
+    private static bool TryParseRunCommandOptions(RunCommand command, string[] args, ref int i, string arg)
     {
         bool parsed = true;
 
@@ -345,7 +356,7 @@ class CommandLineOptions
         return parsed;
     }
 
-    private static bool ParseFindFilesCommandOptions(FindFilesCommand command, string[] args, ref int i, string arg)
+    private static bool TryParseFindFilesCommandOptions(FindFilesCommand command, string[] args, ref int i, string arg)
     {
         bool parsed = true;
 
@@ -459,7 +470,7 @@ class CommandLineOptions
         return parsed;
     }
 
-    private static bool ParseWebCommandOptions(WebCommand command, string[] args, ref int i, string arg)
+    private static bool TryParseWebCommandOptions(WebCommand command, string[] args, ref int i, string arg)
     {
         bool parsed = true;
 
@@ -563,7 +574,7 @@ class CommandLineOptions
         return parsed;
     }
 
-    private static bool ParseSharedCommandOptions(Command command, string[] args, ref int i, string arg)
+    private static bool TryParseSharedCommandOptions(Command command, string[] args, ref int i, string arg)
     {
         bool parsed = true;
 
@@ -603,6 +614,24 @@ class CommandLineOptions
         }
 
         return parsed;
+    }
+
+    private static bool TryParseAliasOptions(CommandLineOptions commandLineOptions, ref Command command, string[] args, ref int i, string alias)
+    {
+        if (File.Exists($"{alias}.alias"))
+        {
+            var aliasArgs = File.ReadAllLines($"{alias}.alias");
+            for (var j = 0; j < aliasArgs.Length; j++)
+            {
+                var parsed = TryParseInputOptions(commandLineOptions, ref command, aliasArgs, ref j, aliasArgs[j]);
+                if (!parsed)
+                {
+                    throw InvalidArgException(command, aliasArgs[j]);
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args, int max = int.MaxValue)

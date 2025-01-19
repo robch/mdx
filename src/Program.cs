@@ -52,13 +52,13 @@ class Program
             return 0;
         }
 
-        var shouldSaveOptions = !string.IsNullOrEmpty(commandLineOptions.SaveOptionsTemplate);
-        if (shouldSaveOptions)
+        var shouldSaveAlias = !string.IsNullOrEmpty(commandLineOptions.SaveAliasName);
+        if (shouldSaveAlias)
         {
-            var filesSaved = commandLineOptions.SaveOptions(commandLineOptions.SaveOptionsTemplate);
+            var filesSaved = commandLineOptions.SaveAlias(commandLineOptions.SaveAliasName);
 
             PrintBanner();
-            PrintSavedOptionFiles(filesSaved);
+            PrintSavedAliasFiles(filesSaved);
 
             return 0;
         }
@@ -124,15 +124,12 @@ class Program
         if (printMessage) ConsoleHelpers.PrintLine($"  {ex.Message}\n\n");
     }
 
-    private static void PrintSavedOptionFiles(List<string> filesSaved)
+    private static void PrintSavedAliasFiles(List<string> filesSaved)
     {
         var firstFileSaved = filesSaved.First();
         var additionalFiles = filesSaved.Skip(1).ToList();
 
-        var savedAsDefault = firstFileSaved == CommandLineOptions.DefaultOptionsFileName;
-        ConsoleHelpers.PrintLine(savedAsDefault
-            ? $"Saved: {firstFileSaved} (default options file)\n"
-            : $"Saved: {firstFileSaved}\n");
+        ConsoleHelpers.PrintLine($"Saved: {firstFileSaved}\n");
 
         var hasAdditionalFiles = additionalFiles.Any();
         if (hasAdditionalFiles)
@@ -145,15 +142,8 @@ class Program
             ConsoleHelpers.PrintLine();
         }
 
-        if (savedAsDefault)
-        {
-            ConsoleHelpers.PrintLine($"NOTE: These options will be used by default when invoking {Program.Name} in this directory.");
-            ConsoleHelpers.PrintLine($"      To stop using these options by default, delete the file: {firstFileSaved}");
-        }
-        else
-        {
-            ConsoleHelpers.PrintLine($"USAGE: {Program.Name} @@" + firstFileSaved);
-        }
+        var aliasName = Path.GetFileNameWithoutExtension(firstFileSaved);
+        ConsoleHelpers.PrintLine($"USAGE: {Program.Name} [...] --" + aliasName);
     }
 
     private static List<Task<string>> HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFilesCommand, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)

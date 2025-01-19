@@ -226,7 +226,7 @@ OPTIONS
                                    (e.g. {filePath}/{fileBase}-output.md)
 
     --save-output [FILE]           Save command output to the specified template file
-    --save-options [FILE]          Save current options to the specified file
+    --save-alias ALIAS             Save current options as an alias (usable via --{ALIAS})
 
 SUB COMMANDS
 
@@ -339,7 +339,7 @@ OPTIONS
   OUTPUT
 
     --save-output [FILE]          Save command output to the specified template file.
-    --save-options [FILE]         Save current options to the specified file.
+    --save-alias ALIAS            Save current options as an alias (usable via --{ALIAS}).
 
 SEE ALSO
 
@@ -453,7 +453,7 @@ OPTIONS
                                        (e.g. {filePath}/{fileBase}-output.md)
 
     --save-output [FILE]               Save command output to the specified template file
-    --save-options [FILE]              Save current options to the specified file
+    --save-alias ALIAS                 Save current options as an alias (usable via --{ALIAS})
 
 SEE ALSO
 
@@ -596,7 +596,7 @@ OPTIONS
                                        (e.g. {filePath}/{fileBase}-output.md)
 
     --save-output [FILE]               Save command output to the specified template file
-    --save-options [FILE]              Save current options to the specified file
+    --save-alias ALIAS                 Save current options as an alias (usable via --{ALIAS})
 
 SEE ALSO
 
