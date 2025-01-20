@@ -7,13 +7,49 @@ using System.Text.RegularExpressions;
 
 class FileHelpers
 {
-    public static void EnsureDirectoryExists(string folder)
+    public static string EnsureDirectoryExists(string folder)
     {
         var validFolderName = !string.IsNullOrEmpty(folder);
         if (validFolderName && !Directory.Exists(folder))
         {
             Directory.CreateDirectory(folder);
         }
+
+        return folder;
+    }
+
+    public static string FindOrCreateDirectory(params string[] paths)
+    {
+        return FindDirectory(paths, createIfNotFound: true);
+    }
+
+    public static string FindDirectory(params string[] paths)
+    {
+        return FindDirectory(paths, createIfNotFound: false);
+    }
+
+    public static string FindDirectory(string[] paths, bool createIfNotFound)
+    {
+        var current = Directory.GetCurrentDirectory();
+        while (current != null)
+        {
+            var combined = Path.Combine(paths.Prepend(current).ToArray());
+            if (Directory.Exists(combined))
+            {
+                return combined;
+            }
+
+            current = Directory.GetParent(current)?.FullName;
+        }
+
+        if (createIfNotFound)
+        {
+            current = Directory.GetCurrentDirectory();
+            var combined = Path.Combine(paths.Prepend(current).ToArray());
+            return EnsureDirectoryExists(combined);
+        }
+
+        return null;
     }
 
     public static void EnsureDirectoryForFileExists(string fileName)

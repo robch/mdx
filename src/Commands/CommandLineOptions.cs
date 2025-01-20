@@ -58,7 +58,8 @@ class CommandLineOptions
     public List<string> SaveAlias(string aliasName)
     {
         var filesSaved = new List<string>();
-        var fileName = aliasName + ".alias";
+        var aliasDirectory = FindAliasDirectory(create: true);
+        var fileName = Path.Combine(aliasDirectory, aliasName + ".alias");
 
         var options = AllOptions
             .Where(x => x != "--save-alias" && x != aliasName)
@@ -245,6 +246,11 @@ class CommandLineOptions
         else if (command is FindFilesCommand findFilesCommand)
         {
             findFilesCommand.Globs.Add(arg);
+            parsedOption = true;
+        }
+        else if (command is RunCommand runCommand)
+        {
+            runCommand.ScriptToRun = $"{runCommand.ScriptToRun} {arg}".Trim();
             parsedOption = true;
         }
         else if (command is WebSearchCommand webSearchCommand)
@@ -618,9 +624,12 @@ class CommandLineOptions
 
     private static bool TryParseAliasOptions(CommandLineOptions commandLineOptions, ref Command command, string[] args, ref int i, string alias)
     {
-        if (File.Exists($"{alias}.alias"))
+        var aliasDirectory = FindAliasDirectory(create: false);
+        var aliasFilePath = Path.Combine(aliasDirectory, $"{alias}.alias");
+
+        if (File.Exists(aliasFilePath))
         {
-            var aliasArgs = File.ReadAllLines($"{alias}.alias");
+            var aliasArgs = File.ReadAllLines(aliasFilePath);
             for (var j = 0; j < aliasArgs.Length; j++)
             {
                 var parsed = TryParseInputOptions(commandLineOptions, ref command, aliasArgs, ref j, aliasArgs[j]);
@@ -721,5 +730,13 @@ class CommandLineOptions
             : command is WebGetCommand ? new WebGetCommandLineException(message)
             : new CommandLineException(message);
         return ex;
+    }
+
+    private static string FindAliasDirectory(bool create = false)
+    {
+        return create
+            ? FileHelpers.FindOrCreateDirectory(".mdx", "aliases")
+            : FileHelpers.FindDirectory(".mdx", "aliases");
+
     }
 }
