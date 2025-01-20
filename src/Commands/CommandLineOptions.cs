@@ -250,7 +250,7 @@ class CommandLineOptions
         }
         else if (command is RunCommand runCommand)
         {
-            runCommand.ScriptToRun = $"{runCommand.ScriptToRun} {arg}".Trim();
+            runCommand.ScriptToRun = $"{runCommand.ScriptToRun}\n{arg}".Trim();
             parsedOption = true;
         }
         else if (command is WebSearchCommand webSearchCommand)

@@ -56,7 +56,7 @@ static class ProcessHelpers
         {
             case "cmd":
                 processName = "cmd.exe";
-                arguments = $"/c {script}";
+                arguments = $"/c {script.Replace("\n", " & ")}";
                 break;
             case "bash":
                 processName = "bash";
@@ -70,7 +70,7 @@ static class ProcessHelpers
                 if (Environment.OSVersion.Platform == PlatformID.Win32NT)
                 {
                     processName = "cmd.exe";
-                    arguments = $"/c {script}";
+                    arguments = $"/c {script.Replace("\n", " & ")}";
                 }
                 else
                 {
