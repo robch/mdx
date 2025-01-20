@@ -42,7 +42,7 @@ OPTIONS
 
 SUB COMMANDS
 
-  run [...]                        Create markdown from shell script output
+  run [...]                        Create markdown from shell commands output
   web search [...]                 Create markdown from web search results
   web get [...]                    Create markdown from web page content
 
