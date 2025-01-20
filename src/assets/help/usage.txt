@@ -11,7 +11,7 @@ Using MDX, you can:
 
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
-   OR: mdx run [...]
+   OR: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
    OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
    OR: mdx web get "URL" ["URL2" [...]] [...]
 

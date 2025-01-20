@@ -328,29 +328,29 @@ class CommandLineOptions
         }
         else if (arg == "--script")
         {
-            var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
-            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --script");
+            var scriptArgs = GetInputOptionArgs(i + 1, args);
+            command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");
             command.Type = RunCommand.ScriptType.Default;
             i += scriptArgs.Count();
         }
         else if (arg == "--cmd")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
-            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --cmd");
+            command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");
             command.Type = RunCommand.ScriptType.Cmd;
             i += scriptArgs.Count();
         }
         else if (arg == "--bash")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
-            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --bash");
+            command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");
             command.Type = RunCommand.ScriptType.Bash;
             i += scriptArgs.Count();
         }
         else if (arg == "--powershell")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args, 1);
-            command.ScriptToRun = scriptArgs.FirstOrDefault() ?? throw new CommandLineException("Missing script for --powershell");
+            command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");
             command.Type = RunCommand.ScriptType.PowerShell;
             i += scriptArgs.Count();
         }
@@ -721,6 +721,17 @@ class CommandLineOptions
         }
 
         return count;
+    }
+
+    private static string ValidateJoinedString(string arg, string seed, IEnumerable<string> values, string separator, string argDescription)
+    {
+        seed = string.Join(separator, values.Prepend(seed)).Trim();
+        if (string.IsNullOrEmpty(seed))
+        {
+            throw new CommandLineException($"Missing {argDescription} for {arg}");
+        }
+
+        return seed;
     }
 
     private static CommandLineException InvalidArgException(Command command, string arg)

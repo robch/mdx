@@ -90,7 +90,7 @@ Using MDX, you can:
 
 USAGE: mdx FILE1 [FILE2 [...]] [...]
    OR: mdx PATTERN1 [PATTERN2 [...]] [...]
-   OR: mdx run [...]
+   OR: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
    OR: mdx web search "TERMS" ["TERMS2" [...]] [...]
    OR: mdx web get "URL" ["URL2" [...]] [...]
 
@@ -266,13 +266,13 @@ MDX RUN
 
   Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
 
-USAGE: mdx run [...]
+USAGE: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
 
 EXAMPLES
 
   EXAMPLE 1: Run a simple command and process the output
 
-    mdx run --script "echo Hello, World!" --instructions "summarize the output"
+    mdx run "echo Hello, World!" --instructions "translate strings to german"
 
   EXAMPLE 2: Run a script using PowerShell and process the output
 
@@ -296,13 +296,13 @@ MDX RUN
 
   Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
 
-USAGE: mdx run [...]
+USAGE: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
 
 EXAMPLES
 
   EXAMPLE 1: Run a simple command and process the output
 
-    mdx run --script "echo Hello, World!" --instructions "summarize the output"
+    mdx run "echo Hello, World!" --instructions "translate strings to german"
 
   EXAMPLE 2: Run a script using PowerShell and process the output
 
@@ -312,6 +312,10 @@ EXAMPLES
 
     mdx run --bash "ls -la" --instructions @step1-instructions.txt @step2-instructions.txt
 
+  EXAMPLE 4: Run multiple commands
+
+    mdx run "echo Hello, World!" "echo Goodbye, World!"
+    
 SEE ALSO
 
   mdx help run
@@ -326,16 +330,18 @@ MDX RUN
 
   Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
 
-USAGE: mdx run [...]
+USAGE: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
 
 OPTIONS
 
   SCRIPT
 
-    --script "COMMAND"            Specify the script or command to run (uses cmd or bash)
-    --cmd "COMMAND"               Specify the script or command to run (default for --script on Windows)
-    --bash "COMMAND"              Specify the script or command to run (default for --script on Linux/Mac)
-    --powershell "COMMAND"        Specify the script or command to run
+    --script [COMMAND]            Specify the script or command to run
+                                  (On Windows, the default is cmd. On Linux/Mac, the default is bash)
+
+    --cmd [COMMAND]               Specify the script or command to run
+    --bash [COMMAND]              Specify the script or command to run
+    --powershell [COMMAND]        Specify the script or command to run
 
   AI PROCESSING
 

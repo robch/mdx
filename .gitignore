@@ -1,5 +1,6 @@
 .ai/data/**
 .ai/scratch/**
+.mdx/aliases/**
 .vs/**
 **/obj/**
 **/bin/**
