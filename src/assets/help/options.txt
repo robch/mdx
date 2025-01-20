@@ -34,7 +34,7 @@ OPTIONS
 
   OUTPUT
 
-    --save-page-output [FILE]      Save each file output to the specified template file
+    --save-file-output [FILE]      Save each file output to the specified template file
                                    (e.g. {filePath}/{fileBase}-output.md)
 
     --save-output [FILE]           Save command output to the specified template file

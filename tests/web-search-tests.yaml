@@ -15,6 +15,22 @@
     Azure AI
     Bing
 
+- name: Test web search with Yahoo
+  parallelize: true
+  bash: |
+    mdx web search "Azure AI" --yahoo
+  expect-regex: |
+    Azure AI
+    Yahoo
+
+- name: Test web search with DuckDuckGo
+  parallelize: true
+  bash: |
+    mdx web search "Azure AI" --duckduckgo
+  expect-regex: |
+    Azure AI
+    DuckDuckGo
+
 - name: Test web search excluding specific sites
   parallelize: true
   bash: |

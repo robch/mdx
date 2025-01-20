@@ -1,0 +1,22 @@
+﻿tests:
+
+- name: Test running a shell script
+  parallelize: true
+  bash: |
+    mdx run --script "echo Hello World&&echo Goodbye World"
+  expect-regex: |
+    Hello World
+    Goodbye World
+
+- name: Test running a PowerShell script with instructions
+  bash: |
+    mdx run --powershell "Get-Process" --instructions "Keep the ones for mdx and ai, put them in a markdown table, with process id, process name, and memory usage (in that order)"
+  expect-regex: |
+    (?i)id.*name.*memory
+
+- name: Test running a bash script
+  parallelize: true
+  bash: |
+    mdx run --bash "ls -l"
+  expect: |
+    The output should look like typical output for `ls -l`
