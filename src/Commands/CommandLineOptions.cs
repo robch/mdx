@@ -631,7 +631,7 @@ class CommandLineOptions
 
     private static bool TryParseAliasOptions(CommandLineOptions commandLineOptions, ref Command command, string[] args, ref int i, string alias)
     {
-        var aliasDirectory = FindAliasDirectory(create: false);
+        var aliasDirectory = FindAliasDirectory(create: false) ?? ".";
         var aliasFilePath = Path.Combine(aliasDirectory, $"{alias}.alias");
 
         if (File.Exists(aliasFilePath))
