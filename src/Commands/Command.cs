@@ -12,6 +12,7 @@ abstract class Command
     {
         InstructionsList = new List<string>();
         UseBuiltInFunctions = false;
+        SaveChatHistory = string.Empty;
         ThreadCount = 0;
     }
 
@@ -20,6 +21,7 @@ abstract class Command
 
     public List<string> InstructionsList;
     public bool UseBuiltInFunctions;
+    public string SaveChatHistory;
 
     public string SaveOutput;
 

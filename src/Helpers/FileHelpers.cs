@@ -88,6 +88,7 @@ class FileHelpers
         string fileBase = Path.GetFileNameWithoutExtension(fileName);
         string fileExt = Path.GetExtension(fileName).TrimStart('.');
         string timeStamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+        string time = DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString();
 
         ConsoleHelpers.PrintDebugLine($"filePath: {filePath}");
         ConsoleHelpers.PrintDebugLine($"fileBase: {fileBase}");
@@ -105,6 +106,7 @@ class FileHelpers
             .Replace("{fileext}", fileExt)
             .Replace("{timeStamp}", timeStamp)
             .Replace("{timestamp}", timeStamp)
+            .Replace("{time}", time)
             .Trim(' ', '/', '\\');
     }
     

@@ -92,7 +92,7 @@ class Program
 
                 if (delayOutputToApplyInstructions)
                 {
-                    commandOutput = AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, commandOutput, command.UseBuiltInFunctions);
+                    commandOutput = AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, commandOutput, command.UseBuiltInFunctions, command.SaveChatHistory);
                     ConsoleHelpers.PrintLine(commandOutput);
                 }
 
@@ -174,6 +174,7 @@ class Program
                 findFilesCommand.RemoveAllLineContainsPatternList,
                 findFilesCommand.FileInstructionsList,
                 findFilesCommand.UseBuiltInFunctions,
+                findFilesCommand.SaveChatHistory,
                 findFilesCommand.SaveFileOutput);
 
             var taskToAdd = delayOutputToApplyInstructions
@@ -202,6 +203,8 @@ class Program
         var browserType = command.Browser;
         var interactive = command.Interactive;
         var useBuiltInFunctions = command.UseBuiltInFunctions;
+        var saveChatHistory = command.SaveChatHistory;
+
         var savePageOutput = command.SavePageOutput;
         var pageInstructionsList = command.PageInstructionsList
             .Select(x => Tuple.Create(
@@ -232,7 +235,7 @@ class Program
 
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, savePageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, savePageOutput);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -256,6 +259,7 @@ class Program
         var interactive = command.Interactive;
         var pageInstructionsList = command.PageInstructionsList;
         var useBuiltInFunctions = command.UseBuiltInFunctions;
+        var saveChatHistory = command.SaveChatHistory;
         var savePageOutput = command.SavePageOutput;
 
         var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
@@ -270,7 +274,7 @@ class Program
         var tasks = new List<Task<string>>();
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, savePageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, savePageOutput);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -328,11 +332,13 @@ class Program
     {
         var formatted = await GetFormattedRunCommandContentAsync(command);
 
-        var afterInstructions = command.InstructionsList.Any()
-            ? AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, formatted, command.UseBuiltInFunctions)
-            : formatted;
+        // var afterInstructions = command.InstructionsList.Any()
+        //     ? AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, formatted, command.UseBuiltInFunctions, command.SaveChatHistory)
+        //     : formatted;
 
-        return afterInstructions;
+        // return afterInstructions;
+
+        return formatted;
     }
 
     private static async Task<string> GetFormattedRunCommandContentAsync(RunCommand command)
@@ -371,7 +377,7 @@ class Program
         }
     }
 
-    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
+    private static Task<string> GetCheckSaveFileContentAsync(string fileName, SemaphoreSlim throttler, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string saveFileOutput)
     {
         var getCheckSaveFileContent = new Func<string>(() =>
             GetCheckSaveFileContent(
@@ -384,6 +390,7 @@ class Program
                 removeAllLineContainsPatternList,
                 fileInstructionsList,
                 useBuiltInFunctions,
+                saveChatHistory,
                 saveFileOutput));
 
         if (!fileInstructionsList.Any())
@@ -405,7 +412,7 @@ class Program
         });
     }
 
-    private static string GetCheckSaveFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveFileOutput)
+    private static string GetCheckSaveFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string saveFileOutput)
     {
         try
         {
@@ -419,7 +426,8 @@ class Program
                 includeLineNumbers,
                 removeAllLineContainsPatternList,
                 fileInstructionsList,
-                useBuiltInFunctions);
+                useBuiltInFunctions,
+                saveChatHistory);
 
             if (!string.IsNullOrEmpty(saveFileOutput))
             {
@@ -436,7 +444,7 @@ class Program
         }
     }
 
-    private static string GetFinalFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions)
+    private static string GetFinalFileContent(string fileName, bool wrapInMarkdown, List<Regex> includeLineContainsPatternList, int includeLineCountBefore, int includeLineCountAfter, bool includeLineNumbers, List<Regex> removeAllLineContainsPatternList, List<Tuple<string, string>> fileInstructionsList, bool useBuiltInFunctions, string saveChatHistory)
     {
         var formatted = GetFormattedFileContent(
             fileName,
@@ -453,7 +461,7 @@ class Program
             .ToList();
 
         var afterInstructions = instructionsForThisFile.Any()
-            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisFile, formatted, useBuiltInFunctions)
+            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisFile, formatted, useBuiltInFunctions, saveChatHistory)
             : formatted;
 
         return afterInstructions;
@@ -589,12 +597,12 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string savePageOutput)
+    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string savePageOutput)
     {
         try
         {
             ConsoleHelpers.PrintStatus($"Processing: {url} ...");
-            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions);
+            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory);
 
             if (!string.IsNullOrEmpty(savePageOutput))
             {
@@ -612,7 +620,7 @@ class Program
         }
     }
 
-    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions)
+    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory)
     {
         var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive);
 
@@ -622,7 +630,7 @@ class Program
             .ToList();
 
         var afterInstructions = instructionsForThisPage.Any()
-            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisPage, formatted, useBuiltInFunctions)
+            ? AiInstructionProcessor.ApplyAllInstructions(instructionsForThisPage, formatted, useBuiltInFunctions, saveChatHistory)
             : formatted;
 
         return afterInstructions;

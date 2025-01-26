@@ -5,12 +5,14 @@ using System.Linq;
 
 class AiInstructionProcessor
 {
-    public static string ApplyAllInstructions(List<string> instructionsList, string content, bool useBuiltInFunctions, int retries = 1)
+    public const string DefaultSaveChatHistoryTemplate = "chat-history-{time}.jsonl";
+
+    public static string ApplyAllInstructions(List<string> instructionsList, string content, bool useBuiltInFunctions, string saveChatHistory, int retries = 1)
     {
         try
         {
             ConsoleHelpers.PrintStatus("Applying instructions ...");
-            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current, useBuiltInFunctions, retries));
+            return instructionsList.Aggregate(content, (current, instruction) => ApplyInstructions(instruction, current, useBuiltInFunctions, saveChatHistory, retries));
         }
         finally
         {
@@ -18,11 +20,11 @@ class AiInstructionProcessor
         }
     }
 
-    public static string ApplyInstructions(string instructions, string content, bool useBuiltInFunctions, int retries = 1)
+    public static string ApplyInstructions(string instructions, string content, bool useBuiltInFunctions, string saveChatHistory, int retries = 1)
     {
         while (true)
         {
-            ApplyInstructions(instructions, content, useBuiltInFunctions, out var returnCode, out var stdOut, out var stdErr, out var exception);
+            ApplyInstructions(instructions, content, useBuiltInFunctions, saveChatHistory, out var returnCode, out var stdOut, out var stdErr, out var exception);
 
             var retryable = retries-- > 0;
             var tryAgain = retryable && (returnCode != 0 || exception != null);
@@ -36,7 +38,7 @@ class AiInstructionProcessor
         }
     }
 
-    private static void ApplyInstructions(string instructions, string content, bool useBuiltInFunctions, out int returnCode, out string stdOut, out string stdErr, out Exception exception)
+    private static void ApplyInstructions(string instructions, string content, bool useBuiltInFunctions, string saveChatHistory, out int returnCode, out string stdOut, out string stdErr, out Exception exception)
     {
         returnCode = 0;
         stdOut = null;
@@ -61,6 +63,12 @@ class AiInstructionProcessor
 
             var arguments = $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
             if (useBuiltInFunctions) arguments += " --built-in-functions";
+
+            if (!string.IsNullOrEmpty(saveChatHistory))
+            {
+                var fileName = FileHelpers.GetFileNameFromTemplate(DefaultSaveChatHistoryTemplate, saveChatHistory);
+                arguments += $" --output-chat-history \"{fileName}\"";
+            }
 
             var process = new System.Diagnostics.Process();
             process.StartInfo.FileName = "ai";

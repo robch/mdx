@@ -605,6 +605,13 @@ class CommandLineOptions
             command.SaveOutput = saveOutput;
             i += max1Arg.Count();
         }
+        else if (arg == "--save-chat-history")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            var saveChatHistory = max1Arg.FirstOrDefault() ?? AiInstructionProcessor.DefaultSaveChatHistoryTemplate;
+            command.SaveChatHistory = saveChatHistory;
+            i += max1Arg.Count();
+        }
         else if (arg == "--built-in-functions")
         {
             command.UseBuiltInFunctions = true;
