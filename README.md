@@ -226,6 +226,9 @@ OPTIONS
     --built-in-functions           Enable built-in functions (AI CLI can use file system)
     --threads N                    Limit the number of concurrent file processing threads
 
+    --save-chat-history [FILE]     Save the chat history to the specified file
+                                   (e.g. chat-history-{time}.jsonl)
+
   OUTPUT
 
     --save-file-output [FILE]      Save each file output to the specified template file
@@ -459,6 +462,9 @@ OPTIONS
     --built-in-functions               Enable built-in functions (AI CLI can use file system)
     --threads N                        Limit the number of concurrent file processing threads
 
+    --save-chat-history [FILE]         Save the chat history to the specified file
+                                       (e.g. chat-history-{time}.jsonl)
+
   OUTPUT
 
     --save-page-output [FILE]          Save each web page output to the specified template file
@@ -601,6 +607,9 @@ OPTIONS
 
     --built-in-functions               Enable built-in functions (AI CLI can use file system)
     --threads N                        Limit the number of concurrent file processing threads
+
+    --save-chat-history [FILE]         Save the chat history to the specified file
+                                       (e.g. chat-history-{time}.jsonl)
 
   OUTPUT
 
