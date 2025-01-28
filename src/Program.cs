@@ -311,8 +311,18 @@ class Program
         try
         {
             ConsoleHelpers.PrintStatus($"Executing: {command.ScriptToRun} ...");
-            var (success, output) = await command.ExecuteWithTimeout();
-            var finalContent = success ? output : $"Error: {output}";
+            
+            var shell = command.Type switch
+            {
+                RunCommand.ScriptType.Cmd => "cmd",
+                RunCommand.ScriptType.PowerShell => "powershell",
+                RunCommand.ScriptType.Bash => "bash",
+                _ => OperatingSystem.IsWindows() ? "cmd" : "bash"
+            };
+
+            var timeout = command.TimeoutMilliseconds > 0 ? command.TimeoutMilliseconds : int.MaxValue;
+            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(command.ScriptToRun, shell, timeout);
+            var finalContent = exitCode == 0 ? output : $"Error (exit code {exitCode}): {output}";
 
             if (!string.IsNullOrEmpty(command.SaveOutput))
             {
