@@ -365,7 +365,8 @@ class Program
                 _ => null
             };
 
-            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell);
+            var timeout = command.TimeoutMilliseconds > 0 ? command.TimeoutMilliseconds : int.MaxValue;
+            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell, timeout);
             var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
 
             var isMultiLine = script.Contains("\n");
