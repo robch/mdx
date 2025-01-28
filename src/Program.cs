@@ -311,7 +311,8 @@ class Program
         try
         {
             ConsoleHelpers.PrintStatus($"Executing: {command.ScriptToRun} ...");
-            var finalContent = await GetFinalRunCommandContentAsync(command);
+            var (success, output) = await command.ExecuteWithTimeout();
+            var finalContent = success ? output : $"Error: {output}";
 
             if (!string.IsNullOrEmpty(command.SaveOutput))
             {
