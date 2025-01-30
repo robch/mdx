@@ -16,14 +16,19 @@ class RunCommand : Command
         Type = ScriptType.Default;
     }
 
-    public override bool IsEmpty()
+    override public string GetCommandName()
+    {
+        return "run";
+    }
+
+    override public bool IsEmpty()
     {
         return string.IsNullOrWhiteSpace(ScriptToRun);
     }
 
-    public override string GetCommandName()
+    override public Command Validate()
     {
-        return "run";
+        return this;
     }
 
     public string ScriptToRun { get; set; }

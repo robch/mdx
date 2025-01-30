@@ -23,6 +23,11 @@ class FindFilesCommand : Command
         FileInstructionsList = new();
     }
 
+    override public string GetCommandName()
+    {
+        return "";
+    }
+
     override public bool IsEmpty()
     {
         return !Globs.Any() &&
@@ -39,9 +44,14 @@ class FindFilesCommand : Command
             ThreadCount == 0;
     }
 
-    override public string GetCommandName()
+    override public Command Validate()
     {
-        return "";
+        if (!Globs.Any()) 
+        {
+            Globs.Add("**");
+        }
+
+        return this;
     }
 
     public List<string> Globs;

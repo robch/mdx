@@ -16,8 +16,9 @@ abstract class Command
         ThreadCount = 0;
     }
 
-    abstract public bool IsEmpty();
     abstract public string GetCommandName();
+    abstract public bool IsEmpty();
+    abstract public Command Validate();
 
     public List<string> InstructionsList;
     public bool UseBuiltInFunctions;

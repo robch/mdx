@@ -9,8 +9,14 @@ class HelpCommand : Command
         return "help";
     }
 
-    public override bool IsEmpty()
+    override public bool IsEmpty()
     {
         return false;
     }
+
+    override public Command Validate()
+    {
+        return this;
+    }
+
 }

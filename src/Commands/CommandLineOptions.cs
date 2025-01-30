@@ -151,24 +151,7 @@ class CommandLineOptions
 
         if (command != null && !command.IsEmpty())
         {
-            commandLineOptions.Commands.Add(command);
-        }
-
-        var findFilesCommands = commandLineOptions.Commands.OfType<FindFilesCommand>().ToList();
-        foreach (var findFileCommand in findFilesCommands.Where(x => !x.Globs.Any()))
-        {
-            findFileCommand.Globs.Add("**");
-        }
-
-        var webSearchCommands = commandLineOptions.Commands.OfType<WebSearchCommand>().ToList();
-        foreach (var webSearchCommand in webSearchCommands.Where(x => !x.GetContent))
-        {
-            var hasInstructions = webSearchCommand.PageInstructionsList.Any() || webSearchCommand.InstructionsList.Any();
-            if (hasInstructions)
-            {
-                webSearchCommand.GetContent = true;
-                webSearchCommand.StripHtml = true;
-            }
+            commandLineOptions.Commands.Add(command.Validate());
         }
 
         return commandLineOptions;
@@ -179,7 +162,7 @@ class CommandLineOptions
         var isEndOfCommand = arg == "--" && command != null && !command.IsEmpty();
         if (isEndOfCommand)
         {
-            commandLineOptions.Commands.Add(command);
+            commandLineOptions.Commands.Add(command.Validate());
             command = null;
             return true;
         }

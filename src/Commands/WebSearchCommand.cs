@@ -10,13 +10,28 @@ class WebSearchCommand : WebCommand
 
     public List<string> Terms { get; set; }
 
+    override public string GetCommandName()
+    {
+        return "web search";
+    }
+
     override public bool IsEmpty()
     {
         return !Terms.Any();
     }
 
-    override public string GetCommandName()
+    override public Command Validate()
     {
-        return "web search";
+        var noContent = !GetContent;
+        var hasInstructions = PageInstructionsList.Any() || InstructionsList.Any();
+
+        var assumeGetAndStrip = noContent && hasInstructions;
+        if (assumeGetAndStrip)
+        {
+            GetContent = true;
+            StripHtml = true;
+        }
+
+        return this;
     }
 }

@@ -10,14 +10,19 @@ class WebGetCommand : WebCommand
     
     public List<string> Urls { get; set; }
 
+    override public string GetCommandName()
+    {
+        return "web get";
+    }
+
     override public bool IsEmpty()
     {
         
         return !Urls.Any();
     }
 
-    override public string GetCommandName()
+    override public Command Validate()
     {
-        return "web get";
+        return this;
     }
 }
