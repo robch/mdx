@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -51,6 +52,12 @@ class FindFilesCommand : Command
             Globs.Add("**");
         }
 
+        var mdxIgnoreFile = FileHelpers.ParentFindFile(".mdxignore");
+        if (mdxIgnoreFile != null)
+        {
+            AddExclusions(mdxIgnoreFile);
+        }
+
         return this;
     }
 
@@ -70,4 +77,21 @@ class FindFilesCommand : Command
     public List<Tuple<string, string>> FileInstructionsList;
 
     public string SaveFileOutput;
+
+    private void AddExclusions(string mdxIgnoreFile)
+    {
+        var lines = File.ReadAllLines(mdxIgnoreFile);
+        foreach (var line in lines)
+        {
+            var assumeIsGlob = line.Contains('/') || line.Contains('\\');
+            if (assumeIsGlob)
+            {
+                ExcludeGlobs.Add(line);
+            }
+            else
+            {
+                ExcludeFileNamePatternList.Add(new Regex(line));
+            }
+        }
+    }
 }

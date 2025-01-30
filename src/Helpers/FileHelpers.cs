@@ -52,6 +52,29 @@ class FileHelpers
         return null;
     }
 
+    public static string ParentFindFile(string fileName)
+    {
+        return ParentFindFile(new[] { "./" }, fileName);
+    }
+
+    public static string ParentFindFile(string[] paths, string fileName)
+    {
+        var current = Directory.GetCurrentDirectory();
+        while (current != null)
+        {
+            var combined = Path.Combine(paths.Prepend(current).ToArray());
+            var file = Path.Combine(combined, fileName);
+            if (File.Exists(file))
+            {
+                return file;
+            }
+
+            current = Directory.GetParent(current)?.FullName;
+        }
+
+        return null;
+    }
+
     public static void EnsureDirectoryForFileExists(string fileName)
     {
         EnsureDirectoryExists(Path.GetDirectoryName(fileName));
