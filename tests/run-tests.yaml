@@ -1,5 +1,24 @@
 ﻿tests:
 
+- name: Test running a shell script with environment variables
+  bash: |
+    mdx run --script "echo $GREETING $NAME" --env "GREETING=Hello" --env "NAME=World"
+  expect-regex: |
+    Hello World
+
+- name: Test running a shell script with environment variables containing special characters
+  bash: |
+    mdx run --script "echo $MESSAGE" --env "MESSAGE=Hello, World! How are you?"
+  expect-regex: |
+    Hello, World! How are you\?
+
+- name: Test running a shell script with environment variable inheritance
+  bash: |
+    export INHERITED_VAR="From parent"
+    mdx run --script "echo $INHERITED_VAR $NEW_VAR" --env "NEW_VAR=From child"
+  expect-regex: |
+    From parent From child
+
 - name: Test running a shell script
   bash: |
     mdx run --script "echo Hello World&&echo Goodbye World"
