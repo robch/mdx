@@ -7,6 +7,12 @@
     Hello World
     Goodbye World
 
+- name: Test running a script with environment variables
+  bash: |
+    mdx run --script "echo $GREETING $NAME" --env "GREETING=Hello" --env "NAME=World"
+  expect-regex: |
+    Hello World
+
 - name: Test running a bash script
   bash: |
     mdx run --bash "ls -l"
@@ -37,6 +43,19 @@
   expect-regex: |
     Hello World
     Goodbye World
+
+- area: Test running a multi-line bash script with environment variables
+  steps:
+  - bash: |
+      cat > script.sh <<EOF
+      echo $GREETING $NAME
+      echo $MESSAGE
+      EOF
+  - bash: |
+      mdx run --script "$(cat script.sh)" --env "GREETING=Hello" --env "NAME=World" --env "MESSAGE=Have a nice day"
+  expect-regex: |
+    Hello World
+    Have a nice day
 
 - area: Test running a multi-line cmd.exe script
   steps:

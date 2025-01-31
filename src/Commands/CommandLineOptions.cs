@@ -309,6 +309,16 @@ class CommandLineOptions
         {
             parsed = false;
         }
+        else if (arg == "--env")
+        {
+            var envArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            if (envArgs.Count() == 0) throw new CommandLineException("Missing value for --env");
+            var envArg = envArgs.First();
+            var parts = envArg.Split('=', 2);
+            if (parts.Length != 2) throw new CommandLineException("Environment variable must be in KEY=VALUE format");
+            command.EnvironmentVariables[parts[0]] = parts[1];
+            i += envArgs.Count();
+        }
         else if (arg == "--script")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args);

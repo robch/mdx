@@ -310,6 +310,12 @@ class Program
     {
         try
         {
+            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(
+                command.ScriptToRun, 
+                command.Type.ToString().ToLowerInvariant(),
+                int.MaxValue,
+                command.EnvironmentVariables);
+            return output;
             ConsoleHelpers.PrintStatus($"Executing: {command.ScriptToRun} ...");
             var finalContent = await GetFinalRunCommandContentAsync(command);
 
