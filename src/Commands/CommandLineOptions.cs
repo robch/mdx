@@ -314,6 +314,33 @@ class CommandLineOptions
             var scriptArgs = GetInputOptionArgs(i + 1, args);
             command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");
             command.Type = RunCommand.ScriptType.Default;
+        }
+        else if (arg == "--env")
+        {
+            var envArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            if (!envArgs.Any())
+                throw new CommandLineException("Missing value for --env option");
+
+            var envVar = envArgs.First();
+            var parts = envVar.Split('=', 2);
+            if (parts.Length != 2)
+                throw new CommandLineException("Invalid environment variable format. Use NAME=VALUE");
+
+            command.AddEnvironmentVariable(parts[0], parts[1]);
+            i += envArgs.Count();
+        }
+        else if (arg == "--env-file")
+        {
+            var fileArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            if (!fileArgs.Any())
+                throw new CommandLineException("Missing file path for --env-file option");
+
+            var filePath = fileArgs.First();
+            if (!File.Exists(filePath))
+                throw new CommandLineException($"Environment file not found: {filePath}");
+
+            command.LoadEnvironmentVariablesFromFile(filePath);
+            i += fileArgs.Count();
             i += scriptArgs.Count();
         }
         else if (arg == "--cmd")
