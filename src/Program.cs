@@ -146,6 +146,52 @@ class Program
         ConsoleHelpers.PrintLine($"USAGE: {Program.Name} [...] --" + aliasName);
     }
 
+    private static async Task<List<Task<string>>> HandleRunCommandAsync(CommandLineOptions commandLineOptions, RunCommand command, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
+    {
+        var tasks = new List<Task<string>>();
+        var scriptToRun = command.ScriptToRun;
+        var shell = command.Type switch
+        {
+            RunCommand.ScriptType.Cmd => "cmd",
+            RunCommand.ScriptType.Bash => "bash",
+            RunCommand.ScriptType.PowerShell => "powershell",
+            _ => string.Empty
+        };
+
+        var task = Task.Run(async () =>
+        {
+            await throttler.WaitAsync();
+            try
+            {
+                ConsoleHelpers.PrintStatus($"Running: {scriptToRun} ...");
+                var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(scriptToRun, shell, int.MaxValue, command.EnvironmentVariables);
+                ConsoleHelpers.PrintStatusErase();
+
+                if (exitCode != 0)
+                {
+                    return $"## Error running script (exit code: {exitCode})\n\n```\n{output}\n```\n";
+                }
+
+                return output;
+            }
+            finally
+            {
+                throttler.Release();
+            }
+        });
+
+        var taskToAdd = delayOutputToApplyInstructions
+            ? task
+            : task.ContinueWith(t =>
+            {
+                ConsoleHelpers.PrintLineIfNotEmpty(t.Result);
+                return t.Result;
+            });
+
+        tasks.Add(taskToAdd);
+        return tasks;
+    }
+
     private static List<Task<string>> HandleFindFileCommand(CommandLineOptions commandLineOptions, FindFilesCommand findFilesCommand, SemaphoreSlim throttler, bool delayOutputToApplyInstructions)
     {
         var files = FileHelpers.FindMatchingFiles(
@@ -332,13 +378,11 @@ class Program
     {
         var formatted = await GetFormattedRunCommandContentAsync(command);
 
-        // var afterInstructions = command.InstructionsList.Any()
-        //     ? AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, formatted, command.UseBuiltInFunctions, command.SaveChatHistory)
-        //     : formatted;
+        var afterInstructions = command.InstructionsList.Any()
+            ? AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, formatted, command.UseBuiltInFunctions, command.SaveChatHistory)
+            : formatted;
 
-        // return afterInstructions;
-
-        return formatted;
+        return afterInstructions;
     }
 
     private static async Task<string> GetFormattedRunCommandContentAsync(RunCommand command)
