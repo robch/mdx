@@ -21,6 +21,10 @@ EXAMPLES
   EXAMPLE 4: Run multiple commands
 
     mdx run "echo Hello, World!" "echo Goodbye, World!"
+
+  EXAMPLE 5: Run a script with environment variables
+
+    mdx run --script "echo $GREETING $NAME" --env "GREETING=Hello" --env "NAME=World"
     
 SEE ALSO
 

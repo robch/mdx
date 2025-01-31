@@ -15,6 +15,9 @@ OPTIONS
     --bash [COMMAND]              Specify the script or command to run
     --powershell [COMMAND]        Specify the script or command to run
 
+    --env NAME=VALUE             Set an environment variable for the script
+                                 Can be used multiple times to set multiple variables
+
   AI PROCESSING
 
     --instructions "..."          Apply the specified instructions to command output (uses AI CLI).
