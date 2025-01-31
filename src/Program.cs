@@ -330,13 +330,16 @@ class Program
 
     private static async Task<string> GetFinalRunCommandContentAsync(RunCommand command)
     {
-        var formatted = await GetFormattedRunCommandContentAsync(command);
+        var shell = command.Type switch
+        {
+            RunCommand.ScriptType.Cmd => "cmd",
+            RunCommand.ScriptType.Bash => "bash",
+            RunCommand.ScriptType.PowerShell => "powershell",
+            _ => null
+        };
 
-        // var afterInstructions = command.InstructionsList.Any()
-        //     ? AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, formatted, command.UseBuiltInFunctions, command.SaveChatHistory)
-        //     : formatted;
-
-        // return afterInstructions;
+        var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(command.ScriptToRun, shell, command.EnvironmentVariables);
+        var formatted = $"```\n{output}\n```";
 
         return formatted;
     }
