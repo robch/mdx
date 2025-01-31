@@ -20,6 +20,11 @@ OPTIONS
     --instructions "..."          Apply the specified instructions to command output (uses AI CLI).
     --built-in-functions          Enable built-in functions (AI CLI can use file system).
 
+  ENVIRONMENT VARIABLES
+
+    --env NAME=VALUE             Set an environment variable for the script
+    --env-file FILE             Load environment variables from a file (one NAME=VALUE per line)
+
   OUTPUT
 
     --save-output [FILE]          Save command output to the specified template file.
