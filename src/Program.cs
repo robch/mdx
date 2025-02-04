@@ -261,6 +261,8 @@ class Program
         var useBuiltInFunctions = command.UseBuiltInFunctions;
         var saveChatHistory = command.SaveChatHistory;
         var savePageOutput = command.SavePageOutput;
+        var waitForSelectors = command.WaitForSelectors;
+        var waitForTimeout = command.WaitForTimeout;
 
         var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
         if (badUrls.Any())
@@ -274,7 +276,7 @@ class Program
         var tasks = new List<Task<string>>();
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, savePageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, savePageOutput, waitForSelectors, waitForTimeout);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -597,12 +599,12 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string savePageOutput)
+    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string savePageOutput, List<string> waitForSelectors = null, int waitForTimeout = 30000)
     {
         try
         {
             ConsoleHelpers.PrintStatus($"Processing: {url} ...");
-            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory);
+            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, waitForSelectors, waitForTimeout);
 
             if (!string.IsNullOrEmpty(savePageOutput))
             {
@@ -620,9 +622,9 @@ class Program
         }
     }
 
-    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory)
+    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, List<string> waitForSelectors = null, int waitForTimeout = 30000)
     {
-        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive);
+        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, waitForSelectors, waitForTimeout);
 
         var instructionsForThisPage = pageInstructionsList
             .Where(x => WebPageMatchesInstructionsCriteria(url, x.Item2))
@@ -643,11 +645,11 @@ class Program
             url == webPageCriteria;
     }
 
-    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive)
+    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<string> waitForSelectors = null, int waitForTimeout = 30000)
     {
         try
         {
-            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, browserType, interactive);
+            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, browserType, interactive, waitForSelectors, waitForTimeout);
 
             var sb = new StringBuilder();
             sb.AppendLine($"## {title}\n");

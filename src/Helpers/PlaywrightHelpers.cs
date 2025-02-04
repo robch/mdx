@@ -48,7 +48,7 @@ class PlaywrightHelpers
         return urls;
     }
 
-    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive)
+    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<string> waitForSelectors = null, int waitForTimeout = 30000)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
@@ -58,6 +58,12 @@ class PlaywrightHelpers
 
         // Navigate to the URL
         await page.GotoAsync(url);
+
+        // Wait for any specified selectors
+        if (waitForSelectors != null && waitForSelectors.Any())
+        {
+            await WaitForSelectors(page, waitForSelectors, waitForTimeout);
+        }
 
         // Fetch the page content and title
         var content = await FetchPageContent(page, url, stripHtml, saveToFolder);
@@ -239,6 +245,40 @@ class PlaywrightHelpers
                 return await GetBrowser(browserType, interactive, playwright);
             }
             throw;
+        }
+    }
+
+    private static async Task WaitForSelectors(IPage page, List<string> selectors, int timeoutMs)
+    {
+        if (selectors == null || !selectors.Any()) return;
+
+        foreach (var selector in selectors)
+        {
+            try
+            {
+                // Try as CSS selector first
+                await page.WaitForSelectorAsync(selector, new PageWaitForSelectorOptions 
+                { 
+                    Timeout = timeoutMs,
+                    State = WaitForSelectorState.Visible
+                });
+            }
+            catch (TimeoutException)
+            {
+                try
+                {
+                    // If CSS selector fails, try as XPath
+                    await page.WaitForSelectorAsync($"xpath={selector}", new PageWaitForSelectorOptions 
+                    { 
+                        Timeout = timeoutMs,
+                        State = WaitForSelectorState.Visible
+                    });
+                }
+                catch (TimeoutException)
+                {
+                    throw new Exception($"Timeout waiting for selector '{selector}' after {timeoutMs}ms");
+                }
+            }
         }
     }
 
