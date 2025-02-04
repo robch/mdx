@@ -48,7 +48,7 @@ class PlaywrightHelpers
         return urls;
     }
 
-    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive)
+    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, string waitForSelector = null)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
@@ -58,6 +58,19 @@ class PlaywrightHelpers
 
         // Navigate to the URL
         await page.GotoAsync(url);
+
+        // Wait for selector if specified
+        if (!string.IsNullOrEmpty(waitForSelector))
+        {
+            try
+            {
+                await page.WaitForSelectorAsync(waitForSelector, new() { Timeout = 30000 });
+            }
+            catch (TimeoutException)
+            {
+                ConsoleHelpers.PrintDebugLine($"Timeout waiting for selector: {waitForSelector}");
+            }
+        }
 
         // Fetch the page content and title
         var content = await FetchPageContent(page, url, stripHtml, saveToFolder);

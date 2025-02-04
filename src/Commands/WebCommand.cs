@@ -18,6 +18,7 @@ abstract class WebCommand : Command
         StripHtml = false;
 
         SaveFolder = null;
+        WaitForSelector = null;
 
         PageInstructionsList = new();
     }
@@ -37,4 +38,6 @@ abstract class WebCommand : Command
     public List<Tuple<string, string>> PageInstructionsList;
 
     public string SavePageOutput { get; set; }
+
+    public string WaitForSelector { get; set; }
 }

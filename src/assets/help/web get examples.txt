@@ -1,34 +1,29 @@
 MDX WEB GET
 
-  Use the 'mdx web get' command to create markdown from one or more web pages.
+  Use the 'mdx web get' command to fetch web pages and create markdown from their content.
 
 USAGE: mdx web get "URL" ["URL2" [...]] [...]
 
 EXAMPLES
 
-  EXAMPLE 1: Create markdown for web page content
+  EXAMPLE 1: Get a web page and convert to markdown
 
-    mdx web get https://example.com
-    mdx web get https://mbers.us/bio --strip
+    mdx web get "https://example.com" --get --strip
 
-  EXAMPLE 2: Apply AI processing on each web page
+  EXAMPLE 2: Get multiple web pages and save to files
 
-    mdx web get https://example.com https://mbers.us/bio --page-instructions "what's the title of this page?"
+    mdx web get "https://example.com" "https://example.org" --get --save-folder pages/
 
-  EXAMPLE 3: Apply AI multi-step instructions
+  EXAMPLE 3: Wait for specific content to load before processing
 
-    mdx web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
+    mdx web get "https://example.com" --get --wait-for "#main-content"
+    mdx web get "https://example.com" --get --wait-for ".article" --interactive
 
-  EXAMPLE 4: Apply AI to the final output
+  EXAMPLE 4: Use different browsers and save output
 
-    mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
-
+    mdx web get "https://example.com" --browser firefox --get --save-page-output "pages/{fileBase}.md"
+    
 SEE ALSO
 
   mdx help web get
   mdx help web get options
-
-  mdx help web search
-  mdx help web search examples
-  mdx help web search options
-
