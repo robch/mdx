@@ -354,7 +354,14 @@ class Program
                 _ => null
             };
 
-            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell);
+            string? stdinContent = null;
+            if (command.UseStdinRedirection)
+            {
+                using var reader = new StreamReader(Console.OpenStandardInput(), Console.InputEncoding);
+                stdinContent = await reader.ReadToEndAsync();
+            }
+
+            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell, stdinContent);
             var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
 
             var isMultiLine = script.Contains("\n");

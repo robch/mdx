@@ -309,6 +309,10 @@ class CommandLineOptions
         {
             parsed = false;
         }
+        else if (arg == "--stdin")
+        {
+            command.UseStdinRedirection = true;
+        }
         else if (arg == "--script")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args);

@@ -2,7 +2,9 @@ MDX RUN
 
   Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
 
-USAGE: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
+USAGE: mdx run [COMMAND1 [COMMAND2 [...]]] [--stdin] [...]
+
+  When --stdin is specified, standard input will be piped to the command.
 
 EXAMPLES
 
@@ -17,6 +19,10 @@ EXAMPLES
   EXAMPLE 3: Run a bash script and apply multi-step AI instructions
 
     mdx run --bash "ls -la" --instructions @step1-instructions.txt @step2-instructions.txt
+
+  EXAMPLE 4: Pipe input to a command
+
+    echo "Hello, World!" | mdx run --stdin "tr '[:lower:]' '[:upper:]'"
 
 SEE ALSO
 
