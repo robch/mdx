@@ -94,3 +94,32 @@
     Example Domain
     This domain is for use in illustrative examples in documents.
 
+- name: Test web page with inline JavaScript execution
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --execute "document.body.style.backgroundColor = 'red'; document.title = 'Modified Title';"
+  expect-regex: |
+    Modified Title
+
+- name: Test web page with JavaScript file execution
+  parallelize: true
+  bash: |
+    echo "document.body.style.backgroundColor = 'red'; document.title = 'Modified Title';" > test.js
+    mdx web get "https://example.com" --execute "test.js"
+    rm test.js
+  expect-regex: |
+    Modified Title
+
+- name: Test web page with invalid JavaScript file
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --execute "nonexistent.js"
+  expect-error: true
+
+- name: Test web page with invalid JavaScript code
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --execute "this.is.invalid.code"
+  expect-regex: |
+    Example Domain
+
