@@ -487,6 +487,12 @@ class CommandLineOptions
         {
             command.StripHtml = true;
         }
+        else if (arg == "--wait-for")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, 1);
+            command.WaitForSelector = max1Arg.FirstOrDefault() ?? throw new CommandLineException("Missing selector for --wait-for");
+            i += max1Arg.Count();
+        }
         else if (arg == "--save-page-folder")
         {
             var max1Arg = GetInputOptionArgs(i + 1, args, 1);

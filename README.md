@@ -12,6 +12,7 @@ MDX is a command-line tool that helps build markdown files from various sources.
 - Capable of handling multiple threads for file processing.
 - Supports web search and retrieval with markdown formatting.
 - Allows headless browsing and HTML stripping for web content.
+- Supports waiting for specific UI elements before processing web pages.
 - Enables saving output and configuration options to specified files.
 - Supports aliasing of options for easy reuse.
 
