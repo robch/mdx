@@ -13,6 +13,8 @@ OPTIONS
     --firefox                          Use Firefox browser
     --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
+    --wait-for "SELECTOR" [...]       Wait for CSS/XPath selectors to be visible before proceeding
+    --wait-for-timeout N              Maximum time in milliseconds to wait for selectors (default: 30000)
 
   AI PROCESSING
 

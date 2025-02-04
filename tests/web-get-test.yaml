@@ -94,3 +94,35 @@
     Example Domain
     This domain is for use in illustrative examples in documents.
 
+- name: Test web page with CSS selector wait-for
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --wait-for "h1" "p"
+  expect-regex: |
+    Example Domain
+    This domain is for use in illustrative examples in documents.
+
+- name: Test web page with XPath selector wait-for
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --wait-for "//h1" "//p"
+  expect-regex: |
+    Example Domain
+    This domain is for use in illustrative examples in documents.
+
+- name: Test web page with wait-for timeout
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --wait-for "h1" --wait-for-timeout 5000
+  expect-regex: |
+    Example Domain
+    This domain is for use in illustrative examples in documents.
+
+- name: Test web page with wait-for timeout failure
+  parallelize: true
+  bash: |
+    mdx web get "https://example.com" --wait-for "non-existent-element" --wait-for-timeout 1000
+  expect-regex: |
+    Error fetching https://example.com
+    Timeout waiting for selector 'non-existent-element' after 1000ms
+

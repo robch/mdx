@@ -23,6 +23,14 @@ EXAMPLES
 
     mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
 
+  EXAMPLE 5: Wait for specific elements to be visible
+
+    mdx web get https://example.com --wait-for "h1" "p" --wait-for-timeout 5000
+
+  EXAMPLE 6: Wait for elements using XPath selectors
+
+    mdx web get https://example.com --wait-for "//h1" "//div[@class='content']"
+
 SEE ALSO
 
   mdx help web get
