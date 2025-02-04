@@ -20,6 +20,8 @@ abstract class WebCommand : Command
         SaveFolder = null;
 
         PageInstructionsList = new();
+        WaitForSelectors = new();
+        WaitForTimeout = 30000; // Default 30 seconds timeout
     }
 
     public bool Interactive { get; set; }
@@ -37,4 +39,14 @@ abstract class WebCommand : Command
     public List<Tuple<string, string>> PageInstructionsList;
 
     public string SavePageOutput { get; set; }
+
+    /// <summary>
+    /// List of CSS or XPath selectors to wait for before considering the page loaded
+    /// </summary>
+    public List<string> WaitForSelectors { get; set; }
+
+    /// <summary>
+    /// Maximum time in milliseconds to wait for selectors to appear
+    /// </summary>
+    public int WaitForTimeout { get; set; }
 }

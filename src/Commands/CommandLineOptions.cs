@@ -555,6 +555,22 @@ class CommandLineOptions
             command.SavePageOutput = savePageOutput;
             i += max1Arg.Count();
         }
+        else if (arg == "--wait-for")
+        {
+            var selectors = GetInputOptionArgs(i + 1, args);
+            if (!selectors.Any())
+            {
+                throw new CommandLineException($"Missing selectors for {arg}");
+            }
+            command.WaitForSelectors.AddRange(selectors);
+            i += selectors.Count();
+        }
+        else if (arg == "--wait-for-timeout")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            command.WaitForTimeout = ValidateInt(arg, max1Arg.FirstOrDefault(), "timeout in milliseconds");
+            i += max1Arg.Count();
+        }
         else
         {
             parsed = false;
