@@ -48,7 +48,7 @@ class PlaywrightHelpers
         return urls;
     }
 
-    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive)
+    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, string javascriptToExecute = null)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
@@ -58,6 +58,25 @@ class PlaywrightHelpers
 
         // Navigate to the URL
         await page.GotoAsync(url);
+
+        // Execute JavaScript if provided
+        if (!string.IsNullOrEmpty(javascriptToExecute))
+        {
+            try
+            {
+                string script = javascriptToExecute;
+                if (File.Exists(javascriptToExecute))
+                {
+                    script = await File.ReadAllTextAsync(javascriptToExecute);
+                }
+                await page.EvaluateAsync(script);
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
+            catch (Exception ex)
+            {
+                ConsoleHelpers.PrintDebugLine($"Error executing JavaScript: {ex.Message}");
+            }
+        }
 
         // Fetch the page content and title
         var content = await FetchPageContent(page, url, stripHtml, saveToFolder);

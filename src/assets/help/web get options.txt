@@ -13,6 +13,7 @@ OPTIONS
     --firefox                          Use Firefox browser
     --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
+    --execute "..."                    Execute JavaScript code or .js file before extracting content
 
   AI PROCESSING
 

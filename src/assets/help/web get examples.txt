@@ -23,6 +23,14 @@ EXAMPLES
 
     mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
 
+  EXAMPLE 5: Execute JavaScript before extracting content
+
+    mdx web get "https://example.com" --execute "document.querySelectorAll('.ad').forEach(e => e.remove())"
+
+  EXAMPLE 6: Execute JavaScript from a file
+
+    mdx web get "https://example.com" --execute "cleanup.js"
+
 SEE ALSO
 
   mdx help web get

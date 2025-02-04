@@ -23,6 +23,13 @@ class WebGetCommand : WebCommand
 
     override public Command Validate()
     {
+        if (!string.IsNullOrEmpty(JavaScriptToExecute) && JavaScriptToExecute.EndsWith(".js"))
+        {
+            if (!File.Exists(JavaScriptToExecute))
+            {
+                throw new WebGetCommandLineException($"JavaScript file not found: {JavaScriptToExecute}");
+            }
+        }
         return this;
     }
 }
