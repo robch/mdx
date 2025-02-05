@@ -14,6 +14,7 @@ class RunCommand : Command
     {
         ScriptToRun = string.Empty;
         Type = ScriptType.Default;
+        Timeout = int.MaxValue;
     }
 
     override public string GetCommandName()
@@ -28,9 +29,14 @@ class RunCommand : Command
 
     override public Command Validate()
     {
+        if (Timeout <= 0)
+        {
+            throw new CommandLineException("Timeout value must be greater than 0 milliseconds");
+        }
         return this;
     }
 
     public string ScriptToRun { get; set; }
     public ScriptType Type { get; set; }
+    public int Timeout { get; set; } // Timeout in milliseconds
 }
