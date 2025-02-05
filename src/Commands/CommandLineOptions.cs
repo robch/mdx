@@ -309,6 +309,16 @@ class CommandLineOptions
         {
             parsed = false;
         }
+        else if (arg == "--timeout")
+        {
+            var timeoutArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            if (timeoutArgs.Count() == 0)
+                throw new CommandLineException("Missing value for --timeout option");
+            if (!int.TryParse(timeoutArgs.First(), out int timeout))
+                throw new CommandLineException("Invalid timeout value - must be a valid integer number of milliseconds");
+            command.Timeout = timeout;
+            i += timeoutArgs.Count();
+        }
         else if (arg == "--script")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args);

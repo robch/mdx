@@ -1,0 +1,19 @@
+name: Test timeout functionality
+steps:
+  - name: Test valid timeout value
+    run: mdx run "sleep 5" --timeout 1000
+    expect:
+      contains: Timedout! Stopping process
+      exitcode: 1
+
+  - name: Test invalid timeout value
+    run: mdx run "echo test" --timeout -1
+    expect:
+      contains: Timeout value must be greater than 0 milliseconds
+      exitcode: 1
+
+  - name: Test normal execution within timeout
+    run: mdx run "echo test" --timeout 5000
+    expect:
+      contains: test
+      exitcode: 0
