@@ -1,0 +1,50 @@
+tests:
+
+- name: Test repeat option with run command
+  parallelize: true
+  bash: |
+    mdx run "echo 'Hello'" --repeat 3
+  expect-regex: |
+    ```
+    Hello
+    ```
+
+    Repeat 2 of 3:
+
+    ```
+    Hello
+    ```
+
+    Repeat 3 of 3:
+
+    ```
+    Hello
+    ```
+
+- name: Test repeat option with invalid count
+  parallelize: true
+  bash: |
+    mdx run "echo 'Hello'" --repeat 0
+  expect-regex: |
+    Repeat count must be a positive integer
+
+- name: Test repeat option with negative count
+  parallelize: true
+  bash: |
+    mdx run "echo 'Hello'" --repeat -1
+  expect-regex: |
+    Repeat count must be a positive integer
+
+- name: Test repeat option with non-numeric value
+  parallelize: true
+  bash: |
+    mdx run "echo 'Hello'" --repeat abc
+  expect-regex: |
+    Repeat count must be a positive integer
+
+- name: Test repeat option with missing value
+  parallelize: true
+  bash: |
+    mdx run "echo 'Hello'" --repeat
+  expect-regex: |
+    Missing repeat count for --repeat

@@ -71,7 +71,14 @@ class Program
 
         foreach (var command in commandLineOptions.Commands)
         {
-            bool delayOutputToApplyInstructions = command.InstructionsList.Any();
+            for (int repeatIndex = 0; repeatIndex < command.RepeatCount; repeatIndex++)
+            {
+                if (repeatIndex > 0)
+                {
+                    ConsoleHelpers.PrintLine($"\nRepeat {repeatIndex + 1} of {command.RepeatCount}:\n");
+                }
+                
+                bool delayOutputToApplyInstructions = command.InstructionsList.Any();
 
             var tasksThisCommand = command switch
             {
@@ -101,6 +108,7 @@ class Program
                     var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", command.SaveOutput);
                     FileHelpers.WriteAllText(saveFileName, commandOutput);
                 }
+            }
             }
         }
 

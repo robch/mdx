@@ -273,6 +273,24 @@ class CommandLineOptions
             commandLineOptions.SaveAliasName = aliasName;
             i += max1Arg.Count();
         }
+        else if (arg == "--repeat")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            var repeatStr = max1Arg.FirstOrDefault() ?? throw new CommandLineException("Missing repeat count for --repeat");
+            if (!int.TryParse(repeatStr, out int repeatCount) || repeatCount < 1)
+            {
+                throw new CommandLineException("Repeat count must be a positive integer");
+            }
+            if (commandLineOptions.Commands.Count > 0)
+            {
+                commandLineOptions.Commands[^1].RepeatCount = repeatCount;
+            }
+            else
+            {
+                throw new CommandLineException("--repeat must be specified after a command");
+            }
+            i += max1Arg.Count();
+        }
         else
         {
             parsed = false;
