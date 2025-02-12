@@ -43,6 +43,10 @@ OPTIONS
     --save-output [FILE]           Save command output to the specified template file
     --save-alias ALIAS             Save current options as an alias (usable via --{ALIAS})
 
+  EXECUTION
+
+    --repeat N                     Execute the command(s) N additional times (1+N total executions)
+
 SUB COMMANDS
 
   run [...]                        Create markdown from shell commands output

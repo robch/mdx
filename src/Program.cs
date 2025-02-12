@@ -69,8 +69,16 @@ class Program
         var allTasks = new List<Task<string>>();
         var throttler = new SemaphoreSlim(parallelism);
 
-        foreach (var command in commandLineOptions.Commands)
+        // Execute commands 1 + RepeatCount times
+        for (int repeatIndex = 0; repeatIndex <= commandLineOptions.RepeatCount; repeatIndex++)
         {
+            if (repeatIndex > 0)
+            {
+                ConsoleHelpers.PrintLine($"\nRepeat {repeatIndex} of {commandLineOptions.RepeatCount}:\n");
+            }
+
+            foreach (var command in commandLineOptions.Commands)
+            {
             bool delayOutputToApplyInstructions = command.InstructionsList.Any();
 
             var tasksThisCommand = command switch

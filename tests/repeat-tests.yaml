@@ -1,0 +1,48 @@
+- name: repeat-run-test
+  args:
+    - run
+    - "echo test"
+    - --repeat
+    - "2"
+  expected: |
+    ```
+    test
+    ```
+
+    Repeat 1 of 2:
+
+    ```
+    test
+    ```
+
+    Repeat 2 of 2:
+
+    ```
+    test
+    ```
+
+- name: repeat-zero-test
+  args:
+    - run
+    - "echo test"
+    - --repeat
+    - "0"
+  expected: |
+    ```
+    test
+    ```
+
+- name: repeat-invalid-test
+  args:
+    - run
+    - "echo test"
+    - --repeat
+    - "-1"
+  expected_error: "--repeat requires a non-negative integer"
+
+- name: repeat-missing-number-test
+  args:
+    - run
+    - "echo test"
+    - --repeat
+  expected_error: "Missing number for --repeat"

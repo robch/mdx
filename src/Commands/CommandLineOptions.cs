@@ -24,6 +24,7 @@ class CommandLineOptions
 
         AllOptions = null;
         SaveAliasName = null;
+        RepeatCount = 0; // 0 means no repeats, execute once
     }
 
     public bool Debug;
@@ -36,6 +37,7 @@ class CommandLineOptions
 
     public string[] AllOptions;
     public string SaveAliasName;
+    public int RepeatCount;
 
     public static bool Parse(string[] args, out CommandLineOptions options, out CommandLineException ex)
     {
@@ -271,6 +273,17 @@ class CommandLineOptions
             var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
             var aliasName = max1Arg.FirstOrDefault() ?? throw new CommandLineException("Missing alias name for --save-alias");
             commandLineOptions.SaveAliasName = aliasName;
+            i += max1Arg.Count();
+        }
+        else if (arg == "--repeat")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            var repeatStr = max1Arg.FirstOrDefault() ?? throw new CommandLineException("Missing number for --repeat");
+            if (!int.TryParse(repeatStr, out var repeatCount) || repeatCount < 0)
+            {
+                throw new CommandLineException("--repeat requires a non-negative integer");
+            }
+            commandLineOptions.RepeatCount = repeatCount;
             i += max1Arg.Count();
         }
         else
