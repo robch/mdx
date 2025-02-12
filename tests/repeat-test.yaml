@@ -1,0 +1,41 @@
+tests:
+
+- name: Test repeat option with invalid value
+  parallelize: true
+  bash: |
+    mdx **\repeat-test.yaml --repeat -1
+  expect-regex: |
+    Invalid value for --repeat. Must be a non-negative integer.
+
+- name: Test repeat option with zero (executes once)
+  parallelize: true
+  bash: |
+    mdx **\repeat-test.yaml --repeat 0
+  expect-regex: |
+    ## File: /.*?/repeat-test.yaml
+
+- name: Test repeat option with one repeat (executes twice)
+  parallelize: true
+  bash: |
+    mdx **\repeat-test.yaml --repeat 1
+  expect-regex: |
+    ## File: /.*?/repeat-test.yaml
+
+    Repeat iteration 1 of 1:
+
+    ## File: /.*?/repeat-test.yaml
+
+- name: Test repeat option with two repeats (executes thrice)
+  parallelize: true
+  bash: |
+    mdx **\repeat-test.yaml --repeat 2
+  expect-regex: |
+    ## File: /.*?/repeat-test.yaml
+
+    Repeat iteration 1 of 2:
+
+    ## File: /.*?/repeat-test.yaml
+
+    Repeat iteration 2 of 2:
+
+    ## File: /.*?/repeat-test.yaml
