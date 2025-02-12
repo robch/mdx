@@ -69,8 +69,17 @@ class Program
         var allTasks = new List<Task<string>>();
         var throttler = new SemaphoreSlim(parallelism);
 
-        foreach (var command in commandLineOptions.Commands)
+        // Execute commands 1+N times based on RepeatCount
+        var repeatCount = commandLineOptions.RepeatCount + 1;
+        for (int iteration = 0; iteration < repeatCount; iteration++)
         {
+            if (iteration > 0)
+            {
+                ConsoleHelpers.PrintLine($"\nRepeat iteration {iteration} of {commandLineOptions.RepeatCount}:\n");
+            }
+
+            foreach (var command in commandLineOptions.Commands)
+            {
             bool delayOutputToApplyInstructions = command.InstructionsList.Any();
 
             var tasksThisCommand = command switch
@@ -102,6 +111,7 @@ class Program
                     FileHelpers.WriteAllText(saveFileName, commandOutput);
                 }
             }
+        }
         }
 
         await Task.WhenAll(allTasks.ToArray());
