@@ -71,37 +71,59 @@ class Program
 
         foreach (var command in commandLineOptions.Commands)
         {
-            bool delayOutputToApplyInstructions = command.InstructionsList.Any();
+            // Calculate total iterations - running once plus any repeats
+            var iterations = 1 + command.RepeatCount;
+            var commandResults = new List<string>();
 
-            var tasksThisCommand = command switch
+            for (int iteration = 0; iteration < iterations; iteration++)
             {
-                FindFilesCommand findFilesCommand => HandleFindFileCommand(commandLineOptions, findFilesCommand, throttler, delayOutputToApplyInstructions),
-                WebSearchCommand webSearchCommand => await HandleWebSearchCommandAsync(commandLineOptions, webSearchCommand, throttler, delayOutputToApplyInstructions),
-                WebGetCommand webGetCommand => HandleWebGetCommand(commandLineOptions, webGetCommand, throttler, delayOutputToApplyInstructions),
-                RunCommand runCommand => HandleRunCommand(commandLineOptions, runCommand, throttler, delayOutputToApplyInstructions),
-                _ => new List<Task<string>>()
-            };
-
-            allTasks.AddRange(tasksThisCommand);
-
-            var shouldSaveOutput = !string.IsNullOrEmpty(command.SaveOutput);
-            if (shouldSaveOutput || delayOutputToApplyInstructions)
-            {
-                await Task.WhenAll(tasksThisCommand.ToArray());
-                var commandOutput = string.Join("\n", tasksThisCommand.Select(t => t.Result));
-
-                if (delayOutputToApplyInstructions)
+                if (iteration > 0)
                 {
-                    commandOutput = AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, commandOutput, command.UseBuiltInFunctions, command.SaveChatHistory);
-                    ConsoleHelpers.PrintLine(commandOutput);
+                    ConsoleHelpers.PrintLine($"\nRepeat #{iteration} of {command.RepeatCount}:\n");
                 }
 
-                if (shouldSaveOutput)
+                bool delayOutputToApplyInstructions = command.InstructionsList.Any();
+
+                var tasksThisCommand = command switch
                 {
-                    var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", command.SaveOutput);
-                    FileHelpers.WriteAllText(saveFileName, commandOutput);
+                    FindFilesCommand findFilesCommand => HandleFindFileCommand(commandLineOptions, findFilesCommand, throttler, delayOutputToApplyInstructions),
+                    WebSearchCommand webSearchCommand => await HandleWebSearchCommandAsync(commandLineOptions, webSearchCommand, throttler, delayOutputToApplyInstructions),
+                    WebGetCommand webGetCommand => HandleWebGetCommand(commandLineOptions, webGetCommand, throttler, delayOutputToApplyInstructions),
+                    RunCommand runCommand => HandleRunCommand(commandLineOptions, runCommand, throttler, delayOutputToApplyInstructions),
+                    _ => new List<Task<string>>()
+                };
+
+                allTasks.AddRange(tasksThisCommand);
+
+                var shouldSaveOutput = !string.IsNullOrEmpty(command.SaveOutput);
+                if (shouldSaveOutput || delayOutputToApplyInstructions)
+                {
+                    await Task.WhenAll(tasksThisCommand.ToArray());
+                    var commandOutput = string.Join("\n", tasksThisCommand.Select(t => t.Result));
+
+                    if (delayOutputToApplyInstructions)
+                    {
+                        commandOutput = AiInstructionProcessor.ApplyAllInstructions(command.InstructionsList, commandOutput, command.UseBuiltInFunctions, command.SaveChatHistory);
+                        ConsoleHelpers.PrintLine(commandOutput);
+                    }
+
+                    if (shouldSaveOutput)
+                    {
+                        var saveFileName = FileHelpers.GetFileNameFromTemplate("output.md", command.SaveOutput);
+                        // For repeat iterations, add suffix to avoid overwriting
+                        if (iteration > 0)
+                        {
+                            var fileExt = Path.GetExtension(saveFileName);
+                            var fileBase = Path.Combine(
+                                Path.GetDirectoryName(saveFileName) ?? "",
+                                Path.GetFileNameWithoutExtension(saveFileName));
+                            saveFileName = $"{fileBase}-repeat{iteration}{fileExt}";
+                        }
+                        FileHelpers.WriteAllText(saveFileName, commandOutput);
+                    }
                 }
             }
+        }
         }
 
         await Task.WhenAll(allTasks.ToArray());
