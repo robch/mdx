@@ -595,6 +595,18 @@ class CommandLineOptions
             command.SaveChatHistory = saveChatHistory;
             i += max1Arg.Count();
         }
+        else if (arg == "--repeat")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            int repeatCount;
+            var hasRepeatCount = max1Arg.Any() && int.TryParse(max1Arg.First(), out repeatCount);
+            if (!hasRepeatCount || repeatCount < 0)
+            {
+                throw new CommandLineException("Invalid repeat count for --repeat (must be >= 0)");
+            }
+            command.RepeatCount = repeatCount;
+            i += max1Arg.Count();
+        }
         else if (arg == "--built-in-functions")
         {
             command.UseBuiltInFunctions = true;
