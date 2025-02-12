@@ -37,6 +37,8 @@ OPTIONS
 
   OUTPUT
 
+    --repeat N                     Execute the command 1+N times (repeating N times after initial execution)
+
     --save-file-output [FILE]      Save each file output to the specified template file
                                    (e.g. {filePath}/{fileBase}-output.md)
 
