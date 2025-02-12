@@ -14,6 +14,7 @@ abstract class Command
         UseBuiltInFunctions = false;
         SaveChatHistory = string.Empty;
         ThreadCount = 0;
+        RepeatCount = 1; // Default to 1 execution
     }
 
     abstract public string GetCommandName();
@@ -27,4 +28,6 @@ abstract class Command
     public string SaveOutput;
 
     public int ThreadCount;
+
+    public int RepeatCount; // Number of times to repeat the command
 }

@@ -203,13 +203,13 @@ class CommandLineOptions
             }
         }
 
-        var parsedOption = TryParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
+        if (TryParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
             TryParseHelpCommandOptions(commandLineOptions, command as HelpCommand, args, ref i, arg) ||
             TryParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
             TryParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
             TryParseRunCommandOptions(command as RunCommand, args, ref i, arg) ||
-            TryParseSharedCommandOptions(command, args, ref i, arg);
-        if (parsedOption) return true;
+            TryParseSharedCommandOptions(command, args, ref i, arg))
+            return true;
 
         if (arg == "--help")
         {
