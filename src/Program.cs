@@ -71,6 +71,8 @@ class Program
 
         foreach (var command in commandLineOptions.Commands)
         {
+            for (var repeat = 0; repeat < command.RepeatCount; repeat++)
+            {
             bool delayOutputToApplyInstructions = command.InstructionsList.Any();
 
             var tasksThisCommand = command switch
