@@ -309,10 +309,16 @@ class CommandLineOptions
         {
             parsed = false;
         }
+        else if (arg == "--working-directory")
+        {
+            var dirArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            command.WorkingDirectory = ValidateJoinedString(arg, command.WorkingDirectory, dirArgs, " ", "working directory path");
+            i += dirArgs.Count();
+        }
         else if (arg == "--script")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args);
-            command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");
+            command.ScriptToRun = ValidateJoinedString(arg, command.ScriptToRun, scriptArgs, "\n", "command");  
             command.Type = RunCommand.ScriptType.Default;
             i += scriptArgs.Count();
         }

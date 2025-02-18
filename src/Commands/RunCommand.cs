@@ -14,6 +14,7 @@ class RunCommand : Command
     {
         ScriptToRun = string.Empty;
         Type = ScriptType.Default;
+        WorkingDirectory = string.Empty;
     }
 
     override public string GetCommandName()
@@ -28,9 +29,14 @@ class RunCommand : Command
 
     override public Command Validate()
     {
+        if (!string.IsNullOrEmpty(WorkingDirectory) && !System.IO.Directory.Exists(WorkingDirectory))
+        {
+            throw new CommandLineException($"Working directory '{WorkingDirectory}' does not exist");
+        }
         return this;
     }
 
     public string ScriptToRun { get; set; }
     public ScriptType Type { get; set; }
+    public string WorkingDirectory { get; set; }
 }

@@ -67,3 +67,14 @@
   expect-regex: |
     Hello World
     Goodbye World
+
+- area: Test working directory option
+  steps:
+  - bash: |
+      mkdir -p test_dir
+      cd test_dir
+      echo "test file content" > test.txt
+      cd ..
+      mdx run --script "cat test.txt" --working-directory test_dir
+  expect-regex: |
+    test file content
