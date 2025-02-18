@@ -12,7 +12,13 @@ static class ProcessHelpers
         return await RunProcessAsync(processName, arguments, timeout);
     }
 
-    public static async Task<(string, int)> RunProcessAsync(string processName, string arguments, int timeout = int.MaxValue)
+    public static async Task<(string, int)> RunShellCommandAsync(string script, string shell, Dictionary<string, string> envVars, int timeout = int.MaxValue)
+    {
+        GetShellProcessNameAndArgs(script, shell, out var processName, out var arguments);
+        return await RunProcessAsync(processName, arguments, envVars, timeout);
+    }
+
+    private static async Task<(string, int)> RunProcessAsync(string processName, string arguments, Dictionary<string, string> envVars = null, int timeout = int.MaxValue)
     {
         var startInfo = new ProcessStartInfo()
         {
@@ -23,6 +29,15 @@ static class ProcessHelpers
             UseShellExecute = false,
             CreateNoWindow = true,
         };
+
+        // Add environment variables if provided
+        if (envVars != null)
+        {
+            foreach (var envVar in envVars)
+            {
+                startInfo.Environment[envVar.Key] = envVar.Value;
+            }
+        }
 
         var sbOut = new StringBuilder();
         var sbErr = new StringBuilder();

@@ -354,17 +354,29 @@ class Program
                 _ => null
             };
 
-            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell);
+            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell, command.EnvironmentVariables);
             var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
 
             var isMultiLine = script.Contains("\n");
             var header = isMultiLine ? "## Run\n\n" : $"## `{script}`\n\n";
+            
+            var sb = new StringBuilder();
+            sb.Append(header);
+
+            if (command.EnvironmentVariables.Any())
+            {
+                sb.Append("Environment:\n");
+                foreach (var envVar in command.EnvironmentVariables)
+                {
+                    sb.AppendLine($"{envVar.Key}={envVar.Value}");
+                }
+                sb.AppendLine();
+            }
+
             var scriptPart = isMultiLine ? $"Run:\n{backticks}\n{script.TrimEnd()}\n{backticks}\n\n" : string.Empty;
             var outputPart = $"Output:\n{backticks}\n{output.TrimEnd()}\n{backticks}\n\n";
             var exitCodePart = exitCode != 0 ? $"Exit code: {exitCode}\n\n" : string.Empty;
 
-            var sb = new StringBuilder();
-            sb.Append(header);
             sb.Append(scriptPart);
             sb.Append(outputPart);
             sb.Append(exitCodePart);
