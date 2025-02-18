@@ -1,24 +1,13 @@
-MDX RUN
+USAGE: mdx run [OPTIONS] commands [...] [@file] [@@glob]
+  Run a shell command
 
-  Use the 'mdx run' command to execute scripts or commands and create markdown from the output.
+    Commands can be provided on the command-line, via file (@file), 
+    or via multiple files (@@glob). Each line is a command or part of 
+    a multi-line script.
 
-USAGE: mdx run [COMMAND1 [COMMAND2 [...]]] [...]
-
-EXAMPLES
-
-  EXAMPLE 1: Run a simple command and process the output
-
-    mdx run "echo Hello, World!" --instructions "translate strings to german"
-
-  EXAMPLE 2: Run a script using PowerShell and process the output
-
-    mdx run --powershell "Get-Process" --instructions "list running processes"
-
-  EXAMPLE 3: Run a bash script and apply multi-step AI instructions
-
-    mdx run --bash "ls -la" --instructions @step1-instructions.txt @step2-instructions.txt
-
-SEE ALSO
-
-  mdx help run examples
-  mdx help run options
+  OPTIONS:
+    --cmd COMMANDS        Run using cmd.exe
+    --bash COMMANDS      Run using bash
+    --powershell COMMANDS Run using PowerShell
+    -e, --env NAME=VALUE Set environment variable
+    --save-output PATH   Save output to markdown file

@@ -337,6 +337,18 @@ class CommandLineOptions
             command.Type = RunCommand.ScriptType.PowerShell;
             i += scriptArgs.Count();
         }
+        else if (arg == "--env" || arg == "-e")
+        {
+            var envArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            var envArg = envArgs.FirstOrDefault() ?? throw new CommandLineException("Missing value for environment variable", command);
+            var parts = envArg.Split('=', 2);
+            if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]))
+            {
+                throw new CommandLineException($"Invalid environment variable format. Expected NAME=VALUE but got {envArg}", command);
+            }
+            command.EnvironmentVariables[parts[0]] = parts[1];
+            i += envArgs.Count();
+        }
         else
         {
             parsed = false;
