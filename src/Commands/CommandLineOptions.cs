@@ -471,6 +471,40 @@ class CommandLineOptions
         {
             command.Interactive = true;
         }
+        else if (arg == "--wait-for")
+        {
+            var waitForArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            command.WaitForSelector = ValidateRequiredString(arg, waitForArgs);
+            i += waitForArgs.Count();
+        }
+        else if (arg == "--type-delay")
+        {
+            var delayArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            var delayStr = ValidateRequiredString(arg, delayArgs);
+            if (int.TryParse(delayStr, out int delay))
+            {
+                command.TypeDelay = TimeSpan.FromMilliseconds(delay);
+            }
+            else
+            {
+                throw new CommandLineException($"Invalid type delay value for {arg}. Must be an integer representing milliseconds.");
+            }
+            i += delayArgs.Count();
+        }
+        else if (arg == "--interaction-timeout")
+        {
+            var timeoutArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            var timeoutStr = ValidateRequiredString(arg, timeoutArgs);
+            if (float.TryParse(timeoutStr, out float timeout))
+            {
+                command.InteractionTimeout = timeout;
+            }
+            else
+            {
+                throw new CommandLineException($"Invalid interaction timeout value for {arg}. Must be a number representing seconds.");
+            }
+            i += timeoutArgs.Count();
+        }
         else if (arg == "--chromium")
         {
             command.Browser = BrowserType.Chromium;

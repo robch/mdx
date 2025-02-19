@@ -1,0 +1,35 @@
+Interactive Web Input Options
+
+The web commands support interactive input mode when --interactive flag is used. The following additional options customize the interactive behavior:
+
+--wait-for <selector>      Wait for element matching CSS selector before continuing
+--type-delay <ms>         Set delay between keystrokes when typing (in milliseconds)  
+--interaction-timeout <s>  Set timeout for interactions like clicks and typing (in seconds)
+
+Example Usage:
+
+  # Open a webpage in interactive mode and wait for login form
+  mdx web get example.com --interactive --wait-for "#login-form"
+
+  # Fill a form with typing simulation (100ms delay between chars)
+  mdx web get example.com --interactive --type-delay 100
+
+  # Set longer timeout for slower pages
+  mdx web get example.com --interactive --interaction-timeout 60
+
+Available Input Methods:
+
+The following input methods are available when in interactive mode:
+
+Mouse Input:
+- Click elements by selector
+- Click at x,y coordinates 
+- Hover over elements
+- Scroll the page
+
+Keyboard Input:
+- Type text into elements
+- Press specific keys
+- Use keyboard shortcuts
+
+For details on using specific input methods, use the --help flag with your command.
