@@ -67,6 +67,106 @@ class PlaywrightHelpers
         return (content, title);
     }
 
+    public static async Task<bool> TypeText(IPage page, string selector, string text, TimeSpan? delay = null)
+    {
+        try
+        {
+            var element = await page.QuerySelectorAsync(selector);
+            if (element == null) return false;
+
+            await element.TypeAsync(text, new() { Delay = delay?.Milliseconds ?? 0 });
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static async Task<bool> PressKey(IPage page, string key)
+    {
+        try
+        {
+            await page.Keyboard.PressAsync(key);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static async Task<bool> ClickElement(IPage page, string selector)
+    {
+        try
+        {
+            var element = await page.QuerySelectorAsync(selector);
+            if (element == null) return false;
+
+            await element.ClickAsync();
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static async Task<bool> ClickCoordinates(IPage page, double x, double y)
+    {
+        try
+        {
+            await page.Mouse.ClickAsync(x, y);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static async Task<bool> HoverElement(IPage page, string selector)
+    {
+        try
+        {
+            var element = await page.QuerySelectorAsync(selector);
+            if (element == null) return false;
+
+            await element.HoverAsync();
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static async Task<bool> ScrollPage(IPage page, double deltaX, double deltaY)
+    {
+        try
+        {
+            await page.Mouse.WheelAsync(deltaX, deltaY);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public static async Task<bool> WaitForElement(IPage page, string selector, float timeout = 30.0f)
+    {
+        try
+        {
+            await page.WaitForSelectorAsync(selector, new() { Timeout = timeout * 1000 });
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     private static async Task<List<string>> ExtractGoogleSearchResults(IPage page, int maxResults, List<Regex> excludeURLContainsPatternList, bool interactive)
     {
         var urls = new List<string>();

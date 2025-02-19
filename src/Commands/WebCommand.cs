@@ -7,6 +7,9 @@ abstract class WebCommand : Command
     public WebCommand()
     {
         Interactive = false;
+        InteractionTimeout = 30.0f;
+        WaitForSelector = null;
+        TypeDelay = null;
 
         SearchProvider = WebSearchProvider.Google;
         MaxResults = 10;
@@ -23,6 +26,9 @@ abstract class WebCommand : Command
     }
 
     public bool Interactive { get; set; }
+    public float InteractionTimeout { get; set; }
+    public string WaitForSelector { get; set; }
+    public TimeSpan? TypeDelay { get; set; }
 
     public WebSearchProvider SearchProvider { get; set; }
     public List<Regex> ExcludeURLContainsPatternList { get; set; }
