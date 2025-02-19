@@ -1,0 +1,25 @@
+# Tests for web input functionality
+---
+- test: Interactive input options
+  commands:
+    - mdx web get http://example.com --interactive --type-delay 100 --interaction-timeout 30 --wait-for "#content"
+  exit_code: 0
+  stdout:
+    - "Opening page in interactive mode"
+    - "Typing delay set to: 100ms"
+    - "Interaction timeout set to: 30s"
+    - "Waiting for selector: #content"
+
+- test: Invalid type delay
+  commands:  
+    - mdx web get http://example.com --interactive --type-delay invalid
+  exit_code: 1
+  stderr:
+    - "Invalid type delay value for --type-delay. Must be an integer representing milliseconds."
+
+- test: Invalid interaction timeout
+  commands:
+    - mdx web get http://example.com --interactive --interaction-timeout abc
+  exit_code: 1
+  stderr:
+    - "Invalid interaction timeout value for --interaction-timeout. Must be a number representing seconds."
