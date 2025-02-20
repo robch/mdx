@@ -12,7 +12,13 @@ static class ProcessHelpers
         return await RunProcessAsync(processName, arguments, timeout);
     }
 
-    public static async Task<(string, int)> RunProcessAsync(string processName, string arguments, int timeout = int.MaxValue)
+    public static async Task<(string, int)> RunShellCommandWithStdinAsync(string script, string shell, string stdinContent, int timeout = int.MaxValue)
+    {
+        GetShellProcessNameAndArgs(script, shell, out var processName, out var arguments);
+        return await RunProcessAsync(processName, arguments, timeout, stdinContent);
+    }
+
+    public static async Task<(string, int)> RunProcessAsync(string processName, string arguments, int timeout = int.MaxValue, string stdinContent = null)
     {
         var startInfo = new ProcessStartInfo()
         {
@@ -20,6 +26,7 @@ static class ProcessHelpers
             Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = stdinContent != null,
             UseShellExecute = false,
             CreateNoWindow = true,
         };
@@ -37,6 +44,12 @@ static class ProcessHelpers
         process.ErrorDataReceived += (sender, e) => AppendLineOrSignal(e.Data, sbErr, sbMerged, errDoneSignal);
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+
+        if (stdinContent != null)
+        {
+            await process.StandardInput.WriteLineAsync(stdinContent);
+            process.StandardInput.Close();
+        }
 
         var exitedNotKilled = WaitForExit(process, timeout);
         if (exitedNotKilled)

@@ -316,6 +316,17 @@ class CommandLineOptions
             command.Type = RunCommand.ScriptType.Default;
             i += scriptArgs.Count();
         }
+        else if (arg == "--stdin")
+        {
+            command.RedirectStandardInput = true;
+            var scriptArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            if (scriptArgs.Any())
+            {
+                command.ScriptToRun = scriptArgs.First();
+                i++;
+            }
+        }
+        }
         else if (arg == "--cmd")
         {
             var scriptArgs = GetInputOptionArgs(i + 1, args, 1);

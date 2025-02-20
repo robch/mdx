@@ -18,6 +18,11 @@ EXAMPLES
 
     mdx run --bash "ls -la" --instructions @step1-instructions.txt @step2-instructions.txt
 
+  EXAMPLE 4: Run a command with standard input redirection
+
+    echo "sample text" | mdx run --stdin "wc -l"
+    cat myfile.txt | mdx run --stdin "grep pattern"
+
 SEE ALSO
 
   mdx help run examples
