@@ -33,4 +33,5 @@ class RunCommand : Command
 
     public string ScriptToRun { get; set; }
     public ScriptType Type { get; set; }
+    public bool RedirectStandardInput { get; set; }
 }
