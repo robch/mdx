@@ -1,0 +1,23 @@
+Interactive Mode
+
+The interactive mode allows you to navigate web pages using keyboard shortcuts and mouse controls.
+
+Keyboard Shortcuts:
+-----------------
+ESC : Exit interactive mode
+n   : Go to next page
+p   : Go to previous page
+j   : Scroll down
+k   : Scroll up
+y   : Copy text under cursor to clipboard
+h   : Show keyboard shortcut help
+q   : Close browser
+
+Mouse Controls:
+-------------
+- Click and drag to select text
+- Double click to select word
+- Triple click to select line
+
+To enable interactive mode, use the --interactive flag when running web commands.
+Example: mdx web --interactive "your search query"

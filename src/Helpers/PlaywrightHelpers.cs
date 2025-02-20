@@ -59,6 +59,12 @@ class PlaywrightHelpers
         // Navigate to the URL
         await page.GotoAsync(url);
 
+        // If in interactive mode, allow keyboard/mouse interaction
+        if (interactive)
+        {
+            await InteractiveHelpers.HandleKeyboardAndMouseEvents(page);
+        }
+
         // Fetch the page content and title
         var content = await FetchPageContent(page, url, stripHtml, saveToFolder);
         var title = await page.TitleAsync();
@@ -223,13 +229,26 @@ class PlaywrightHelpers
     {
         try
         {
-            return browserType switch
+            var launchOptions = new BrowserTypeLaunchOptions 
+            { 
+                Headless = !interactive,
+                Args = interactive ? new[] { "--start-maximized" } : Array.Empty<string>()
+            };
+            
+            var browser = browserType switch
             {
-                BrowserType.Chromium => await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = !interactive }),
-                BrowserType.Firefox => await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions { Headless = !interactive }),
-                BrowserType.Webkit => await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = !interactive }),
+                BrowserType.Chromium => await playwright.Chromium.LaunchAsync(launchOptions),
+                BrowserType.Firefox => await playwright.Firefox.LaunchAsync(launchOptions),
+                BrowserType.Webkit => await playwright.Webkit.LaunchAsync(launchOptions),
                 _ => throw new ArgumentOutOfRangeException(nameof(browserType), browserType, null)
             };
+
+            if (interactive)
+            {
+                Console.WriteLine("\nEntering interactive mode. Press 'h' for help on keyboard shortcuts.");
+            }
+
+            return browser;
         }
         catch (Exception)
         {
