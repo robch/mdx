@@ -354,7 +354,10 @@ class Program
                 _ => null
             };
 
-            var (output, exitCode) = await ProcessHelpers.RunShellCommandAsync(script, shell);
+            var (output, exitCode) = command.RedirectStandardInput
+                ? await ProcessHelpers.RunShellCommandWithStdinAsync(script, shell, string.Join("\n", ConsoleHelpers.GetAllLinesFromStdin()))
+                : await ProcessHelpers.RunShellCommandAsync(script, shell);
+
             var backticks = new string('`', MarkdownHelpers.GetCodeBlockBacktickCharCountRequired(output));
 
             var isMultiLine = script.Contains("\n");
