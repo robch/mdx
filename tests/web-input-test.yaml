@@ -1,0 +1,26 @@
+---
+options:
+  - "--click"
+  - "#submit-button"
+  - "--type"
+  - "test input"
+  - "--key"
+  - "Enter"
+  - "--scroll"  
+  - "0"
+  - "100"
+  - "--move"
+  - "200"
+  - "300"
+  - "--drag"
+  - "#source-elem"
+  - "#target-elem"
+  - "--shortcut"
+  - "Control+A"
+
+expected:
+  - status: 0
+  - stderr: ""
+  - stdout: |-
+      Processing input actions on dummy test page...
+      Success!
