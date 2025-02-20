@@ -1,0 +1,27 @@
+INPUT MOUSE AND KEYBOARD OPTIONS
+
+The following options allow interaction with web pages using mouse and keyboard inputs:
+
+Mouse Input Options:
+  --click "selector"               Click on the element matching the selector
+  --move <x> <y>                  Move mouse to coordinates x,y
+  --drag "src" "target"           Drag element from source selector to target selector
+  --scroll <x> <y>                Scroll the page by x and y pixels
+
+Keyboard Input Options:  
+  --type "text"                   Type the specified text
+  --key "key"                     Press a single key (e.g. "Enter", "Tab")
+  --shortcut "combo"              Send keyboard shortcut (e.g. "Control+C")
+
+Examples:
+  Click a button:
+    mdx web get "https://example.com" --click "#submit-button" 
+
+  Fill out a form:
+    mdx web get "https://example.com/form" --click "#username" --type "myuser" --click "#password" --type "mypass" --click "#submit"
+
+  Drag and drop:
+    mdx web get "https://example.com/drag" --drag "#source" "#target"
+
+  Scroll down page:
+    mdx web get "https://example.com" --scroll 0 500

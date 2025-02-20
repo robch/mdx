@@ -467,6 +467,74 @@ class CommandLineOptions
         {
             parsed = false;
         }
+        else if (arg == "--click")
+        {
+            var selector = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
+            if (string.IsNullOrEmpty(selector))
+                throw new CommandLineException($"Missing selector for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.Click) { Selector = selector });
+            i += 1;
+        }
+        else if (arg == "--move")
+        {
+            var coords = GetInputOptionArgs(i + 1, args, max: 2).ToList();
+            if (coords.Count != 2)
+                throw new CommandLineException($"Missing x,y coordinates for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.MouseMove) 
+            { 
+                X = ValidateInt(arg, coords[0], "x coordinate"),
+                Y = ValidateInt(arg, coords[1], "y coordinate")
+            });
+            i += 2;
+        }
+        else if (arg == "--drag")
+        {
+            var selectors = GetInputOptionArgs(i + 1, args, max: 2).ToList();
+            if (selectors.Count != 2)
+                throw new CommandLineException($"Missing source and target selectors for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.DragDrop) 
+            { 
+                Selector = selectors[0],
+                TargetSelector = selectors[1]
+            });
+            i += 2;
+        }
+        else if (arg == "--scroll")
+        {
+            var coords = GetInputOptionArgs(i + 1, args, max: 2).ToList();
+            if (coords.Count != 2)
+                throw new CommandLineException($"Missing x,y coordinates for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.Scroll)
+            {
+                X = ValidateInt(arg, coords[0], "x coordinate"),
+                Y = ValidateInt(arg, coords[1], "y coordinate")
+            });
+            i += 2;
+        }
+        else if (arg == "--type")
+        {
+            var text = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
+            if (string.IsNullOrEmpty(text))
+                throw new CommandLineException($"Missing text for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.TypeText) { Value = text });
+            i += 1;
+        }
+        else if (arg == "--key")
+        {
+            var key = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
+            if (string.IsNullOrEmpty(key))
+                throw new CommandLineException($"Missing key for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.KeyPress) { Value = key });
+            i += 1;
+        }
+        else if (arg == "--shortcut")
+        {
+            var shortcut = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
+            if (string.IsNullOrEmpty(shortcut))
+                throw new CommandLineException($"Missing shortcut for {arg}");
+            command.InputActions.Add(new WebInputAction(WebInputActionType.Shortcut) { Value = shortcut });
+            i += 1;
+        }
         else if (arg == "--interactive")
         {
             command.Interactive = true;

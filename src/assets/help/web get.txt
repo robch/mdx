@@ -14,10 +14,15 @@ EXAMPLES
 
     mdx web get "https://learnxinyminutes.com/docs/yaml/" --strip
 
+  EXAMPLE 3: Interact with a web page using mouse and keyboard inputs 
+
+    mdx web get "https://example.com" --click "#button" --type "text"
+
 SEE ALSO
 
   mdx help web get options
   mdx help web get examples
+  mdx help web get inputs 
 
   mdx help web search
   mdx help web search examples
