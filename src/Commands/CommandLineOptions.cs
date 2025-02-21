@@ -182,6 +182,7 @@ class CommandLineOptions
             {
                 "help" => "help",
                 "run" => "run",
+                "export" => "export",
                 _ => $"{name1} {name2}".Trim()
             };
 
@@ -191,6 +192,7 @@ class CommandLineOptions
                 "web get" => new WebGetCommand(),
                 "help" => new HelpCommand(),
                 "run" => new RunCommand(),
+                "export" => new ExportCommand(),
                 _ => new FindFilesCommand()
             };
 
@@ -208,6 +210,7 @@ class CommandLineOptions
             TryParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
             TryParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
             TryParseRunCommandOptions(command as RunCommand, args, ref i, arg) ||
+            TryParseExportCommandOptions(command as ExportCommand, args, ref i, arg) ||
             TryParseSharedCommandOptions(command, args, ref i, arg);
         if (parsedOption) return true;
 
@@ -292,6 +295,38 @@ class CommandLineOptions
         else if (arg == "--expand")
         {
             commandLineOptions.ExpandHelpTopics = true;
+        }
+        else
+        {
+            parsed = false;
+        }
+
+        return parsed;
+    }
+
+    private static bool TryParseExportCommandOptions(ExportCommand command, string[] args, ref int i, string arg)
+    {
+        bool parsed = true;
+
+        if (command == null)
+        {
+            parsed = false;
+        }
+        else if (arg == "--format")
+        {
+            var formatArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            command.Format = formatArgs.FirstOrDefault() ?? throw new CommandLineException("Missing format value");
+            i += formatArgs.Count();
+        }
+        else if (arg == "--output")
+        {
+            var outputArgs = GetInputOptionArgs(i + 1, args, max: 1);
+            command.OutputPath = outputArgs.FirstOrDefault() ?? throw new CommandLineException("Missing output path");
+            i += outputArgs.Count();
+        }
+        else if (!arg.StartsWith("--"))
+        {
+            command.Files.Add(arg);
         }
         else
         {
