@@ -13,6 +13,7 @@ OPTIONS
     --firefox                          Use Firefox browser
     --webkit                           Use WebKit browser
     --strip                            Strip HTML tags from downloaded content (default: false)
+    --wait-for SELECTOR [...]          Wait for specified CSS selectors to be present before proceeding
 
   AI PROCESSING
 
