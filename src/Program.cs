@@ -261,6 +261,7 @@ class Program
         var useBuiltInFunctions = command.UseBuiltInFunctions;
         var saveChatHistory = command.SaveChatHistory;
         var savePageOutput = command.SavePageOutput;
+        var screenshot = command.Screenshot;
 
         var badUrls = command.Urls.Where(l => !l.StartsWith("http")).ToList();
         if (badUrls.Any())
@@ -274,7 +275,7 @@ class Program
         var tasks = new List<Task<string>>();
         foreach (var url in urls)
         {
-            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, savePageOutput);
+            var getCheckSaveTask = GetCheckSaveWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, savePageOutput, screenshot);
             var taskToAdd = delayOutputToApplyInstructions
                 ? getCheckSaveTask
                 : getCheckSaveTask.ContinueWith(t =>
@@ -597,12 +598,12 @@ class Program
         return string.Join("\n", output);
     }
 
-    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string savePageOutput)
+    private static async Task<string> GetCheckSaveWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string savePageOutput, string screenshot)
     {
         try
         {
             ConsoleHelpers.PrintStatus($"Processing: {url} ...");
-            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory);
+            var finalContent = await GetFinalWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, pageInstructionsList, useBuiltInFunctions, saveChatHistory, screenshot);
 
             if (!string.IsNullOrEmpty(savePageOutput))
             {
@@ -620,9 +621,9 @@ class Program
         }
     }
 
-    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory)
+    private static async Task<string> GetFinalWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, List<Tuple<string, string>> pageInstructionsList, bool useBuiltInFunctions, string saveChatHistory, string screenshot)
     {
-        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive);
+        var formatted = await GetFormattedWebPageContentAsync(url, stripHtml, saveToFolder, browserType, interactive, screenshot);
 
         var instructionsForThisPage = pageInstructionsList
             .Where(x => WebPageMatchesInstructionsCriteria(url, x.Item2))
@@ -643,15 +644,22 @@ class Program
             url == webPageCriteria;
     }
 
-    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive)
+    private static async Task<string> GetFormattedWebPageContentAsync(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, string screenshot = null)
     {
         try
         {
-            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, browserType, interactive);
+            var (content, title) = await PlaywrightHelpers.GetPageAndTitle(url, stripHtml, saveToFolder, browserType, interactive, screenshot);
 
             var sb = new StringBuilder();
             sb.AppendLine($"## {title}\n");
             sb.AppendLine($"url: {url}\n");
+
+            if (!string.IsNullOrEmpty(screenshot))
+            {
+                var fullPath = Path.GetFullPath(screenshot);
+                sb.AppendLine($"screenshot: {screenshot}\n");
+            }
+
             sb.AppendLine("```");
             sb.AppendLine(content);
             sb.AppendLine("```\n");

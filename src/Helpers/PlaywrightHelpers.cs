@@ -48,7 +48,7 @@ class PlaywrightHelpers
         return urls;
     }
 
-    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive)
+    public static async Task<(string, string)> GetPageAndTitle(string url, bool stripHtml, string saveToFolder, BrowserType browserType, bool interactive, string screenshot = null)
     {
         // Initialize Playwright
         using var playwright = await Playwright.CreateAsync();
@@ -62,6 +62,17 @@ class PlaywrightHelpers
         // Fetch the page content and title
         var content = await FetchPageContent(page, url, stripHtml, saveToFolder);
         var title = await page.TitleAsync();
+
+        // Take screenshot if requested
+        if (!string.IsNullOrEmpty(screenshot))
+        {
+            var screenshotDir = Path.GetDirectoryName(screenshot);
+            if (!string.IsNullOrEmpty(screenshotDir))
+            {
+                Directory.CreateDirectory(screenshotDir);
+            }
+            await page.ScreenshotAsync(new PageScreenshotOptions { Path = screenshot, FullPage = true });
+        }
 
         // Return the content and title
         return (content, title);

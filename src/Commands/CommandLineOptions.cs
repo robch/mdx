@@ -555,6 +555,13 @@ class CommandLineOptions
             command.SavePageOutput = savePageOutput;
             i += max1Arg.Count();
         }
+        else if (arg == "--screenshot")
+        {
+            var max1Arg = GetInputOptionArgs(i + 1, args, max: 1);
+            var screenshot = max1Arg.FirstOrDefault() ?? DefaultSavePageOutputTemplate.Replace(".md", ".png");
+            command.Screenshot = screenshot;
+            i += max1Arg.Count();
+        }
         else
         {
             parsed = false;

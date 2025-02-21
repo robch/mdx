@@ -37,4 +37,6 @@ abstract class WebCommand : Command
     public List<Tuple<string, string>> PageInstructionsList;
 
     public string SavePageOutput { get; set; }
+    
+    public string Screenshot { get; set; }
 }
