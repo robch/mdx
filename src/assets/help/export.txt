@@ -1,0 +1,17 @@
+Export command
+-------------
+
+The export command converts markdown files to various document formats.
+
+Usage:
+    mdx export <input.md> <output.ext>
+
+Where <output.ext> can be one of:
+- .pdf  - Export as PDF document 
+- .docx - Export as Word document
+- .pptx - Export as PowerPoint presentation
+
+Examples:
+    mdx export document.md document.pdf
+    mdx export notes.md presentation.pptx
+    mdx export report.md report.docx
