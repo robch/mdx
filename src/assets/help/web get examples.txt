@@ -19,7 +19,11 @@ EXAMPLES
 
     mdx web get https://learnxinyminutes.com/yaml/ --page-instructions @step1-instructions.txt @step2-instructions.txt
 
-  EXAMPLE 4: Apply AI to the final output
+  EXAMPLE 4: Capture page content and screenshot
+
+    mdx web get https://example.com --save-page-output "{filePath}/{fileBase}-content.md" --screenshot "{filePath}/{fileBase}-screenshot.png"
+
+  EXAMPLE 5: Apply AI to the final output
 
     mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
 
