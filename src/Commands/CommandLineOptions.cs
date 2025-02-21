@@ -191,6 +191,7 @@ class CommandLineOptions
                 "web get" => new WebGetCommand(),
                 "help" => new HelpCommand(),
                 "run" => new RunCommand(),
+                "export" => new ExportCommand(),
                 _ => new FindFilesCommand()
             };
 
