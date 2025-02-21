@@ -1,0 +1,16 @@
+Convert markdown files to other formats like PDF, DOCX or PPTX.
+
+The export command takes one or more markdown files as input and converts them to the specified format.
+
+Usage: mdx export [options] <files...>
+
+Options:
+  --format    Output format (pdf, docx, or pptx)
+  --output    Output file path
+
+The input files will be combined in the order they are specified, with two newlines between each file's content.
+
+Examples:
+  mdx export --format pdf --output output.pdf input.md
+  mdx export --format docx --output presentation.docx slide1.md slide2.md slide3.md
+  mdx export --format pptx --output deck.pptx content.md
