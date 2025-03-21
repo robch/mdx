@@ -129,21 +129,38 @@ class AiInstructionProcessor
     {
         if (_useChatX == null)
         {
-            var process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = "chatx";
-            process.StartInfo.Arguments = "help topics --expand";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardInput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.Start();
+            _useChatX = false;
 
-            ConsoleHelpers.PrintDebugLine("Checking chatx installation ...");
+            try
+            {
+                var process = new System.Diagnostics.Process();
+                process.StartInfo.FileName = "chatx";
+                process.StartInfo.Arguments = "help topics --expand";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.Start();
 
-            process.StandardInput.Close();
-            process.WaitForExit();
-            
-            _useChatX = process.ExitCode == 0;
+                ConsoleHelpers.PrintDebugLine("Checking chatx installation ...");
+
+                process.StandardInput.Close();
+                process.WaitForExit();
+                
+                _useChatX = process.ExitCode == 0;
+            }
+            catch (Exception ex)
+            {
+                ConsoleHelpers.PrintDebugLine($"Error checking chatx installation: {ex.Message}");
+                _useChatX = false;
+            }
+            finally
+            {
+                if (_useChatX == null)
+                {
+                    _useChatX = false;
+                }
+            }
             ConsoleHelpers.PrintDebugLine($"ChatX installed: {_useChatX}");
         }
 
