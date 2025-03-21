@@ -61,8 +61,12 @@ class AiInstructionProcessor
             ConsoleHelpers.PrintDebugLine($"system:\n{File.ReadAllText(systemPromptFileName)}\n\n");
             ConsoleHelpers.PrintDebugLine($"instructions:\n{File.ReadAllText(instructionsFileName)}\n\n");
 
-            var arguments = $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
-            if (useBuiltInFunctions) arguments += " --built-in-functions";
+            var useChatX = UseChatX();
+            var arguments = useChatX
+                ? $"--input \"@{userPromptFileName}\" --system-prompt \"@{systemPromptFileName}\" --quiet --interactive false"
+                : $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
+
+            if (useBuiltInFunctions && !useChatX) arguments += " --built-in-functions";
 
             if (!string.IsNullOrEmpty(saveChatHistory))
             {
@@ -70,8 +74,14 @@ class AiInstructionProcessor
                 arguments += $" --output-chat-history \"{fileName}\"";
             }
 
+            if (useChatX)
+            {
+                RewriteExpandedFile(userPromptFileName);
+                RewriteExpandedFile(systemPromptFileName);
+            }
+
             var process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = "ai";
+            process.StartInfo.FileName = useChatX ? "chatx" : "ai";
             process.StartInfo.Arguments = arguments;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardInput = false;
@@ -114,4 +124,53 @@ class AiInstructionProcessor
             .Replace("{contentFile}", contentFile)
             .Replace("{backticks}", backticks);
     }
+
+    private static bool UseChatX()
+    {
+        if (_useChatX == null)
+        {
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = "chatx";
+            process.StartInfo.Arguments = "help topics --expand";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardInput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.Start();
+
+            ConsoleHelpers.PrintDebugLine("Checking chatx installation ...");
+
+            process.StandardInput.Close();
+            process.WaitForExit();
+            
+            _useChatX = process.ExitCode == 0;
+            ConsoleHelpers.PrintDebugLine($"ChatX installed: {_useChatX}");
+        }
+
+        return _useChatX.Value;
+    }
+
+    private static void RewriteExpandedFile(string userPromptFileName)
+    {
+        var content = File.ReadAllText(userPromptFileName);
+        
+        // Find patterns that look like this {@FILENAME}, and replace them with the content of the file
+        // For example, {@FILENAME} will be replaced with the content of the file FILENAME
+        var pattern = @"\{@(.*?)\}";
+        var matches = System.Text.RegularExpressions.Regex.Matches(content, pattern);
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            var fileName = match.Groups[1].Value;
+            var filePath = Path.Combine(Path.GetDirectoryName(userPromptFileName), fileName);
+            if (File.Exists(filePath))
+            {
+                var fileContent = File.ReadAllText(filePath);
+                content = content.Replace(match.Value, fileContent);
+            }
+        }
+
+        File.WriteAllText(userPromptFileName, content);
+    }
+
+    private static bool? _useChatX;
 }
