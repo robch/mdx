@@ -180,6 +180,7 @@ class CommandLineOptions
             var name2 = GetInputOptionArgs(i + 1, args, max: 1).FirstOrDefault();
             var commandName = name1 switch
             {
+                "version" => "version",
                 "help" => "help",
                 "run" => "run",
                 _ => $"{name1} {name2}".Trim()
@@ -189,6 +190,7 @@ class CommandLineOptions
             {
                 "web search" => new WebSearchCommand(),
                 "web get" => new WebGetCommand(),
+                "version" => new VersionCommand(),
                 "help" => new HelpCommand(),
                 "run" => new RunCommand(),
                 _ => new FindFilesCommand()
@@ -205,6 +207,7 @@ class CommandLineOptions
 
         var parsedOption = TryParseGlobalCommandLineOptions(commandLineOptions, args, ref i, arg) ||
             TryParseHelpCommandOptions(commandLineOptions, command as HelpCommand, args, ref i, arg) ||
+            TryParseVersionCommandOptions(commandLineOptions, command as VersionCommand, args, ref i, arg) ||
             TryParseFindFilesCommandOptions(command as FindFilesCommand, args, ref i, arg) ||
             TryParseWebCommandOptions(command as WebCommand, args, ref i, arg) ||
             TryParseRunCommandOptions(command as RunCommand, args, ref i, arg) ||
@@ -214,6 +217,12 @@ class CommandLineOptions
         if (arg == "--help")
         {
             commandLineOptions.HelpTopic = command.GetCommandName();
+            i = args.Count();
+            parsedOption = true;
+        }
+        else if (arg == "--version")
+        {
+            command = new VersionCommand();
             i = args.Count();
             parsedOption = true;
         }
@@ -292,6 +301,22 @@ class CommandLineOptions
         else if (arg == "--expand")
         {
             commandLineOptions.ExpandHelpTopics = true;
+        }
+        else
+        {
+            parsed = false;
+        }
+
+        return parsed;
+    }
+
+    private static bool TryParseVersionCommandOptions(CommandLineOptions commandLineOptions, VersionCommand versionCommand, string[] args, ref int i, string arg)
+    {
+        bool parsed = true;
+
+        if (versionCommand == null)
+        {
+            parsed = false;
         }
         else
         {

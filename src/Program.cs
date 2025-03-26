@@ -79,6 +79,7 @@ class Program
                 WebSearchCommand webSearchCommand => await HandleWebSearchCommandAsync(commandLineOptions, webSearchCommand, throttler, delayOutputToApplyInstructions),
                 WebGetCommand webGetCommand => HandleWebGetCommand(commandLineOptions, webGetCommand, throttler, delayOutputToApplyInstructions),
                 RunCommand runCommand => HandleRunCommand(commandLineOptions, runCommand, throttler, delayOutputToApplyInstructions),
+                VersionCommand versionCommand => versionCommand.ExecuteAsync(),
                 _ => new List<Task<string>>()
             };
 
@@ -114,8 +115,8 @@ class Program
     {
         var programNameUppercase = Program.Name.ToUpper();
         ConsoleHelpers.PrintLine(
-            $"{programNameUppercase} - The AI-Powered Markdown Generator CLI, Version 1.0.0\n" +
-            "Copyright(c) 2024, Rob Chambers. All rights reserved.\n");
+            $"{programNameUppercase} - The AI-Powered Markdown Generator CLI, Version {VersionInfo.GetVersion()}\n" +
+            "Copyright(c) 2025, Rob Chambers. All rights reserved.\n");
     }
 
     private static void PrintException(CommandLineException ex)
