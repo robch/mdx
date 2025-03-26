@@ -135,7 +135,7 @@ class AiInstructionProcessor
             {
                 var process = new System.Diagnostics.Process();
                 process.StartInfo.FileName = "chatx";
-                process.StartInfo.Arguments = "help topics --expand";
+                process.StartInfo.Arguments = "version";
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardInput = true;
                 process.StartInfo.RedirectStandardError = true;
