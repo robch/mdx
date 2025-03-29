@@ -23,6 +23,10 @@ EXAMPLES
 
     mdx web get https://example.com https://mbers.us/bio --instructions "style example.com as the other site"    
 
+  EXAMPLE 5: Wait for dynamic content to load
+
+    mdx web get https://example.com --wait-for "#main-content" ".dynamic-widget"
+
 SEE ALSO
 
   mdx help web get

@@ -37,4 +37,7 @@ abstract class WebCommand : Command
     public List<Tuple<string, string>> PageInstructionsList;
 
     public string SavePageOutput { get; set; }
+
+    // List of CSS selectors to wait for before proceeding
+    public List<string> WaitForSelectors { get; set; } = new();
 }

@@ -522,6 +522,16 @@ class CommandLineOptions
         {
             command.SearchProvider = WebSearchProvider.Bing;
         }
+        else if (arg == "--wait-for")
+        {
+            var selectors = GetInputOptionArgs(i + 1, args);
+            if (selectors.Count() == 0)
+            {
+                throw new CommandLineException($"Missing CSS selectors for {arg}");
+            }
+            command.WaitForSelectors.AddRange(selectors);
+            i += selectors.Count();
+        }
         else if (arg == "--duck-duck-go" || arg == "--duckduckgo")
         {
             command.SearchProvider = WebSearchProvider.DuckDuckGo;
