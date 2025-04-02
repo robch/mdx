@@ -63,7 +63,7 @@ class AiInstructionProcessor
 
             var useChatX = UseChatX();
             var arguments = useChatX
-                ? $"--input \"@{userPromptFileName}\" --system-prompt \"@{systemPromptFileName}\" --quiet --interactive false"
+                ? $"--input \"@{userPromptFileName}\" --system-prompt \"@{systemPromptFileName}\" --quiet --interactive false --no-templates"
                 : $"chat --user \"@{userPromptFileName}\" --system \"@{systemPromptFileName}\" --quiet true";
 
             if (useBuiltInFunctions && !useChatX) arguments += " --built-in-functions";
