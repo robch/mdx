@@ -33,11 +33,6 @@ jobs:
       with:
         dotnet-version: 8.0.x
     
-    - name: Install Playwright browsers
-      run: |
-        dotnet tool install --global Microsoft.Playwright.CLI
-        playwright install
-        
     - name: Restore dependencies
       run: dotnet restore
     
