@@ -17,9 +17,28 @@ MDX is a command-line tool that helps build markdown files from various sources.
 
 ## Installation
 
-There are several ways to build and run MDX.
+There are several ways to install and run MDX.
 
-### OPTION 1: Local Build
+### OPTION 1: Install as .NET Tool
+
+MDX is available as a .NET global tool that can be installed from NuGet.
+
+For global installation (available from any directory):
+```bash
+dotnet tool install --global MDX --prerelease
+```
+
+For local installation (available only in current directory):
+```bash
+dotnet tool install --local MDX --prerelease
+```
+
+After installation, you can run MDX directly from your terminal:
+```bash
+mdx --help
+```
+
+### OPTION 2: Local Build
 
 To build and run MDX locally:
 
@@ -34,7 +53,7 @@ cd mdx
 dotnet build
 ```
 
-### OPTION 2: Docker Build
+### OPTION 3: Docker Build
 
 To run MDX in a Docker container with all dependencies pre-installed:
 
@@ -52,7 +71,7 @@ docker build -t mdx .
 docker run mdx [command arguments]
 ```
 
-### OPTION 3: VS Code Dev Container
+### OPTION 4: VS Code Dev Container
 
 1. Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 2. Clone this repository
@@ -64,7 +83,7 @@ git clone https://github.com/robch/mdx
 code mdx
 ```
 
-### OPTION 4: GitHub Codespaces
+### OPTION 5: GitHub Codespaces
 
 - Visit [codespaces.new/robch/mdx](https://codespaces.new/robch/mdx?quickstart=1)
 - Or open in GitHub and click the "Code" button > "Create codespace"
