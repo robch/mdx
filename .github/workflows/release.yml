@@ -15,6 +15,16 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     environment: production # Adds protection and approval requirements
+    env:
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_CHAT_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+      AZURE_OPENAI_SYSTEM_PROMPT: ${{ secrets.AZURE_OPENAI_SYSTEM_PROMPT }}
+      BING_SEARCH_V7_ENDPOINT: ${{ secrets.BING_SEARCH_V7_ENDPOINT }}
+      BING_SEARCH_V7_KEY: ${{ secrets.BING_SEARCH_V7_KEY }}
+      GOOGLE_SEARCH_ENDPOINT: ${{ secrets.GOOGLE_SEARCH_ENDPOINT }}
+      GOOGLE_SEARCH_KEY: ${{ secrets.GOOGLE_SEARCH_KEY }}
+      GOOGLE_SEARCH_ENGINE_ID: ${{ secrets.GOOGLE_SEARCH_ENGINE_ID }}
     
     steps:
     - uses: actions/checkout@v3
@@ -25,6 +35,11 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0.x
+    
+    - name: Install Playwright browsers
+      run: |
+        dotnet tool install --global Microsoft.Playwright.CLI
+        playwright install
     
     - name: Determine version
       id: get-version
