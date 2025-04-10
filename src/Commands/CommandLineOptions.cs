@@ -380,7 +380,7 @@ class CommandLineOptions
         }
         else if (arg == "--contains")
         {
-            var patterns = GetInputOptionArgs(i + 1, args);
+            var patterns = GetInputOptionArgs(i + 1, args, required: 1);
             var asRegExs = ValidateRegExPatterns(arg, patterns);
             command.IncludeFileContainsPatternList.AddRange(asRegExs);
             command.IncludeLineContainsPatternList.AddRange(asRegExs);
@@ -388,21 +388,21 @@ class CommandLineOptions
         }
         else if (arg == "--file-contains")
         {
-            var patterns = GetInputOptionArgs(i + 1, args);
+            var patterns = GetInputOptionArgs(i + 1, args, required: 1);
             var asRegExs = ValidateRegExPatterns(arg, patterns);
             command.IncludeFileContainsPatternList.AddRange(asRegExs);
             i += patterns.Count();
         }
         else if (arg == "--file-not-contains")
         {
-            var patterns = GetInputOptionArgs(i + 1, args);
+            var patterns = GetInputOptionArgs(i + 1, args, required: 1);
             var asRegExs = ValidateRegExPatterns(arg, patterns);
             command.ExcludeFileContainsPatternList.AddRange(asRegExs);
             i += patterns.Count();
         }
         else if (arg == "--line-contains")
         {
-            var patterns = GetInputOptionArgs(i + 1, args);
+            var patterns = GetInputOptionArgs(i + 1, args, required: 1);
             var asRegExs = ValidateRegExPatterns(arg, patterns);
             command.IncludeLineContainsPatternList.AddRange(asRegExs);
             i += patterns.Count();
@@ -658,11 +658,13 @@ class CommandLineOptions
         return false;
     }
 
-    private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args, int max = int.MaxValue)
+    private static IEnumerable<string> GetInputOptionArgs(int startAt, string[] args, int max = int.MaxValue, int required = 0)
     {
+        var found = 0;
+
         for (int i = startAt; i < args.Length && i - startAt < max; i++)
         {
-            if (args[i].StartsWith("--"))
+            if (args[i].StartsWith("--") && found >= required)
             {
                 yield break;
             }
